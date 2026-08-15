@@ -1,0 +1,8 @@
+line-length = 79
+
+[lint]
+# E402: we insert code/ into sys.path before importing config, so
+#   this cannot be satisfied without a packaging layer we do not
+#   need at this size.
+# EXE001: git on Windows does not preserve the executable bit.
+ignore = ["E402", "EXE001"]

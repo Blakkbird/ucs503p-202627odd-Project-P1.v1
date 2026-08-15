@@ -1,0 +1,10 @@
+# Runtime is deliberately standard-library only for ingestion, so
+# the daily job has nothing that can break on a dependency update.
+# Everything below is for testing, linting and (later) modelling.
+
+pytest>=8.0
+ruff>=0.6
+
+# added at W5 when the model arrives:
+# pandas>=2.2
+# scikit-learn>=1.5

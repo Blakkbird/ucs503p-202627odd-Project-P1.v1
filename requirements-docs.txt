@@ -1,0 +1,10 @@
+# Transcribed from .github/workflows/mkdocs.yml so that a local
+# `mkdocs serve` matches what CI builds. See journal W1.
+mkdocs-material
+mkdocstrings[python]
+mkdocs-gen-files
+mkdocs-literate-nav
+mkdocs-section-index
+mkdocs-git-revision-date-localized-plugin
+mkdocs-git-authors-plugin
+pymdown-extensions
