@@ -1,0 +1,49 @@
+name: Daily ingest
+
+# Three ways this runs:
+#   schedule        - unattended, every morning
+#   workflow_dispatch - a button in the Actions tab, for testing
+#   (never on push) - ingestion is not a code event
+on:
+  schedule:
+    - cron: "30 2 * * *"     # 02:30 UTC = 08:00 IST
+  workflow_dispatch:
+
+# Without this the job can read the repo but not write to it,
+# and the final push fails with 403. See journal W3.
+permissions:
+  contents: write
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch today's records
+        env:
+          OPENAQ_KEY: ${{ secrets.OPENAQ_KEY }}
+          DATA_GOV_KEY: ${{ secrets.DATA_GOV_KEY }}
+          FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+        run: python code/ingest/run_daily.py
+
+      - name: Validate what was written
+        run: |
+          pip install pytest
+          python -m pytest code/tests/ -q
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "::error::No new data was written"
+            exit 1
+          fi
+          git commit -m "data: ingest $(date -u +%F)"
+          git push
