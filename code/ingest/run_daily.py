@@ -4,7 +4,10 @@ forecast. Run by .github/workflows/ingest.yml each morning."""
 import csv
 import io
 import json
+import socket
 import sys
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -20,11 +23,47 @@ IST = timezone(timedelta(hours=5, minutes=30))
 # rolling window instead; already-filled fields are skipped.
 BACKFILL_DAYS = 10
 
+RETRIES = 3
+TIMEOUT = 45
+
+# CI runners sometimes have no usable IPv6 route, and urllib tries
+# the AAAA record first, failing with "Network is unreachable"
+# instead of falling back. Restrict resolution to IPv4.
+_getaddrinfo = socket.getaddrinfo
+
+
+def _ipv4_only(*args, **kwargs):
+    return [r for r in _getaddrinfo(*args, **kwargs)
+            if r[0] == socket.AF_INET]
+
+
+socket.getaddrinfo = _ipv4_only
+
+
+class SourceError(Exception):
+    """A data source could not be reached or returned nonsense."""
+
 
 def fetch(url, headers=None):
-    req = urllib.request.Request(url, headers=headers or {})
-    with urllib.request.urlopen(req, timeout=90) as r:
-        return r.read().decode("utf-8", errors="replace")
+    """GET with retries. Raises SourceError once attempts run out."""
+    last = None
+    for attempt in range(1, RETRIES + 1):
+        try:
+            req = urllib.request.Request(url, headers=headers or {})
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+                return r.read().decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as e:
+            # 4xx will not fix itself; only retry server-side faults
+            if e.code < 500:
+                raise SourceError(f"HTTP {e.code} for {url[:60]}") from e
+            last = e
+        except (TimeoutError, urllib.error.URLError, OSError) as e:
+            last = e
+        if attempt < RETRIES:
+            wait = 2 ** attempt
+            print(f"  retry {attempt}/{RETRIES - 1} in {wait}s ({last})")
+            time.sleep(wait)
+    raise SourceError(f"unreachable after {RETRIES} tries: {last}")
 
 
 def observed(day):
@@ -145,29 +184,40 @@ def main():
     stamp = datetime.now(IST).isoformat(timespec="seconds")
     changed = 0
     sources = None
+    failures = []
 
-    # backfill any gap in the recent window, not just yesterday
+    # Backfill any gap in the recent window, not just yesterday.
+    # A failure on one source or one day must not abort the rest:
+    # partial data written today is better than nothing, and the
+    # window means we retry tomorrow anyway.
     for n in range(BACKFILL_DAYS, 0, -1):
         day = today - timedelta(days=n)
         row = rows.get(day.isoformat(), blank(day))
         touched = False
 
         if not row.get("obs_pm25"):
-            mean, hours = observed(day)
-            if mean is not None:
-                row["obs_pm25"] = round(mean, 2)
-                row["obs_hours"] = hours
-                touched = True
-                print(f"obs   {day}: {mean:.1f} ug/m3 ({hours}h)")
+            try:
+                mean, hours = observed(day)
+                if mean is not None:
+                    row["obs_pm25"] = round(mean, 2)
+                    row["obs_hours"] = hours
+                    touched = True
+                    print(f"obs   {day}: {mean:.1f} ug/m3 ({hours}h)")
+            except SourceError as e:
+                failures.append(f"obs {day}: {e}")
 
         if not row.get("fire_count"):
-            if sources is None:
-                sources = firms_sources()
-            n_fires = fire_count(day, sources)
-            if n_fires is not None:
-                row["fire_count"] = n_fires
-                touched = True
-                print(f"fires {day}: {n_fires}")
+            try:
+                if sources is None:
+                    sources = firms_sources()
+                n_fires = fire_count(day, sources)
+                if n_fires is not None:
+                    row["fire_count"] = n_fires
+                    touched = True
+                    print(f"fires {day}: {n_fires}")
+            except SourceError as e:
+                failures.append(f"fires {day}: {e}")
+                sources = sources or []   # do not retry all ten days
 
         if touched:
             row["ingested_at"] = stamp
@@ -177,22 +227,31 @@ def main():
     # tomorrow: the forecast issued today, with its issue date
     row = rows.get(tomorrow.isoformat(), blank(tomorrow))
     if not row.get("cams_pm25"):
-        f = forecast(tomorrow)
-        if f["cams_pm25"] is not None:
-            row.update({k: (round(v, 2) if v is not None else "")
-                        for k, v in f.items()})
-            row["cams_issue_date"] = today.isoformat()
-            row["ingested_at"] = stamp
-            rows[tomorrow.isoformat()] = row
-            changed += 1
-            print(f"fcst  {tomorrow}: {f['cams_pm25']:.1f} ug/m3 "
-                  f"(issued {today})")
+        try:
+            f = forecast(tomorrow)
+            if f["cams_pm25"] is not None:
+                row.update({k: (round(v, 2) if v is not None else "")
+                            for k, v in f.items()})
+                row["cams_issue_date"] = today.isoformat()
+                row["ingested_at"] = stamp
+                rows[tomorrow.isoformat()] = row
+                changed += 1
+                print(f"fcst  {tomorrow}: {f['cams_pm25']:.1f} ug/m3 "
+                      f"(issued {today})")
+        except SourceError as e:
+            failures.append(f"forecast {tomorrow}: {e}")
 
     save(rows)
+
     still_missing = [d for d in sorted(rows)
                      if d < today.isoformat() and not rows[d]["obs_pm25"]]
-    print(f"{len(rows)} rows, {changed} updated, "
+    print(f"\n{len(rows)} rows, {changed} updated, "
           f"{len(still_missing)} past days still without an observation")
+
+    if failures:
+        print(f"{len(failures)} source failure(s):")
+        for f_msg in failures[:5]:
+            print(f"  {f_msg}")
 
     # A second run on the same day legitimately has nothing to do,
     # so "changed == 0" is not a failure. Fail only when the thing
