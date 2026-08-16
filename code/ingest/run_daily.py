@@ -1,4 +1,4 @@
-"""Daily ingest. Fills in yesterday's observation, adds tomorrow's
+"""Daily ingest. Backfills recent observations, adds tomorrow's
 forecast. Run by .github/workflows/ingest.yml each morning."""
 
 import csv
@@ -14,6 +14,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import config
 
 IST = timezone(timedelta(hours=5, minutes=30))
+
+# Observations arrive with a lag of a day or two, so a job that
+# only ever looks at yesterday leaves permanent holes. Re-check a
+# rolling window instead; already-filled fields are skipped.
+BACKFILL_DAYS = 10
 
 
 def fetch(url, headers=None):
@@ -84,23 +89,27 @@ def forecast(target_day):
     }
 
 
-def fire_count(day):
-    """Fire detections in the bbox for one date."""
+def firms_sources():
+    """Available FIRMS products with their date coverage."""
     # NRT products cover only a recent window and return an empty
     # csv, not an error, outside it. Pick the source by date.
-    avail = fetch("https://firms.modaps.eosdis.nasa.gov/api/"
-                  f"data_availability/csv/{config.FIRMS_MAP_KEY}/all")
-    source = None
-    for r in csv.DictReader(io.StringIO(avail)):
+    text = fetch("https://firms.modaps.eosdis.nasa.gov/api/"
+                 f"data_availability/csv/{config.FIRMS_MAP_KEY}/all")
+    out = []
+    for r in csv.DictReader(io.StringIO(text)):
         name = r.get("data_id") or r.get("source") or ""
         lo, hi = r.get("min_date", ""), r.get("max_date", "")
-        if "VIIRS" in name.upper() and lo and hi \
-                and lo <= day.isoformat() <= hi:
-            source = name
-            break
+        if "VIIRS" in name.upper() and lo and hi:
+            out.append((name, lo, hi))
+    return out
+
+
+def fire_count(day, sources):
+    """Fire detections in the bbox for one date."""
+    source = next((n for n, lo, hi in sources
+                   if lo <= day.isoformat() <= hi), None)
     if source is None:
         return None
-
     text = fetch("https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
                  f"{config.FIRMS_MAP_KEY}/{source}/"
                  f"{config.FIRMS_BBOX}/1/{day.isoformat()}")
@@ -131,31 +140,39 @@ def blank(day):
 
 def main():
     today = datetime.now(IST).date()
-    yesterday = today - timedelta(days=1)
     tomorrow = today + timedelta(days=1)
     rows = load()
     stamp = datetime.now(IST).isoformat(timespec="seconds")
     changed = 0
+    sources = None
 
-    # yesterday: fill in what is only knowable now
-    row = rows.get(yesterday.isoformat(), blank(yesterday))
-    if not row.get("obs_pm25"):
-        mean, hours = observed(yesterday)
-        if mean is not None:
-            row["obs_pm25"] = round(mean, 2)
-            row["obs_hours"] = hours
+    # backfill any gap in the recent window, not just yesterday
+    for n in range(BACKFILL_DAYS, 0, -1):
+        day = today - timedelta(days=n)
+        row = rows.get(day.isoformat(), blank(day))
+        touched = False
+
+        if not row.get("obs_pm25"):
+            mean, hours = observed(day)
+            if mean is not None:
+                row["obs_pm25"] = round(mean, 2)
+                row["obs_hours"] = hours
+                touched = True
+                print(f"obs   {day}: {mean:.1f} ug/m3 ({hours}h)")
+
+        if not row.get("fire_count"):
+            if sources is None:
+                sources = firms_sources()
+            n_fires = fire_count(day, sources)
+            if n_fires is not None:
+                row["fire_count"] = n_fires
+                touched = True
+                print(f"fires {day}: {n_fires}")
+
+        if touched:
+            row["ingested_at"] = stamp
+            rows[day.isoformat()] = row
             changed += 1
-            print(f"obs {yesterday}: {mean:.1f} ug/m3 ({hours}h)")
-        else:
-            print(f"obs {yesterday}: no data")
-    if not row.get("fire_count"):
-        n = fire_count(yesterday)
-        if n is not None:
-            row["fire_count"] = n
-            changed += 1
-            print(f"fires {yesterday}: {n}")
-    row["ingested_at"] = stamp
-    rows[yesterday.isoformat()] = row
 
     # tomorrow: the forecast issued today, with its issue date
     row = rows.get(tomorrow.isoformat(), blank(tomorrow))
@@ -165,17 +182,26 @@ def main():
             row.update({k: (round(v, 2) if v is not None else "")
                         for k, v in f.items()})
             row["cams_issue_date"] = today.isoformat()
+            row["ingested_at"] = stamp
+            rows[tomorrow.isoformat()] = row
             changed += 1
-            print(f"forecast {tomorrow}: {f['cams_pm25']:.1f} ug/m3 "
+            print(f"fcst  {tomorrow}: {f['cams_pm25']:.1f} ug/m3 "
                   f"(issued {today})")
-    row["ingested_at"] = stamp
-    rows[tomorrow.isoformat()] = row
 
     save(rows)
-    print(f"{len(rows)} rows, {changed} field group(s) updated")
-    if changed == 0:
-        print("WARNING: nothing new was written")
+    still_missing = [d for d in sorted(rows)
+                     if d < today.isoformat() and not rows[d]["obs_pm25"]]
+    print(f"{len(rows)} rows, {changed} updated, "
+          f"{len(still_missing)} past days still without an observation")
+
+    # A second run on the same day legitimately has nothing to do,
+    # so "changed == 0" is not a failure. Fail only when the thing
+    # this job exists to produce is missing.
+    if not rows.get(tomorrow.isoformat(), {}).get("cams_pm25"):
+        print(f"ERROR: no forecast for {tomorrow}")
         return 1
+    if changed == 0:
+        print("already up to date")
     return 0
 
 

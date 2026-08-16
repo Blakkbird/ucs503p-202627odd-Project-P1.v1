@@ -474,3 +474,5 @@ __pycache__/
 .ruff_cache/
 .vscode/*
 !.vscode/settings.json
+.DS_Store
+Thumbs.db
