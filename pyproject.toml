@@ -1,41 +1,36 @@
-
 [build-system]
-requires = ["hatchling","hatch-vcs"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tiet-ucs503.github.io/ucs503p-202627odd-template"
-version = "0.0.1"
-authors = [
-  { name="Raghav B. Venkataramaiyer", email="bv.raghav@thapar.edu" },
-]
-# maintainers = [
-#   { name="Raghav B. Venkataramaiyer",
-#     email="bvraghav@gmail.com" },
-# ]
-description = "UCS503 : Software Engineering : Project Sample"
+name = "pawan"
+version = "0.2.0"
+description = "Locally calibrated next-day PM2.5 forecasting for Patiala"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
+authors = [
+  { name = "Gurkirpa Singh", email = "gsarao_be24@thapar.edu" },
+  { name = "Ketubh Bansal" },
+  { name = "Aayush Kandhol" },
+]
 classifiers = [
-    # See: https://pypi.org/classifiers/
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
-    "Intended Audience :: Developers",
-    "Operating System :: POSIX",
-    "Programming Language :: Unix Shell",
 ]
-dependencies = ["click"]
+# Ingest and modelling are standard library only, on purpose: the
+# daily job runs unattended and nothing in its path should be able
+# to break on a dependency upgrade. See requirements.txt.
+dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/tiet-ucs503/ucs503p-202627odd-template"
-Issues = "https://github.com/tiet-unc512/ucs503p-202627odd-template/issues"
+Homepage = "https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1"
+Repository = "https://github.com/Blakkbird/ucs503p-202627odd-Project-P1.v1"
 
 # Adapted from https://stackoverflow.com/a/50156706
 [tool.pytest.ini_options]
 pythonpath = [
   "code"
 ]
-# THE END -------------------------------------------

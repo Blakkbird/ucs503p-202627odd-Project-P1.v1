@@ -1,0 +1,105 @@
+{
+  "generated_for": "2026-08-14",
+  "window": {
+    "first": "2026-06-30",
+    "last": "2026-08-14"
+  },
+  "features": [
+    "cams_log",
+    "obs_recent",
+    "obs_recent_log",
+    "obs_mean7",
+    "obs_age",
+    "doy_sin",
+    "doy_cos",
+    "burning"
+  ],
+  "min_train": 40,
+  "overall": {
+    "model": {
+      "n": 46,
+      "mae": 7.267,
+      "rmse": 9.032,
+      "bias": 4.074,
+      "band_hit_rate": 0.826,
+      "r": 0.535
+    },
+    "persistence": {
+      "n": 46,
+      "mae": 6.116,
+      "rmse": 8.45,
+      "bias": 0.483,
+      "band_hit_rate": 0.848,
+      "r": 0.6
+    },
+    "persistence_operational": {
+      "n": 46,
+      "mae": 8.762,
+      "rmse": 11.767,
+      "bias": 1.887,
+      "band_hit_rate": 0.739,
+      "r": 0.313
+    },
+    "climatology": {
+      "n": 46,
+      "mae": 11.744,
+      "rmse": 12.704,
+      "bias": 9.294,
+      "band_hit_rate": 0.783,
+      "r": 0.407
+    },
+    "raw_cams": {
+      "n": 46,
+      "mae": 42.351,
+      "rmse": 47.283,
+      "bias": 42.351,
+      "band_hit_rate": 0.109,
+      "r": 0.784
+    }
+  },
+  "by_season": {
+    "calm": {
+      "model": {
+        "n": 46,
+        "mae": 7.267,
+        "rmse": 9.032,
+        "bias": 4.074,
+        "band_hit_rate": 0.826,
+        "r": 0.535
+      },
+      "persistence": {
+        "n": 46,
+        "mae": 6.116,
+        "rmse": 8.45,
+        "bias": 0.483,
+        "band_hit_rate": 0.848,
+        "r": 0.6
+      },
+      "persistence_operational": {
+        "n": 46,
+        "mae": 8.762,
+        "rmse": 11.767,
+        "bias": 1.887,
+        "band_hit_rate": 0.739,
+        "r": 0.313
+      },
+      "climatology": {
+        "n": 46,
+        "mae": 11.744,
+        "rmse": 12.704,
+        "bias": 9.294,
+        "band_hit_rate": 0.783,
+        "r": 0.407
+      },
+      "raw_cams": {
+        "n": 46,
+        "mae": 42.351,
+        "rmse": 47.283,
+        "bias": 42.351,
+        "band_hit_rate": 0.109,
+        "r": 0.784
+      }
+    }
+  },
+  "skill_vs_persistence": -0.1882
+}

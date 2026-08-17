@@ -4,6 +4,7 @@ forecast. Run by .github/workflows/ingest.yml each morning."""
 import csv
 import io
 import json
+import math
 import socket
 import sys
 import time
@@ -91,6 +92,36 @@ def observed(day):
     return sum(vals) / len(vals), len(vals)
 
 
+def day_mean(times, values, day):
+    """Mean of the hourly values that fall on `day`."""
+    picked = [v for t, v in zip(times, values)
+              if t[:10] == day.isoformat() and v is not None]
+    return sum(picked) / len(picked) if picked else None
+
+
+def wind_day_mean(times, speeds, bearings, day):
+    """Daily mean wind as (speed, bearing).
+
+    Averaging bearings arithmetically is wrong: 350 deg and 10 deg
+    are twenty degrees apart but average to 180, i.e. exactly
+    backwards. Resolve each hour into components, average those,
+    and convert back. Speed is taken as the mean of the hourly
+    speeds rather than the length of the mean vector, so that a day
+    of swirling wind still reads as windy.
+    """
+    hours = [(s, b) for t, s, b in zip(times, speeds, bearings)
+             if t[:10] == day.isoformat() and s is not None
+             and b is not None]
+    if not hours:
+        return None, None
+
+    u = sum(-s * math.sin(math.radians(b)) for s, b in hours) / len(hours)
+    v = sum(-s * math.cos(math.radians(b)) for s, b in hours) / len(hours)
+    speed = sum(s for s, _ in hours) / len(hours)
+    bearing = (math.degrees(math.atan2(-u, -v))) % 360
+    return speed, bearing
+
+
 def forecast(target_day):
     """CAMS pm2.5 and weather for target_day, as issued today."""
     aq = json.loads(fetch(
@@ -108,23 +139,20 @@ def forecast(target_day):
                        "wind_speed_10m,wind_direction_10m"),
             "forecast_days": 3, "timezone": "Asia/Kolkata"})))
 
-    def day_mean(times, values, day):
-        picked = [v for t, v in zip(times, values)
-                  if t[:10] == day.isoformat() and v is not None]
-        return sum(picked) / len(picked) if picked else None
-
     t_aq = aq["hourly"]["time"]
     t_wx = wx["hourly"]["time"]
+    speed, bearing = wind_day_mean(
+        t_wx, wx["hourly"]["wind_speed_10m"],
+        wx["hourly"]["wind_direction_10m"], target_day)
+
     return {
         "cams_pm25": day_mean(t_aq, aq["hourly"]["pm2_5"], target_day),
         "temp_mean": day_mean(
             t_wx, wx["hourly"]["temperature_2m"], target_day),
         "rh_mean": day_mean(
             t_wx, wx["hourly"]["relative_humidity_2m"], target_day),
-        "wind_speed_mean": day_mean(
-            t_wx, wx["hourly"]["wind_speed_10m"], target_day),
-        "wind_dir_mean": day_mean(
-            t_wx, wx["hourly"]["wind_direction_10m"], target_day),
+        "wind_speed_mean": speed,
+        "wind_dir_mean": bearing,
     }
 
 
