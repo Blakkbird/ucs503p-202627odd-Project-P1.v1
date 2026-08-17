@@ -38,12 +38,26 @@ TARGET = "pm25"
 TARGET_UNITS = "ug/m3"
 HORIZON_DAYS = 1
 
+# --- timing 
+
+# The forecast for day D is issued on the morning of D-1. At that
+# moment the CPCB feed has not caught up: measured on 2026-08-17,
+# the freshest published observation was 2026-08-14. So anything
+# the model reads about the past must stop three days short of the
+# issue date. Persistence gets scored both ways, see evaluate.py.
+OBS_LATENCY_DAYS = 3
+
+# Paddy residue burning upwind of Patiala. Errors in this window
+# are much larger, so it is scored as its own season.
+BURNING_MONTHS = (10, 11)
+
 # --- paths 
 
 DATA = ROOT / "data"
 DAILY_CSV = DATA / "daily.csv"
 PREDICTIONS_JSON = DATA / "predictions.json"
 METRICS_JSON = DATA / "metrics.json"
+MODEL_JSON = DATA / "model.json"
 
 # --- credentials 
 

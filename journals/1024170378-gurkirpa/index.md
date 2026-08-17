@@ -7,4 +7,6 @@ Name: Gurkirpa Singh
    clone](./w1-ticket-resolution.md)
 +  [W2 : A filtered query that returned
    everything](./w2-ticket-resolution.md)
++  [W3 : The baseline we promised to beat reads the
+   future](./w3-ticket-resolution.md)
 +  […]
