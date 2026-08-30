@@ -11,7 +11,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -22,7 +22,17 @@ IST = timezone(timedelta(hours=5, minutes=30))
 # Observations arrive with a lag of a day or two, so a job that
 # only ever looks at yesterday leaves permanent holes. Re-check a
 # rolling window instead; already-filled fields are skipped.
-BACKFILL_DAYS = 10
+#
+# The window was 10, which turned out to be a trap. When the
+# observation feed broke on 15 August the hole grew a day at a
+# time until it was wider than the window, and after that the
+# window slid past it: every run looked only at days that were
+# already hopeless, so the job could never have recovered even
+# once the feed came back. A window has to be wider than the
+# outage it is meant to survive. Filled cells cost nothing to
+# skip, so the only price of a generous window is a handful of
+# requests on the days when there is genuinely something to fetch.
+BACKFILL_DAYS = 30
 
 RETRIES = 3
 TIMEOUT = 45
@@ -205,6 +215,25 @@ def blank(day):
     return {c: "" for c in config.COLUMNS} | {"date": day.isoformat()}
 
 
+def obs_staleness(rows, today):
+    """Days between `today` and the freshest observation on record.
+
+    None when there is no observation at all.
+
+    This exists because a dead observation feed does not look like
+    a failure from inside the backfill loop. Each day's fetch
+    raises, the exception is caught so one bad source cannot take
+    down the rest, the forecast still lands, and the job exits
+    green. It did that every morning for a fortnight while the
+    training data sat frozen. The staleness of the record is the
+    thing that actually went wrong, so that is what to check.
+    """
+    seen = [d for d, r in rows.items() if r.get("obs_pm25")]
+    if not seen:
+        return None
+    return (today - date.fromisoformat(max(seen))).days
+
+
 def main():
     today = datetime.now(IST).date()
     tomorrow = today + timedelta(days=1)
@@ -282,14 +311,30 @@ def main():
             print(f"  {f_msg}")
 
     # A second run on the same day legitimately has nothing to do,
-    # so "changed == 0" is not a failure. Fail only when the thing
-    # this job exists to produce is missing.
+    # so "changed == 0" is not a failure. Both checks below run
+    # after save(), so a red run still leaves today's data on disk
+    # for the workflow to commit -- the point is to raise a hand,
+    # not to throw away the rows we did manage to get.
+    ok = True
+
     if not rows.get(tomorrow.isoformat(), {}).get("cams_pm25"):
         print(f"ERROR: no forecast for {tomorrow}")
-        return 1
+        ok = False
+
+    stale = obs_staleness(rows, today)
+    if stale is None:
+        print("ERROR: not one observation in the whole record")
+        ok = False
+    elif stale > config.OBS_STALENESS_LIMIT_DAYS:
+        print(f"ERROR: freshest observation is {stale} days old, "
+              f"limit is {config.OBS_STALENESS_LIMIT_DAYS}. "
+              "The observation feed is not being written -- check "
+              "the OPENAQ_KEY secret and the obs lines above.")
+        ok = False
+
     if changed == 0:
         print("already up to date")
-    return 0
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

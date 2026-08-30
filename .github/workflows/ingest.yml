@@ -25,6 +25,13 @@ jobs:
           python-version: "3.12"
 
       - name: Fetch today's records
+        id: fetch
+        # run_daily.py now exits non-zero when the observation
+        # record has gone stale, and it does that after writing
+        # whatever it did manage to fetch. Letting the step fail
+        # here would skip the commit and throw those rows away, so
+        # the failure is deferred to the last step instead.
+        continue-on-error: true
         env:
           OPENAQ_KEY: ${{ secrets.OPENAQ_KEY }}
           FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
@@ -46,3 +53,11 @@ jobs:
           fi
           git commit -m "data: ingest $(date -u +%F)"
           git push
+
+      # Today's rows are committed by now, so it is safe to go red.
+      - name: Report a bad ingest
+        if: steps.fetch.outcome == 'failure'
+        run: |
+          echo "::error::run_daily.py exited non-zero -- see the"\
+               "Fetch step log for which source failed."
+          exit 1
