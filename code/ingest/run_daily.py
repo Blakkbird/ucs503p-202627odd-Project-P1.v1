@@ -77,29 +77,61 @@ def fetch(url, headers=None):
     raise SourceError(f"unreachable after {RETRIES} tries: {last}")
 
 
-def observed(day):
-    """Daily mean and hour count for one date."""
-    # v3 wants date_from/date_to. A wrong name is dropped silently
-    # and the oldest rows come back instead, so filter again below.
+def parse_days(payload, start, end):
+    """{iso date: (daily mean, hours behind it)} from a /days body.
+
+    Split out from the request so it can be tested without a
+    network, which the thing it replaces could not be. v3 ignores
+    query parameters it does not recognise and answers with some
+    other window rather than an error, so the dates that come back
+    are checked again here instead of being trusted.
+
+    `hours` is None when the payload carries no coverage count.
+    That is recorded rather than guessed at: a mean over four
+    hours and a mean over twenty-four are both means, and the
+    difference belongs in the data, not in a silent assumption.
+    """
+    out = {}
+    for row in payload.get("results", []):
+        day = ((row.get("period") or {}).get("datetimeFrom")
+               or {}).get("local", "")[:10]
+        val = row.get("value")
+        if not day or val is None:
+            continue
+        if not (start.isoformat() <= day <= end.isoformat()):
+            continue
+        out[day] = (float(val), (row.get("coverage") or {})
+                    .get("observedCount"))
+    return out
+
+
+def observed_window(start, end):
+    """Daily means for a date range, in one request.
+
+    The /days endpoint, deliberately, not /hours. The daily job
+    asked /hours for a single day at a time and got an empty
+    result set back every morning for three weeks while the sensor
+    was publishing normally the whole time -- scripts/bootstrap.py
+    and scripts/check_sensor.py both read the same sensor over
+    /days without trouble. Whatever /hours wanted, it was not what
+    was being sent, and it said so by returning nothing at all,
+    which the caller could not tell apart from a quiet day.
+
+    Taking the range in one request rather than one request per
+    day is the other half of it: a thirty-day backfill costs one
+    call, and a bad morning is one failure in the log instead of
+    thirty.
+    """
     params = {
-        "date_from": day.isoformat(),
-        "date_to": (day + timedelta(days=1)).isoformat(),
-        "limit": 200,
+        "date_from": start.isoformat(),
+        "date_to": end.isoformat(),
+        "limit": 1000,
     }
     url = (f"https://api.openaq.org/v3/sensors/"
-           f"{config.OPENAQ_PM25_SENSOR_ID}/hours?"
+           f"{config.OPENAQ_PM25_SENSOR_ID}/days?"
            + urllib.parse.urlencode(params))
     data = json.loads(fetch(url, {"X-API-Key": config.OPENAQ_KEY}))
-
-    vals = []
-    for row in data.get("results", []):
-        t = ((row.get("period") or {}).get("datetimeFrom")
-             or {}).get("local", "")
-        if t[:10] == day.isoformat() and row.get("value") is not None:
-            vals.append(float(row["value"]))
-    if not vals:
-        return None, 0
-    return sum(vals) / len(vals), len(vals)
+    return parse_days(data, start, end)
 
 
 def day_mean(times, values, day):
@@ -247,21 +279,30 @@ def main():
     # A failure on one source or one day must not abort the rest:
     # partial data written today is better than nothing, and the
     # window means we retry tomorrow anyway.
+    # One request for the whole window, before the loop. See
+    # observed_window: the old code asked per day and a failure
+    # was therefore also per day, which made a systematic outage
+    # look like a run of unrelated quiet ones.
+    obs_window = {}
+    try:
+        obs_window = observed_window(
+            today - timedelta(days=BACKFILL_DAYS), today)
+    except SourceError as e:
+        failures.append(f"obs window: {e}")
+
     for n in range(BACKFILL_DAYS, 0, -1):
         day = today - timedelta(days=n)
         row = rows.get(day.isoformat(), blank(day))
         touched = False
 
         if not row.get("obs_pm25"):
-            try:
-                mean, hours = observed(day)
-                if mean is not None:
-                    row["obs_pm25"] = round(mean, 2)
-                    row["obs_hours"] = hours
-                    touched = True
-                    print(f"obs   {day}: {mean:.1f} ug/m3 ({hours}h)")
-            except SourceError as e:
-                failures.append(f"obs {day}: {e}")
+            mean, hours = obs_window.get(day.isoformat(), (None, None))
+            if mean is not None:
+                row["obs_pm25"] = round(mean, 2)
+                row["obs_hours"] = "" if hours is None else hours
+                touched = True
+                print(f"obs   {day}: {mean:.1f} ug/m3"
+                      + ("" if hours is None else f" ({hours}h)"))
 
         if not row.get("fire_count"):
             try:
