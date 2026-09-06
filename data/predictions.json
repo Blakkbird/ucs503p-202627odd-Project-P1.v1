@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-09-06T18:34:28+05:30",
+  "model": {
+    "alpha": 30.0,
+    "features": [
+      "cams_log",
+      "obs_recent",
+      "obs_recent_log",
+      "obs_mean7",
+      "obs_age",
+      "doy_sin",
+      "doy_cos",
+      "burning"
+    ],
+    "fitted_rows": 105
+  },
+  "predictions": [
+    {
+      "date": "2026-09-07",
+      "issued": "2026-09-06",
+      "pm25": 15.84,
+      "band": "Good",
+      "actual": 19.4,
+      "error": -3.56,
+      "interval": [
+        5.57,
+        26.11
+      ],
+      "inputs": {
+        "cams_log": 4.4198,
+        "obs_age_days": 4.0,
+        "persistence_operational": 7.74,
+        "forecast_provenance_live": true
+      },
+      "band_hit": true
+    }
+  ]
+}

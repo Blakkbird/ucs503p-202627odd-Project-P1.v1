@@ -37,6 +37,16 @@ jobs:
           FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
         run: python code/ingest/run_daily.py
 
+      - name: Refit and forecast tomorrow
+        id: predict
+        # Deferred the same way as the fetch. A prediction that
+        # cannot be made is worth a red run, but never worth
+        # dropping the observations the fetch just recovered.
+        continue-on-error: true
+        run: |
+          python code/evaluate.py
+          python code/predict.py
+
       - name: Validate what was written
         run: |
           pip install pytest
@@ -56,8 +66,8 @@ jobs:
 
       # Today's rows are committed by now, so it is safe to go red.
       - name: Report a bad ingest
-        if: steps.fetch.outcome == 'failure'
+        if: steps.fetch.outcome == 'failure' || steps.predict.outcome == 'failure'
         run: |
-          echo "::error::run_daily.py exited non-zero -- see the"\
-               "Fetch step log for which source failed."
+          echo "::error::the ingest reported a problem -- see the"\
+               "Fetch or Refit step log for which part failed."
           exit 1
