@@ -5,6 +5,7 @@ is the staleness tripwire: the failure it catches is invisible by
 construction, because every symptom of it looks like success.
 """
 
+import inspect
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -65,3 +66,63 @@ def test_backfill_window_outlasts_the_staleness_limit():
     that went missing while the feed was down, otherwise the job
     reports the problem and then cannot fix it."""
     assert run_daily.BACKFILL_DAYS > config.OBS_STALENESS_LIMIT_DAYS
+
+
+# --- the observation fetch -------------------------------------
+#
+# The bug these cover: run_daily asked /hours for one day at a
+# time, got an empty result set every morning for three weeks,
+# and reported that as "no reading today". Nothing caught it
+# because the only way to exercise the code was to call the live
+# API. Parsing is separate from fetching now, so these run dry.
+
+
+def days_payload(*triples):
+    """A /days response body. Each triple is (date, value, hours)."""
+    return {"results": [
+        {"period": {"datetimeFrom": {"local": f"{d}T00:00:00+05:30"}},
+         "value": v,
+         "coverage": {} if h is None else {"observedCount": h}}
+        for d, v, h in triples
+    ]}
+
+
+def test_parses_a_normal_response():
+    got = run_daily.parse_days(
+        days_payload(("2026-08-20", 31.5, 24), ("2026-08-21", 44.0, 22)),
+        date(2026, 8, 1), date(2026, 8, 30))
+    assert got == {"2026-08-20": (31.5, 24), "2026-08-21": (44.0, 22)}
+
+
+def test_rows_outside_the_asked_window_are_dropped():
+    """v3 answers an unrecognised parameter with the wrong window
+    rather than an error, so a row arriving is not evidence it was
+    the row requested."""
+    got = run_daily.parse_days(
+        days_payload(("2025-03-01", 88.0, 24), ("2026-08-20", 31.5, 24)),
+        date(2026, 8, 1), date(2026, 8, 30))
+    assert list(got) == ["2026-08-20"]
+
+
+def test_null_values_are_not_treated_as_zero():
+    got = run_daily.parse_days(
+        days_payload(("2026-08-20", None, 24)),
+        date(2026, 8, 1), date(2026, 8, 30))
+    assert got == {}
+
+
+def test_a_missing_coverage_count_keeps_the_value():
+    """Not knowing how many hours went into a mean is a reason to
+    record the mean without the count, not to discard the day."""
+    got = run_daily.parse_days(
+        days_payload(("2026-08-20", 31.5, None)),
+        date(2026, 8, 1), date(2026, 8, 30))
+    assert got == {"2026-08-20": (31.5, None)}
+
+
+def test_observations_come_from_the_days_endpoint():
+    """Regression guard. /hours is what broke, and it broke
+    silently, so the endpoint is worth asserting outright."""
+    src = inspect.getsource(run_daily.observed_window)
+    assert "/days?" in src
+    assert "/hours?" not in src
