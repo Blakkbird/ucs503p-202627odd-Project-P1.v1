@@ -47,6 +47,14 @@ HORIZON_DAYS = 1
 # issue date. Persistence gets scored both ways, see evaluate.py.
 OBS_LATENCY_DAYS = 3
 
+# How stale the freshest observation may get before the daily job
+# treats it as a broken feed rather than a slow one. A day or two
+# with no reading is ordinary; a week means nobody is writing
+# ground truth any more and the training set has stopped growing.
+# Kept comfortably above OBS_LATENCY_DAYS so normal publication
+# delay never trips it.
+OBS_STALENESS_LIMIT_DAYS = 7
+
 # Paddy residue burning upwind of Patiala. Errors in this window
 # are much larger, so it is scored as its own season.
 BURNING_MONTHS = (10, 11)
