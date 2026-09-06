@@ -9,4 +9,6 @@ Name: Gurkirpa Singh
    everything](./w2-ticket-resolution.md)
 +  [W3 : The baseline we promised to beat reads the
    future](./w3-ticket-resolution.md)
++  [W4 : A job that reported success for three weeks without ever
+   working](./w4-ticket-resolution.md)
 +  […]
