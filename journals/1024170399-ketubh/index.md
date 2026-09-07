@@ -9,3 +9,4 @@
 
 - [Week 1 - Understanding the Project Problem and Objective](w1-project-understanding.md)
 - [Week 2 - Understanding the Data Sources and Evaluation Approach](w2-system-and-evaluation.md)
+- [Week 3 - Data Quality and Forecast Inputs](w3-data-quality.md)
