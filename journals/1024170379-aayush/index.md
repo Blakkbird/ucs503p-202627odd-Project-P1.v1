@@ -9,3 +9,4 @@
 
 - [Week 1 - Problem Analysis and Project Scope](w1-problem-analysis.md)
 - [Week 2 - System Architecture and Validation Strategy](w2-architecture-and-validation.md)
+- [Week 3 - Evaluation Integrity and Persistence Baseline](w3-evaluation-integrity.md)
