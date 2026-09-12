@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-11T12:55:32+05:30",
+  "generated_at": "2026-09-12T12:50:25+05:30",
   "model": {
     "alpha": 30.0,
     "features": [
@@ -12,7 +12,7 @@
       "doy_cos",
       "burning"
     ],
-    "fitted_rows": 110
+    "fitted_rows": 113
   },
   "predictions": [
     {
@@ -39,8 +39,8 @@
       "issued": "2026-09-09",
       "pm25": 15.68,
       "band": "Good",
-      "actual": null,
-      "error": null,
+      "actual": 19.8,
+      "error": -4.12,
       "interval": [
         5.72,
         25.65
@@ -50,15 +50,16 @@
         "obs_age_days": 4.0,
         "persistence_operational": 13.7,
         "forecast_provenance_live": true
-      }
+      },
+      "band_hit": true
     },
     {
       "date": "2026-09-11",
       "issued": "2026-09-10",
       "pm25": 16.5,
       "band": "Good",
-      "actual": null,
-      "error": null,
+      "actual": 27.8,
+      "error": -11.3,
       "interval": [
         6.54,
         26.46
@@ -68,7 +69,8 @@
         "obs_age_days": 4.0,
         "persistence_operational": 17.7,
         "forecast_provenance_live": true
-      }
+      },
+      "band_hit": true
     },
     {
       "date": "2026-09-12",
@@ -85,6 +87,24 @@
         "cams_log": 3.6283,
         "obs_age_days": 4.0,
         "persistence_operational": 23.2,
+        "forecast_provenance_live": true
+      }
+    },
+    {
+      "date": "2026-09-13",
+      "issued": "2026-09-12",
+      "pm25": 14.96,
+      "band": "Good",
+      "actual": null,
+      "error": null,
+      "interval": [
+        4.96,
+        24.95
+      ],
+      "inputs": {
+        "cams_log": 3.6934,
+        "obs_age_days": 4.0,
+        "persistence_operational": 25.9,
         "forecast_provenance_live": true
       }
     }
