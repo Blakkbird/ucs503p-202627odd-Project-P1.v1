@@ -140,18 +140,24 @@ def test_log_interval_is_asymmetric_and_positive():
     assert (high - point) > (point - low)
 
 
-def test_model_survives_a_save_and_load():
-    """A reloaded model predicts what the fitted one predicted."""
+def test_model_survives_a_save_and_load(tmp_path):
+    """A reloaded model predicts what the fitted one predicted.
+
+    tmp_path rather than NamedTemporaryFile: on Windows a named
+    temporary file cannot be opened a second time while the first
+    handle is still open, so saving and then loading the same path
+    fails there and nowhere else. CI runs on Linux and would never
+    have caught it.
+    """
     import json
-    import tempfile
 
     x = [[float(a), float(a) % 3] for a in range(30)]
     y = [math.expm1(1.0 + 0.05 * a) for a in range(30)]
     fitted = Ridge(alpha=0.5, names=["a", "b"], log_target=True).fit(x, y)
 
-    with tempfile.NamedTemporaryFile("w+", suffix=".json") as f:
-        fitted.save(f.name)
-        again = Ridge.load(f.name)
+    path = tmp_path / "model.json"
+    fitted.save(path)
+    again = Ridge.load(path)
 
     assert again.log_target is True
     assert json.loads(json.dumps(again.to_dict()))["names"] == ["a", "b"]
