@@ -56,3 +56,30 @@ $(ICONS_FOLDER)/simple/%.svg: $(ICONS_FOLDER)/simple
 $(ICONS_FOLDER)/simple $(ICONS_FOLDER) :
 	mkdir -p $(@)
 ### ---------------------------------------------------
+
+### ---------------------------------------------------
+### Pawan
+### ---------------------------------------------------
+### The daily job runs these in the same order. Handy for
+### reproducing a day's output locally when something looks off.
+
+.PHONY: ingest eval forecast site daily check
+
+ingest:
+	python code/ingest/run_daily.py
+
+eval:
+	python code/evaluate.py
+
+forecast:
+	python code/predict.py
+
+site:
+	python code/pages.py
+
+# Everything, in the order the workflow does it.
+daily: ingest eval forecast site
+
+check:
+	ruff check code/ scripts/
+	python -m pytest code/tests/ -q

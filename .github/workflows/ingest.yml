@@ -47,6 +47,13 @@ jobs:
           python code/evaluate.py
           python code/predict.py
 
+      - name: Rebuild the public pages
+        # Runs whether or not the step above went green. If the
+        # forecast failed, the site should say so rather than keep
+        # showing yesterday's number as though it were current.
+        if: always()
+        run: python code/pages.py
+
       - name: Validate what was written
         run: |
           pip install pytest
@@ -56,7 +63,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/
+          git add data/ docs/forecast.md docs/results.md
           if git diff --staged --quiet; then
             echo "Nothing to commit; data already current."
             exit 0
