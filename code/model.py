@@ -60,21 +60,36 @@ def _solve(a, b):
 
 
 class Ridge:
-    """Least squares with an L2 penalty on the standardised inputs."""
+    """Least squares with an L2 penalty on the standardised inputs.
 
-    def __init__(self, alpha=1.0, names=None):
+    With `log_target` the fit happens on log1p(y) and predictions
+    are mapped back with expm1. PM2.5 is roughly log-normal -- a
+    clean day sits near 15 and a burning-season day near 200 -- so
+    on the raw scale a single bad November day would dominate the
+    squared error and drag the whole fit towards it. Working in
+    logs makes the penalty proportional rather than absolute,
+    which is also how the error is actually felt: being 10 out on
+    a reading of 20 matters, being 10 out on 200 does not.
+    """
+
+    def __init__(self, alpha=1.0, names=None, log_target=False):
         self.alpha = alpha
         self.names = names or []
+        self.log_target = log_target
         self.coef = []
         self.intercept = 0.0
         self.means = []
         self.devs = []
+        self.residual_sd = None  # spread of the fit residuals
 
     def fit(self, x, y):
         if not x:
             raise ValueError("nothing to fit")
         if len(x) != len(y):
             raise ValueError("x and y disagree on length")
+
+        if self.log_target:
+            y = [math.log1p(max(v, 0.0)) for v in y]
 
         self.means, self.devs = _standardise(x)
         z = [[(row[j] - self.means[j]) / self.devs[j]
@@ -96,15 +111,47 @@ class Ridge:
 
         self.coef = _solve(gram, rhs)
         self.intercept = y_mean
+
+        # Kept so the daily job can size an interval without
+        # reloading the backtest. In-sample, so it understates the
+        # real spread; predict.py prefers the backtest RMSE and
+        # only falls back to this.
+        fitted = [self._raw(row) for row in x]
+        if len(y) > 1:
+            gap = sum((a - b) ** 2 for a, b in zip(y, fitted)) / (len(y) - 1)
+            self.residual_sd = math.sqrt(gap)
         return self
 
-    def predict_one(self, row):
+    def _raw(self, row):
+        """The linear response, before any inverse transform."""
         total = self.intercept
         for j, value in enumerate(row):
             total += self.coef[j] * (value - self.means[j]) / self.devs[j]
+        return total
+
+    def predict_one(self, row):
+        total = self._raw(row)
+        if self.log_target:
+            total = math.expm1(total)
         # PM2.5 cannot be negative, and an unclipped linear model
         # will happily say -4 on a clean day.
         return max(total, 0.0)
+
+    def interval(self, row, sd, z=1.28):
+        """A rough band around the point forecast.
+
+        Under a log target the band has to be built in log space
+        and mapped back, which makes it asymmetric -- wider above
+        than below. That is the right shape: pollution spikes
+        upward far more readily than it falls.
+        """
+        if not sd:
+            return None
+        middle = self._raw(row)
+        low, high = middle - z * sd, middle + z * sd
+        if self.log_target:
+            low, high = math.expm1(low), math.expm1(high)
+        return [max(low, 0.0), max(high, 0.0)]
 
     def predict(self, x):
         return [self.predict_one(row) for row in x]
@@ -122,6 +169,8 @@ class Ridge:
         return {
             "alpha": self.alpha,
             "names": self.names,
+            "log_target": self.log_target,
+            "residual_sd": self.residual_sd,
             "coef": self.coef,
             "intercept": self.intercept,
             "means": self.means,
@@ -130,7 +179,9 @@ class Ridge:
 
     @classmethod
     def from_dict(cls, blob):
-        model = cls(alpha=blob["alpha"], names=blob.get("names"))
+        model = cls(alpha=blob["alpha"], names=blob.get("names"),
+                    log_target=blob.get("log_target", False))
+        model.residual_sd = blob.get("residual_sd")
         model.coef = blob["coef"]
         model.intercept = blob["intercept"]
         model.means = blob["means"]

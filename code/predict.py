@@ -23,6 +23,7 @@ error. That is the record the accuracy claims come from.
 """
 
 import json
+import math
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -36,9 +37,13 @@ from model import Ridge
 IST = timezone(timedelta(hours=5, minutes=30))
 
 # An interval this wide would hold roughly four out of five days
-# if the errors were normal and the backtest RMSE still described
-# them. Both are approximations, so it is published as a rough
-# band and named one, not as a confidence interval.
+# if the errors were normal and the backtest spread still
+# described them. Both are approximations, so it is published as a
+# rough band and named one, not as a confidence interval.
+#
+# Since the model fits in log space the band is built there too
+# and mapped back, so it comes out asymmetric. That is deliberate:
+# a day forecast at 40 is far more likely to turn out 70 than 10.
 INTERVAL_Z = 1.28
 
 
@@ -56,16 +61,26 @@ def load_history():
     return {r["date"]: r for r in blob.get("predictions", [])}
 
 
-def spread():
-    """Backtest RMSE, for sizing the interval. None if unmeasured."""
+def spread(model):
+    """How wide the band should be, in whatever space the fit used.
+
+    A log-target model needs the spread of its log residuals, and
+    the backtest RMSE is in micrograms, so the two are not
+    interchangeable. The residual spread stored with the model is
+    already on the right scale, which is why it is preferred here;
+    the backtest RMSE is the fallback for a linear fit.
+    """
+    if model.log_target:
+        return model.residual_sd
     if not config.METRICS_JSON.exists():
-        return None
+        return model.residual_sd
     try:
         with open(config.METRICS_JSON) as f:
             blob = json.load(f)
     except (json.JSONDecodeError, OSError):
-        return None
-    return ((blob.get("overall") or {}).get("model") or {}).get("rmse")
+        return model.residual_sd
+    rmse = ((blob.get("overall") or {}).get("model") or {}).get("rmse")
+    return rmse or model.residual_sd
 
 
 def attach_outcomes(history, samples):
@@ -89,7 +104,7 @@ def attach_outcomes(history, samples):
     return filled
 
 
-def describe(sample, model, rmse, today):
+def describe(sample, model, sd, today):
     """One prediction record, with enough context to explain it."""
     point = model.predict_one(sample.x)
     record = {
@@ -100,9 +115,9 @@ def describe(sample, model, rmse, today):
         "actual": None,
         "error": None,
     }
-    if rmse:
-        record["interval"] = [round(max(point - INTERVAL_Z * rmse, 0.0), 2),
-                              round(point + INTERVAL_Z * rmse, 2)]
+    band = model.interval(sample.x, sd, INTERVAL_Z)
+    if band:
+        record["interval"] = [round(band[0], 2), round(band[1], 2)]
 
     # What the correction was applied to, and what it would have
     # been worth doing nothing. Kept per row so a bad day can be
@@ -110,7 +125,8 @@ def describe(sample, model, rmse, today):
     named = dict(zip(sample.names, sample.x))
     record["inputs"] = {
         "cams_log": round(named.get("cams_log", 0.0), 4),
-        "obs_age_days": named.get("obs_age"),
+        "cams_pm25": round(math.expm1(named.get("cams_log", 0.0)), 2),
+        "obs_age_days": sample.obs_age,
         "persistence_operational": (
             None if sample.persistence_op is None
             else round(sample.persistence_op, 2)),
@@ -120,7 +136,7 @@ def describe(sample, model, rmse, today):
 
 
 def main():
-    weather = "--weather" in sys.argv
+    weather = "--no-weather" not in sys.argv
     today = datetime.now(IST).date()
     tomorrow = today + timedelta(days=1)
 
@@ -136,18 +152,25 @@ def main():
     if filled:
         print(f"attached {filled} observed outcome(s) to past forecasts")
 
+    # Why no forecast was issued, when none was. Kept as a value
+    # rather than just printed, because the run has to be able to
+    # fail on it at the end.
+    skipped = None
     target = next((s for s in samples if s.day == tomorrow), None)
     if target is None:
-        print(f"no row for {tomorrow}; the ingest has not run today")
-    elif any(v is None for v in target.x):
+        skipped = "the ingest has not written a row for it"
+    elif not target.complete:
         missing = [n for n, v in zip(target.names, target.x) if v is None]
-        print(f"{tomorrow}: incomplete features, missing {missing}")
+        skipped = f"incomplete features, missing {missing}"
+
+    if skipped:
+        print(f"no forecast for {tomorrow}: {skipped}")
     elif tomorrow.isoformat() in history:
         # Not an error. The job runs again, the answer stands.
         print(f"{tomorrow}: already forecast on "
               f"{history[tomorrow.isoformat()]['issued']}, left alone")
     else:
-        record = describe(target, model, spread(), today)
+        record = describe(target, model, spread(model), today)
         history[record["date"]] = record
         print(f"{record['date']}: {record['pm25']} ug/m3 "
               f"({record['band']}), issued {record['issued']}")
@@ -173,6 +196,15 @@ def main():
               f"band correct {hits}/{len(scored)}")
     print(f"wrote {config.PREDICTIONS_JSON} "
           f"({len(out['predictions'])} forecast(s) on record)")
+
+    # Two days in September went by with the ingest committing
+    # happily and no forecast being recorded, and nothing said so.
+    # The same class of silence as the dead observation feed, so
+    # it gets the same treatment: a missing forecast is a failed
+    # run, not a quiet one.
+    if tomorrow.isoformat() not in history:
+        print(f"ERROR: no forecast on record for {tomorrow}")
+        return 1
     return 0
 
 

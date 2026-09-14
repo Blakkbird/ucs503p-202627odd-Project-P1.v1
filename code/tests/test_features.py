@@ -43,8 +43,9 @@ def synthetic(n=60, start=date(2026, 1, 1)):
 def test_no_observation_from_the_target_day_or_later():
     start = date(2026, 1, 1)
     for sample in features.build(synthetic(), use_weather=True):
-        index = sample.names.index("obs_recent")
-        recent = sample.x[index]
+        # obs_recent_log is the feature; persistence_op is the same
+        # number before the log, which is easier to read back.
+        recent = sample.persistence_op
         if recent is None:
             continue
         # obs_pm25 was set to the day number, so the value doubles
@@ -58,7 +59,7 @@ def test_respects_the_publication_lag():
     """Features stop short of the issue date by the configured lag."""
     start = date(2026, 1, 1)
     for sample in features.build(synthetic()):
-        recent = sample.x[sample.names.index("obs_recent")]
+        recent = sample.persistence_op
         if recent is None:
             continue
         taken = start + timedelta(days=int(recent))
@@ -116,3 +117,43 @@ def test_real_csv_builds_without_error():
         return
     assert all(len(s.x) == len(s.names) for s in built)
     assert built == sorted(built, key=lambda s: s.day)
+
+
+def test_thin_days_are_not_used_as_targets():
+    """A day published with too few hours is not a training label."""
+    rows = synthetic(20)
+    thin = date(2026, 1, 10).isoformat()
+    rows[thin]["obs_hours"] = str(config.MIN_OBS_HOURS - 1)
+
+    by_day = {s.day.isoformat(): s for s in features.build(rows)}
+    assert by_day[thin].y is not None, "the reading is still recorded"
+    assert not by_day[thin].valid_target
+    assert thin not in {s.day.isoformat() for s in features.usable(
+        features.build(rows))}
+
+
+def test_thin_days_are_not_fed_forward_as_features():
+    """Nor are they allowed to become a later day's persistence."""
+    rows = synthetic(20)
+    thin = date(2026, 1, 10)
+    rows[thin.isoformat()]["obs_hours"] = "4"
+
+    later = thin + timedelta(days=config.OBS_LATENCY_DAYS + 1)
+    sample = next(s for s in features.build(rows) if s.day == later)
+    assert sample.persistence_op != float(9), (
+        "a four-hour mean was used as the freshest reading")
+
+
+def test_fire_count_is_lagged_behind_the_issue_date():
+    """The target day's own fire count cannot be known at issue time."""
+    rows = synthetic(20)
+    marked = date(2026, 1, 12)
+    for key in rows:
+        rows[key]["fire_count"] = "1"
+    rows[marked.isoformat()]["fire_count"] = "999"
+
+    sample = next(s for s in features.build(rows, use_weather=True)
+                  if s.day == marked)
+    fire = sample.x[sample.names.index("fire_log")]
+    assert fire is not None
+    assert fire < 3.0, "the forecast saw fires that had not been reported yet"

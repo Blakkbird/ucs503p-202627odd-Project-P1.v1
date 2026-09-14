@@ -116,3 +116,44 @@ def test_climatology_baseline_is_causal():
     days = [s.day for s in features.usable(samples)]
     pairs = evaluate.baselines(samples, days)["climatology"]
     assert pairs[0][1] is None or pairs[0][1] < pairs[-1][1]
+
+
+def test_log_target_round_trips():
+    """A fit in log space still predicts in micrograms."""
+    x = [[float(a)] for a in range(30)]
+    y = [math.expm1(1.0 + 0.08 * a) for a in range(30)]
+
+    model = Ridge(alpha=1e-6, names=["a"], log_target=True).fit(x, y)
+    for row, truth in zip(x, y):
+        assert abs(model.predict_one(row) - truth) < 1e-3
+
+
+def test_log_interval_is_asymmetric_and_positive():
+    """The band widens upward, and never goes below zero."""
+    x = [[float(a)] for a in range(30)]
+    y = [math.expm1(1.0 + 0.08 * a) for a in range(30)]
+    model = Ridge(alpha=1.0, names=["a"], log_target=True).fit(x, y)
+
+    low, high = model.interval([10.0], sd=0.4)
+    point = model.predict_one([10.0])
+    assert 0.0 <= low < point < high
+    assert (high - point) > (point - low)
+
+
+def test_model_survives_a_save_and_load():
+    """A reloaded model predicts what the fitted one predicted."""
+    import json
+    import tempfile
+
+    x = [[float(a), float(a) % 3] for a in range(30)]
+    y = [math.expm1(1.0 + 0.05 * a) for a in range(30)]
+    fitted = Ridge(alpha=0.5, names=["a", "b"], log_target=True).fit(x, y)
+
+    with tempfile.NamedTemporaryFile("w+", suffix=".json") as f:
+        fitted.save(f.name)
+        again = Ridge.load(f.name)
+
+    assert again.log_target is True
+    assert json.loads(json.dumps(again.to_dict()))["names"] == ["a", "b"]
+    for row in x:
+        assert abs(again.predict_one(row) - fitted.predict_one(row)) < 1e-9
