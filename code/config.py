@@ -55,9 +55,27 @@ OBS_LATENCY_DAYS = 3
 # delay never trips it.
 OBS_STALENESS_LIMIT_DAYS = 7
 
+# FIRMS reports detections for days that have already happened,
+# so on the morning of D-1 the freshest complete count is D-2. The
+# fire feature is lagged to match. This is not only a matter of
+# availability: smoke lifted off a field upwind takes the better
+# part of a day to arrive, so yesterday's fires are the ones that
+# describe tomorrow's air anyway.
+FIRE_LATENCY_DAYS = 1
+
 # Paddy residue burning upwind of Patiala. Errors in this window
 # are much larger, so it is scored as its own season.
 BURNING_MONTHS = (10, 11)
+
+# CPCB will not call a 24-hour average valid unless at least this
+# many hourly readings went into it. Days below the line are still
+# ingested and still shown, but they are not used as training
+# targets and not scored: a 14-hour mean is a different quantity
+# from the one the model is meant to predict, and letting it in
+# adds noise to both the fit and the accuracy claim. Rows from the
+# early backfill have no hour count at all and are taken on trust,
+# since the API aggregated them the same way.
+MIN_OBS_HOURS = 16
 
 # --- paths 
 

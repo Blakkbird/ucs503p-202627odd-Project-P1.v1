@@ -3,15 +3,18 @@
 The hard part here is not arithmetic, it is bookkeeping. A row for
 target day D is only honest if every number in it existed on the
 morning of D-1, when the job that produces the forecast actually
-runs. Two things make that awkward:
+runs. Three things make that awkward:
 
   * the CPCB feed lags, so the freshest observation on D-1 is
     roughly D-4 rather than D-2 (config.OBS_LATENCY_DAYS);
   * rows written by scripts/bootstrap.py have no cams_issue_date,
-    so we cannot prove which model run they came from.
+    so we cannot prove which model run they came from;
+  * some days are published with only a handful of hours behind
+    them, and a 14-hour mean is not the quantity we are trying to
+    predict (config.MIN_OBS_HOURS).
 
-Both are handled here rather than being left for the model to trip
-over later.
+All three are handled here rather than being left for the model to
+trip over later.
 """
 
 import csv
@@ -24,12 +27,25 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import config
 
-# Features that exist for every row. The weather columns were only
-# added to the daily job later and are blank for most of the
-# backfilled history, so they are opt-in until the backfill has
-# been run (scripts/backfill_history.py).
-CORE = ["cams_log", "obs_recent", "obs_recent_log", "obs_mean7",
-        "obs_age", "doy_sin", "doy_cos", "burning"]
+# The columns the model is actually fitted on.
+#
+# This list is shorter than it was. The week 5 review dropped four
+# things, each for its own reason:
+#
+#   obs_recent   duplicated obs_recent_log, which split one signal
+#                across two coefficients that then fought
+#   obs_age      constant at 4.0 once the feed was healthy, so it
+#                carried no information and only cost a parameter
+#   obs_mean7    a weekly mean adds nothing once yesterday's
+#                reading and today's meteorology are both present
+#   doy_sin/cos  with four months of data these cannot tell
+#                seasonality from trend. They had learnt "PM2.5
+#                falls through the monsoon" and would have kept
+#                extrapolating that straight into burning season
+#
+# What is left is either the thing being corrected, the station's
+# own recent level, or a physical driver of dispersion.
+CORE = ["cams_log", "obs_recent_log", "burning"]
 WEATHER = ["temp", "rh", "wind_speed", "wind_u", "wind_v", "fire_log"]
 
 
@@ -43,6 +59,8 @@ class Sample:
     live: bool                 # forecast provenance is provable
     persistence: float | None  # obs[D-1]: the textbook baseline
     persistence_op: float | None  # freshest obs actually available on D-1
+    obs_hours: float | None = None  # hours behind y, when known
+    obs_age: float | None = None    # days between issue and that reading
     names: list[str] = field(default_factory=list)
 
     @property
@@ -50,9 +68,27 @@ class Sample:
         return self.day.month in config.BURNING_MONTHS
 
     @property
+    def complete(self):
+        """Every feature has a value, so the row can be predicted."""
+        return all(v is not None for v in self.x)
+
+    @property
+    def valid_target(self):
+        """The label is present and is a real 24-hour mean.
+
+        Days assembled from too few hours are dropped rather than
+        kept and down-weighted. There are only a handful of them,
+        and weighting them correctly would be harder to defend
+        than simply leaving them out.
+        """
+        if self.y is None:
+            return False
+        return self.obs_hours is None or self.obs_hours >= config.MIN_OBS_HOURS
+
+    @property
     def usable(self):
-        """Has a label and a full feature vector."""
-        return self.y is not None and all(v is not None for v in self.x)
+        """Fit-ready: a trustworthy label and a full feature vector."""
+        return self.valid_target and self.complete
 
 
 def num(cell):
@@ -87,22 +123,43 @@ def _observed_upto(obs, cutoff, window):
     return out
 
 
-def build(rows=None, use_weather=False):
+def build(rows=None, use_weather=True):
     """Build one Sample per target day, oldest first.
 
-    `use_weather` adds the meteorology columns. Leave it off until
-    scripts/backfill_history.py has filled them in, otherwise
-    almost every row loses its feature vector and the training set
-    collapses to a handful of days.
+    `use_weather` is on by default now that the meteorology
+    backfill has been run. Turning it off reproduces the earlier
+    CAMS-plus-persistence model, which is the ablation quoted in
+    the report; it is not something the daily job should do.
     """
     rows = load() if rows is None else rows
     names = CORE + (WEATHER if use_weather else [])
 
-    obs = {}
+    # Two views of the observations. `measured` is everything the
+    # station published, and is what a target day's label and the
+    # site's history chart come from. `obs` drops the thin days,
+    # and is what gets fed forward as a feature or a baseline: a
+    # day assembled from nine hours is untrustworthy as an input
+    # for the same reason it is untrustworthy as a label.
+    measured, obs, hours = {}, {}, {}
     for key, row in rows.items():
         value = num(row.get("obs_pm25"))
-        if value is not None:
-            obs[date.fromisoformat(key)] = value
+        if value is None:
+            continue
+        day = date.fromisoformat(key)
+        count = num(row.get("obs_hours"))
+        measured[day] = value
+        hours[day] = count
+        if count is None or count >= config.MIN_OBS_HOURS:
+            obs[day] = value
+
+    # Fire detections are recorded against the day they happened,
+    # which means a target day's own count does not exist yet when
+    # the forecast for it goes out. Read lagged, per FIRE_LATENCY_DAYS.
+    fires = {}
+    for key, row in rows.items():
+        count = num(row.get("fire_count"))
+        if count is not None:
+            fires[date.fromisoformat(key)] = count
 
     samples = []
     for key in sorted(rows):
@@ -118,12 +175,11 @@ def build(rows=None, use_weather=False):
         cutoff = issue - timedelta(days=config.OBS_LATENCY_DAYS)
 
         recent = _observed_upto(obs, cutoff, 1)
-        week = _observed_upto(obs, cutoff, 7)
         obs_recent = recent[-1] if recent else None
-        obs_mean7 = sum(week) / len(week) if week else None
 
-        # How stale that most recent reading is. When the feed has
-        # been down for a week the model should be able to see it.
+        # How stale that reading is. Not a feature any more, but
+        # the daily job still publishes it, so a bad forecast can
+        # be read back against a half-dead feed later.
         age = None
         if obs_recent is not None:
             for k in range(config.OBS_LATENCY_DAYS + 8):
@@ -131,23 +187,27 @@ def build(rows=None, use_weather=False):
                     age = float(k + config.OBS_LATENCY_DAYS + 1)
                     break
 
-        doy = day.timetuple().tm_yday
         values = {
             "cams_log": math.log1p(cams),
-            "obs_recent": obs_recent,
             "obs_recent_log": (math.log1p(obs_recent)
                                if obs_recent is not None else None),
-            "obs_mean7": obs_mean7,
-            "obs_age": age,
-            "doy_sin": math.sin(2 * math.pi * doy / 365.25),
-            "doy_cos": math.cos(2 * math.pi * doy / 365.25),
             "burning": 1.0 if day.month in config.BURNING_MONTHS else 0.0,
         }
 
         if use_weather:
             speed = num(row.get("wind_speed_mean"))
             bearing = num(row.get("wind_dir_mean"))
-            fires = num(row.get("fire_count"))
+            # Walk back from the last day whose count was complete
+            # at issue time until one is found. A few days of gap
+            # is tolerable; beyond a week the row simply has no
+            # fire feature and drops out of the fit.
+            burn_day = issue - timedelta(days=config.FIRE_LATENCY_DAYS)
+            recent_fires = None
+            for k in range(7):
+                got = fires.get(burn_day - timedelta(days=k))
+                if got is not None:
+                    recent_fires = got
+                    break
             # Wind splits into components so the model can tell a
             # northwesterly (residue smoke) from a southeasterly of
             # the same strength.
@@ -162,17 +222,19 @@ def build(rows=None, use_weather=False):
                 "wind_speed": speed,
                 "wind_u": u,
                 "wind_v": v,
-                "fire_log": (math.log1p(fires)
-                             if fires is not None else None),
+                "fire_log": (math.log1p(recent_fires)
+                             if recent_fires is not None else None),
             })
 
         samples.append(Sample(
             day=day,
             x=[values[n] for n in names],
-            y=obs.get(day),
+            y=measured.get(day),
             live=bool(row.get("cams_issue_date")),
             persistence=obs.get(day - timedelta(days=1)),
             persistence_op=obs_recent,
+            obs_hours=hours.get(day),
+            obs_age=age,
             names=names,
         ))
 
@@ -201,10 +263,13 @@ def main():
     for weather in (False, True):
         built = build(use_weather=weather)
         ready = usable(built)
+        thin = sum(1 for s in built
+                   if s.y is not None and not s.valid_target)
         label = "core + weather" if weather else "core only"
         print(f"\n{label}: {len(built)} candidate rows, "
               f"{len(ready)} usable, "
-              f"{sum(1 for s in ready if s.live)} of them live")
+              f"{sum(1 for s in ready if s.live)} of them live, "
+              f"{thin} dropped as thin")
         for name, got in coverage(built).items():
             flag = "  <-- sparse" if got < len(built) * 0.8 else ""
             print(f"    {name:16s} {got:3d}/{len(built)}{flag}")

@@ -27,7 +27,16 @@ MIN_TRAIN = 40
 
 # Searched inside each fit, on a validation tail of the training
 # window only, so the choice never sees the day being predicted.
-ALPHA_GRID = [0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0]
+# Runs further up than it used to. Fitting in log space shrinks
+# the scale of the target, so the penalty that suits it is larger;
+# with the old ceiling of 30 the search was picking the last entry
+# in the grid every time, which is the sign of a grid that stops
+# too early rather than of a well-chosen alpha.
+ALPHA_GRID = [0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0]
+
+# The model is fitted on log1p(PM2.5) and mapped back afterwards.
+# See the class docstring in model.py for why.
+LOG_TARGET = True
 
 # CPCB National AQI breakpoints for 24-hour PM2.5, in ug/m3. The
 # service is useful to a person only if it lands in the right
@@ -83,19 +92,21 @@ def fit(train):
     cut = int(len(train) * 0.8)
     if cut < 10 or len(train) - cut < 5:
         # Too short to split; fall back to the middle of the grid.
-        return Ridge(alpha=1.0, names=names).fit(x, y)
+        return Ridge(1.0, names, LOG_TARGET).fit(x, y)
 
     best, best_mae = 1.0, None
     for alpha in ALPHA_GRID:
         try:
-            trial = Ridge(alpha, names).fit(x[:cut], y[:cut])
+            trial = Ridge(alpha, names, LOG_TARGET).fit(x[:cut], y[:cut])
         except ValueError:
             continue
+        # Scored on the real scale even when the fit is in logs,
+        # because micrograms are what the project is judged on.
         got = score(list(zip(y[cut:], trial.predict(x[cut:]))))
         if got and (best_mae is None or got["mae"] < best_mae):
             best, best_mae = alpha, got["mae"]
 
-    return Ridge(best, names).fit(x, y)
+    return Ridge(best, names, LOG_TARGET).fit(x, y)
 
 
 def backtest(samples):
@@ -177,16 +188,40 @@ def report(use_weather=False):
         "generated_for": days[-1].isoformat(),
         "window": {"first": days[0].isoformat(), "last": days[-1].isoformat()},
         "features": samples[0].names,
+        "log_target": LOG_TARGET,
         "min_train": MIN_TRAIN,
+        "min_obs_hours": config.MIN_OBS_HOURS,
         "overall": scored,
         "by_season": {},
-        "skill_vs_persistence": None,
+        "skill": {},
     }
 
-    persistence = scored.get("persistence")
-    if persistence and scored["model"]:
-        gain = (persistence["mae"] - scored["model"]["mae"]) / persistence["mae"]
-        out["skill_vs_persistence"] = round(gain, 4)
+    # Two skill numbers, and the distinction matters enough that
+    # neither is allowed to be the only one reported.
+    #
+    # The operational figure is the honest one. It compares the
+    # model against the best a person could actually do at 08:00
+    # with the data published by then, which is a reading roughly
+    # four days old. That is the same information set the model
+    # has, so it is a fair fight and it is what the service is
+    # worth to a user.
+    #
+    # The textbook figure compares against yesterday's reading,
+    # which nobody has yet when the forecast goes out. It is
+    # reported anyway because it is the number quoted in the
+    # proposal and because it bounds what any amount of modelling
+    # could buy: closing that gap needs a faster feed, not a
+    # better regression.
+    for label, key in (("operational", "persistence_operational"),
+                       ("textbook", "persistence")):
+        ref = scored.get(key)
+        if ref and scored["model"] and ref["mae"]:
+            gain = (ref["mae"] - scored["model"]["mae"]) / ref["mae"]
+            out["skill"][label] = round(gain, 4)
+
+    # Kept under the old name so anything already reading the file
+    # does not silently start seeing nothing.
+    out["skill_vs_persistence"] = out["skill"].get("textbook")
 
     for season, subset in season_split(runs).items():
         if not subset:
@@ -216,22 +251,30 @@ def show(out, runs):
         print(f"{name:26s}{got['n']:5d}{got['mae']:9.2f}{got['rmse']:9.2f}"
               f"{got['bias']:9.2f}{got['band_hit_rate']:8.2f}")
 
-    gain = out["skill_vs_persistence"]
-    if gain is not None:
+    print()
+    for label in ("operational", "textbook"):
+        gain = out["skill"].get(label)
+        if gain is None:
+            continue
         verdict = "beats" if gain > 0 else "loses to"
-        print(f"\nModel {verdict} persistence by {abs(gain) * 100:.1f}% MAE "
-              f"(target: 10% calm, 20% burning season)")
+        print(f"vs {label:12s} persistence: {verdict} it by "
+              f"{abs(gain) * 100:5.1f}% MAE")
+    print("(target: 10% calm, 20% burning season, against operational)")
 
     for season, entry in out["by_season"].items():
-        if entry.get("model") and entry.get("persistence"):
-            m, p = entry["model"]["mae"], entry["persistence"]["mae"]
+        if entry.get("model") and entry.get("persistence_operational"):
+            m = entry["model"]["mae"]
+            p = entry["persistence_operational"]["mae"]
             print(f"  {season:8s} n={entry['model']['n']:3d}  "
-                  f"model {m:6.2f}  persistence {p:6.2f}  "
+                  f"model {m:6.2f}  persistence_op {p:6.2f}  "
                   f"({(p - m) / p * 100:+.1f}%)")
 
 
 def main():
-    weather = "--weather" in sys.argv
+    # Weather is on unless explicitly switched off. `--no-weather`
+    # reproduces the pre-review model and is how the ablation
+    # table in the report was generated.
+    weather = "--no-weather" not in sys.argv
     built = report(use_weather=weather)
     if built is None:
         return 1
