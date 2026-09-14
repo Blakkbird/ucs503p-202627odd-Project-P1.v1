@@ -94,33 +94,91 @@ strongly non-linear during the burning season, that is a finding
 worth having rather than something to pre-empt with a bigger model
 now.
 
+## The week 5 review
+
+The first fitted model lost to textbook persistence by 22.6% and,
+worse, had started drifting downward while the station was
+climbing. Pulling it apart found five separate faults, and the
+current model is what came out of fixing them.
+
+- **The meteorology was never switched on.** The backfill had been
+  run weeks earlier and the fit was still reading CAMS, lagged
+  observations and a seasonal term. Wind and fire counts, the two
+  things most likely to matter in October, had never been tested.
+- **`doy_sin` and `doy_cos` were not measuring seasonality.** With
+  four months of data a day-of-year term cannot tell a season from
+  a trend, and these had learnt "PM2.5 falls through the monsoon".
+  They carried almost as much weight as the CAMS forecast itself
+  and would have kept extrapolating that decline into November.
+  Dropped.
+- **`obs_recent` and `obs_recent_log` were the same signal twice**,
+  split across two coefficients that pulled against each other.
+  One kept.
+- **`obs_age` had been constant** at 4.0 since the feed was
+  repaired, so it contributed nothing but still cost a parameter.
+  It is still computed and still published with each forecast as a
+  diagnostic; it is simply not fitted on.
+- **Thin days were being trained on.** CPCB does not consider a
+  24-hour mean valid below 16 hourly readings, and neither should
+  the model. Days under that line are recorded and displayed but
+  are no longer used as labels, nor fed forward as a later day's
+  persistence.
+
+Two further changes did more than any of the above.
+
+**Fitting in log space.** PM2.5 spans an order of magnitude
+between a clean day and a burning-season one. On the raw scale the
+squared error is decided by the worst few days, and the fit bends
+towards them at the expense of the ordinary ones. `log1p` makes
+the penalty proportional, which is also how the error is felt: ten
+out on a reading of twenty matters, ten out on two hundred does
+not.
+
+**Lagging the fire count.** FIRMS records detections against the
+day they happened, so a target day's own count does not exist when
+its forecast goes out. It was a leak. Fixing it improved the
+model, because the physically correct signal was the lagged one
+all along — smoke lifted off a field upwind takes the better part
+of a day to arrive.
+
 ## Where it stands
 
-The harness runs end to end. On the record available in mid
-August, over 46 backtested days:
+Over 40 backtested days, 27 July to 11 September:
 
 | | MAE | RMSE | band hit |
 | --- | --- | --- | --- |
-| model | 7.27 | 9.03 | 0.83 |
-| persistence | 6.12 | 8.45 | 0.85 |
-| persistence (operational) | 8.76 | 11.77 | 0.74 |
-| climatology | 11.74 | 12.70 | 0.78 |
-| raw CAMS | 42.35 | 47.28 | 0.11 |
+| model | 3.29 | 4.26 | 1.00 |
+| persistence | 3.48 | 4.26 | 1.00 |
+| persistence (operational) | 4.60 | 5.89 | 1.00 |
+| climatology | 9.55 | 10.51 | 1.00 |
+| raw CAMS | 40.96 | 43.75 | 0.00 |
 
-So: the model beats the baseline it shares an information set with
-by about 17%, and loses to the textbook baseline by about 19%.
-Both facts are real and neither cancels the other.
+Against the baseline it shares an information set with, that is a
+28.3% improvement, comfortably past the 10% calm-season target.
+Against the textbook baseline it is 5.2% ahead, which was not
+expected and is a small enough margin to be worth rechecking on a
+longer window.
 
-Two things are worth saying plainly about this. The window is
-monsoon, when the observed mean sits near 25 µg/m³ and moves
-slowly, which is exactly the regime where persistence is strongest
-and a forecast adds least. And the meteorology columns are not in
-this fit at all — they were blank for most of the history until
-the backfill, so the run above uses CAMS, lagged observations and
-seasonality only. The features most likely to matter in October,
-wind and fire counts, have not been tested yet.
+The caveats have not gone away, and three are worth stating.
 
-Reaching the proposal's targets against textbook persistence, on
-this information set, may not be possible. That is better known in
-August than in November, and it is the reason the backtest was
-built before the model rather than after it.
+The window is calm season, when the observed mean sits near 23
+µg/m³ and moves slowly, which is exactly the regime where
+persistence is strongest and a forecast adds least. The band hit
+rate is close to meaningless here: almost every day falls in Good,
+so guessing Good every time would score nearly as well.
+
+The 20% burning-season target rests on a feature that has never
+fired. No training row falls in October or November, so `burning`
+carries no weight yet. `fire_log` does vary and does carry weight,
+which is the tested half of the mechanism.
+
+And the feature set was chosen on this window. Each change above
+has a reason that stands independently of its effect on the score,
+which is why the reasons are written out rather than just the
+numbers. But the reasons and the scores were looked at together,
+and forty days is not enough to fully separate the two. October is
+the honest test.
+
+The live results page rebuilds from `data/metrics.json` on every
+ingest, so the figures in this section are a snapshot and
+[Results](results.md) is the current one.
