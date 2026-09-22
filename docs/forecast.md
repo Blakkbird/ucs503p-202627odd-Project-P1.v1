@@ -1,36 +1,37 @@
 # Tomorrow in Patiala
 
 <div class="pawan-card" style="border-left-color:#5ba829">
-  <div class="pawan-when">Monday 21 September</div>
-  <div class="pawan-value">18<span class="pawan-unit">&micro;g/m&sup3;</span></div>
+  <div class="pawan-when">Wednesday 23 September</div>
+  <div class="pawan-value">21<span class="pawan-unit">&micro;g/m&sup3;</span></div>
   <div class="pawan-band-name" style="color:#5ba829">Good</div>
-  <div class="pawan-note">likely range 13 to 25 &middot; issued 2026-09-20</div>
+  <div class="pawan-note">likely range 14 to 30 &middot; issued 2026-09-22</div>
 </div>
 
 
 <svg viewBox="0 0 760 260" class="pawan-chart" role="img" aria-label="Observed and forecast PM2.5">
-<line x1="34" y1="170.3" x2="726" y2="170.3" class="pawan-grid"/>
-<text x="28" y="174.3" class="pawan-axis" text-anchor="end">10</text>
-<line x1="34" y1="114.7" x2="726" y2="114.7" class="pawan-grid"/>
-<text x="28" y="118.7" class="pawan-axis" text-anchor="end">20</text>
-<line x1="34" y1="59.0" x2="726" y2="59.0" class="pawan-grid"/>
-<text x="28" y="63.0" class="pawan-axis" text-anchor="end">30</text>
-<polygon points="510.7,80.7 556.8,83.3 572.2,78.7 587.6,98.8 603.0,87.1 618.4,109.7 633.7,89.3 679.9,90.3 695.2,85.1 710.6,92.7 726.0,84.9 726.0,153.2 710.6,157.3 695.2,153.3 679.9,156.2 633.7,200.5 618.4,221.0 603.0,198.4 587.6,209.7 572.2,189.6 556.8,194.2 510.7,195.0" class="pawan-band"/>
-<polyline points="34.0,167.6 49.4,112.5 64.8,159.8 80.1,139.7 95.5,145.3 110.9,147.5 126.3,130.8 141.6,143.6 172.4,150.3 187.8,141.4 203.2,138.6 218.5,132.5 233.9,134.7 249.3,150.9 264.7,131.9 280.0,139.2 295.4,113.0 310.8,119.1 326.2,108.0 341.6,59.0 356.9,86.3 372.3,84.1 387.7,130.8 403.1,124.7 418.4,137.5 433.8,159.2 449.2,182.9 464.6,172.3 480.0,150.9 495.3,149.8 510.7,127.5 526.1,96.9 541.5,81.9 556.8,115.8 572.2,71.3 587.6,173.2 603.0,171.0 618.4,156.4 633.7,127.5 649.1,109.7 664.5,138.6" class="pawan-observed"/>
-<polyline points="510.7,137.8 556.8,138.7 572.2,134.2 587.6,154.3 603.0,142.7 618.4,165.3 633.7,144.9 679.9,128.4 695.2,124.5 710.6,130.1 726.0,124.3" class="pawan-forecast"/>
-<circle cx="510.7" cy="137.8" r="3" class="pawan-dot"/>
-<circle cx="556.8" cy="138.7" r="3" class="pawan-dot"/>
-<circle cx="572.2" cy="134.2" r="3" class="pawan-dot"/>
-<circle cx="587.6" cy="154.3" r="3" class="pawan-dot"/>
-<circle cx="603.0" cy="142.7" r="3" class="pawan-dot"/>
-<circle cx="618.4" cy="165.3" r="3" class="pawan-dot"/>
-<circle cx="633.7" cy="144.9" r="3" class="pawan-dot"/>
-<circle cx="679.9" cy="128.4" r="3" class="pawan-dot"/>
-<circle cx="695.2" cy="124.5" r="3" class="pawan-dot"/>
-<circle cx="710.6" cy="130.1" r="3" class="pawan-dot"/>
-<circle cx="726.0" cy="124.3" r="3" class="pawan-dot"/>
-<text x="34.0" y="252" class="pawan-axis" text-anchor="middle">07 Aug</text>
-<text x="726.0" y="252" class="pawan-axis" text-anchor="middle">21 Sep</text>
+<line x1="34" y1="175.9" x2="726" y2="175.9" class="pawan-grid"/>
+<text x="28" y="179.9" class="pawan-axis" text-anchor="end">10</text>
+<line x1="34" y1="125.7" x2="726" y2="125.7" class="pawan-grid"/>
+<text x="28" y="129.7" class="pawan-axis" text-anchor="end">20</text>
+<line x1="34" y1="75.6" x2="726" y2="75.6" class="pawan-grid"/>
+<text x="28" y="79.6" class="pawan-axis" text-anchor="end">30</text>
+<polygon points="485.3,95.1 530.4,97.4 545.5,93.3 560.5,111.4 575.6,100.9 590.6,121.2 605.7,102.8 650.8,103.7 665.8,99.1 680.9,105.9 695.9,98.9 726.0,77.0 726.0,154.0 695.9,160.4 680.9,164.1 665.8,160.5 650.8,163.1 605.7,203.0 590.6,221.5 575.6,201.1 560.5,211.4 545.5,193.2 530.4,197.3 485.3,198.1" class="pawan-band"/>
+<polyline points="34.0,123.7 49.0,166.3 64.1,148.3 79.1,153.3 94.2,155.3 109.2,140.3 124.3,151.8 154.3,157.8 169.4,149.8 184.4,147.3 199.5,141.8 214.5,143.8 229.6,158.3 244.6,141.3 259.7,147.8 274.7,124.2 289.7,129.7 304.8,119.7 319.8,75.6 334.9,100.2 349.9,98.2 365.0,140.3 380.0,134.8 395.0,146.3 410.1,165.8 425.1,187.2 440.2,177.6 455.2,158.3 470.3,157.3 485.3,137.3 500.3,109.7 515.4,96.1 530.4,126.7 545.5,86.6 560.5,178.5 575.6,176.5 590.6,163.3 605.7,137.3 620.7,121.2 635.7,147.3 650.8,166.3 665.8,133.2 680.9,102.7 695.9,59.0" class="pawan-observed"/>
+<polyline points="485.3,146.6 530.4,147.4 545.5,143.3 560.5,161.4 575.6,151.0 590.6,171.4 605.7,153.0 650.8,138.1 665.8,134.6 680.9,139.6 695.9,134.4 726.0,122.1" class="pawan-forecast"/>
+<circle cx="485.3" cy="146.6" r="3" class="pawan-dot"/>
+<circle cx="530.4" cy="147.4" r="3" class="pawan-dot"/>
+<circle cx="545.5" cy="143.3" r="3" class="pawan-dot"/>
+<circle cx="560.5" cy="161.4" r="3" class="pawan-dot"/>
+<circle cx="575.6" cy="151.0" r="3" class="pawan-dot"/>
+<circle cx="590.6" cy="171.4" r="3" class="pawan-dot"/>
+<circle cx="605.7" cy="153.0" r="3" class="pawan-dot"/>
+<circle cx="650.8" cy="138.1" r="3" class="pawan-dot"/>
+<circle cx="665.8" cy="134.6" r="3" class="pawan-dot"/>
+<circle cx="680.9" cy="139.6" r="3" class="pawan-dot"/>
+<circle cx="695.9" cy="134.4" r="3" class="pawan-dot"/>
+<circle cx="726.0" cy="122.1" r="3" class="pawan-dot"/>
+<text x="34.0" y="252" class="pawan-axis" text-anchor="middle">08 Aug</text>
+<text x="726.0" y="252" class="pawan-axis" text-anchor="middle">23 Sep</text>
 </svg>
 
 The solid line is what the station at Model Town measured. The
@@ -41,7 +42,7 @@ yet.
 
 ## How it has done so far
 
-Since the service started issuing forecasts it has made **11** of them, **7** of which have an observation to be checked against. On those, the mean absolute error is **4.6 &micro;g/m&sup3;** and the AQI band was right **7 times out of 7**.
+Since the service started issuing forecasts it has made **12** of them, **11** of which have an observation to be checked against. On those, the mean absolute error is **5.5 &micro;g/m&sup3;** and the AQI band was right **10 times out of 11**.
 
 
 That is the live record, not the backtest. It is short, and it
@@ -50,13 +51,16 @@ is the number to argue with.
 
 | Day | Forecast | Observed | Error | Band |
 | --- | ---: | ---: | ---: | :--- |
+| 2026-09-21 | 18.3 | 33.3 | -15.0 | Good (missed) |
+| 2026-09-20 | 17.2 | 24.6 | -7.4 | Good (correct) |
+| 2026-09-19 | 18.2 | 18.5 | -0.3 | Good (correct) |
+| 2026-09-18 | 17.5 | 11.9 | +5.6 | Good (correct) |
 | 2026-09-15 | 14.6 | 17.7 | -3.1 | Good (correct) |
 | 2026-09-14 | 10.9 | 12.5 | -1.6 | Good (correct) |
 | 2026-09-13 | 15.0 | 9.9 | +5.1 | Good (correct) |
 | 2026-09-12 | 12.9 | 9.5 | +3.4 | Good (correct) |
 | 2026-09-11 | 16.5 | 27.8 | -11.3 | Good (correct) |
 | 2026-09-10 | 15.7 | 19.8 | -4.1 | Good (correct) |
-| 2026-09-07 | 15.8 | 19.4 | -3.6 | Good (correct) |
 
 
 A forecast is written once and never revised. When the
@@ -65,4 +69,4 @@ original, untouched. Rewriting yesterday's forecast after
 yesterday happened is the easiest way to build a system that
 looks far better than it is.
 
-<small>Generated from `data/predictions.json` at 2026-09-21T13:38:19+05:30.</small>
+<small>Generated from `data/predictions.json` at 2026-09-22T13:23:36+05:30.</small>
