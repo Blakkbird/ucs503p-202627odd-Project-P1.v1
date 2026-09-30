@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-29T14:25:12+05:30",
+  "generated_at": "2026-09-30T14:24:02+05:30",
   "model": {
     "alpha": 100.0,
     "features": [
@@ -13,7 +13,7 @@
       "wind_v",
       "fire_log"
     ],
-    "fitted_rows": 93
+    "fitted_rows": 97
   },
   "predictions": [
     {
@@ -274,8 +274,8 @@
       "issued": "2026-09-24",
       "pm25": 18.87,
       "band": "Good",
-      "actual": null,
-      "error": null,
+      "actual": 20.3,
+      "error": -1.43,
       "interval": [
         13.05,
         27.09
@@ -286,15 +286,16 @@
         "obs_age_days": 4.0,
         "persistence_operational": 33.3,
         "forecast_provenance_live": true
-      }
+      },
+      "band_hit": true
     },
     {
       "date": "2026-09-26",
       "issued": "2026-09-25",
       "pm25": 19.72,
       "band": "Good",
-      "actual": null,
-      "error": null,
+      "actual": 19.0,
+      "error": 0.72,
       "interval": [
         13.55,
         28.5
@@ -305,15 +306,16 @@
         "obs_age_days": 4.0,
         "persistence_operational": 32.8,
         "forecast_provenance_live": true
-      }
+      },
+      "band_hit": true
     },
     {
       "date": "2026-09-27",
       "issued": "2026-09-26",
       "pm25": 16.56,
       "band": "Good",
-      "actual": null,
-      "error": null,
+      "actual": 8.41,
+      "error": 8.15,
       "interval": [
         11.33,
         24.01
@@ -324,15 +326,16 @@
         "obs_age_days": 4.0,
         "persistence_operational": 30.6,
         "forecast_provenance_live": true
-      }
+      },
+      "band_hit": true
     },
     {
       "date": "2026-09-28",
       "issued": "2026-09-27",
       "pm25": 13.75,
       "band": "Good",
-      "actual": null,
-      "error": null,
+      "actual": 12.9,
+      "error": 0.85,
       "interval": [
         9.36,
         20.0
@@ -343,7 +346,8 @@
         "obs_age_days": 4.0,
         "persistence_operational": 33.4,
         "forecast_provenance_live": true
-      }
+      },
+      "band_hit": true
     }
   ]
 }

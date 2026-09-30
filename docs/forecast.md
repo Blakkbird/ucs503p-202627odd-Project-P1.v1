@@ -15,28 +15,28 @@
 <text x="28" y="130.0" class="pawan-axis" text-anchor="end">20</text>
 <line x1="34" y1="76.0" x2="726" y2="76.0" class="pawan-grid"/>
 <text x="28" y="80.0" class="pawan-axis" text-anchor="end">30</text>
-<polygon points="388.0,95.5 436.3,97.8 452.4,93.7 468.5,111.8 484.6,101.3 500.7,121.5 516.8,103.2 565.1,104.1 581.2,99.5 597.3,106.2 613.3,99.2 645.5,77.4 661.6,89.0 677.7,90.6 693.8,83.5 709.9,106.0 726.0,126.0 726.0,179.2 709.9,169.4 693.8,158.3 677.7,160.8 661.6,160.0 645.5,154.2 613.3,160.6 597.3,164.3 581.2,160.7 565.1,163.3 516.8,203.1 500.7,221.5 484.6,201.2 468.5,211.4 452.4,193.3 436.3,197.4 388.0,198.2" class="pawan-band"/>
-<polyline points="34.0,158.0 50.1,150.0 66.2,147.5 82.3,142.0 98.4,144.0 114.5,158.5 130.6,141.5 146.7,148.0 162.7,124.5 178.8,130.0 194.9,120.0 211.0,76.0 227.1,100.5 243.2,98.5 259.3,140.5 275.4,135.0 291.5,146.5 307.6,166.0 323.7,187.3 339.8,177.8 355.9,158.5 372.0,157.5 388.0,137.5 404.1,110.0 420.2,96.5 436.3,127.0 452.4,87.0 468.5,178.6 484.6,176.6 500.7,163.5 516.8,137.5 532.9,121.5 549.0,147.5 565.1,166.5 581.2,133.5 597.3,103.0 613.3,59.5 629.4,62.0 645.5,73.0 661.6,59.0" class="pawan-observed"/>
-<polyline points="388.0,146.8 436.3,147.6 452.4,143.5 468.5,161.6 484.6,151.2 500.7,171.5 516.8,153.2 565.1,138.3 581.2,134.9 597.3,139.8 613.3,134.7 645.5,122.4 661.6,130.6 677.7,131.7 693.8,127.4 709.9,143.2 726.0,157.3" class="pawan-forecast"/>
-<circle cx="388.0" cy="146.8" r="3" class="pawan-dot"/>
-<circle cx="436.3" cy="147.6" r="3" class="pawan-dot"/>
-<circle cx="452.4" cy="143.5" r="3" class="pawan-dot"/>
-<circle cx="468.5" cy="161.6" r="3" class="pawan-dot"/>
-<circle cx="484.6" cy="151.2" r="3" class="pawan-dot"/>
-<circle cx="500.7" cy="171.5" r="3" class="pawan-dot"/>
-<circle cx="516.8" cy="153.2" r="3" class="pawan-dot"/>
-<circle cx="565.1" cy="138.3" r="3" class="pawan-dot"/>
-<circle cx="581.2" cy="134.9" r="3" class="pawan-dot"/>
-<circle cx="597.3" cy="139.8" r="3" class="pawan-dot"/>
-<circle cx="613.3" cy="134.7" r="3" class="pawan-dot"/>
-<circle cx="645.5" cy="122.4" r="3" class="pawan-dot"/>
-<circle cx="661.6" cy="130.6" r="3" class="pawan-dot"/>
-<circle cx="677.7" cy="131.7" r="3" class="pawan-dot"/>
-<circle cx="693.8" cy="127.4" r="3" class="pawan-dot"/>
-<circle cx="709.9" cy="143.2" r="3" class="pawan-dot"/>
-<circle cx="726.0" cy="157.3" r="3" class="pawan-dot"/>
+<polygon points="380.0,95.5 427.2,97.8 442.9,93.7 458.6,111.8 474.4,101.3 490.1,121.5 505.8,103.2 553.0,104.1 568.7,99.5 584.5,106.2 600.2,99.2 631.6,77.4 647.4,89.0 663.1,90.6 678.8,83.5 694.5,106.0 710.3,126.0 710.3,179.2 694.5,169.4 678.8,158.3 663.1,160.8 647.4,160.0 631.6,154.2 600.2,160.6 584.5,164.3 568.7,160.7 553.0,163.3 505.8,203.1 490.1,221.5 474.4,201.2 458.6,211.4 442.9,193.3 427.2,197.4 380.0,198.2" class="pawan-band"/>
+<polyline points="34.0,158.0 49.7,150.0 65.5,147.5 81.2,142.0 96.9,144.0 112.6,158.5 128.4,141.5 144.1,148.0 159.8,124.5 175.5,130.0 191.3,120.0 207.0,76.0 222.7,100.5 238.5,98.5 254.2,140.5 269.9,135.0 285.6,146.5 301.4,166.0 317.1,187.3 332.8,177.8 348.5,158.5 364.3,157.5 380.0,137.5 395.7,110.0 411.5,96.5 427.2,127.0 442.9,87.0 458.6,178.6 474.4,176.6 490.1,163.5 505.8,137.5 521.5,121.5 537.3,147.5 553.0,166.5 568.7,133.5 584.5,103.0 600.2,59.5 615.9,62.0 631.6,73.0 647.4,59.0 663.1,124.5 678.8,131.0 694.5,184.0 710.3,161.5 726.0,119.0" class="pawan-observed"/>
+<polyline points="380.0,146.8 427.2,147.6 442.9,143.5 458.6,161.6 474.4,151.2 490.1,171.5 505.8,153.2 553.0,138.3 568.7,134.9 584.5,139.8 600.2,134.7 631.6,122.4 647.4,130.6 663.1,131.7 678.8,127.4 694.5,143.2 710.3,157.3" class="pawan-forecast"/>
+<circle cx="380.0" cy="146.8" r="3" class="pawan-dot"/>
+<circle cx="427.2" cy="147.6" r="3" class="pawan-dot"/>
+<circle cx="442.9" cy="143.5" r="3" class="pawan-dot"/>
+<circle cx="458.6" cy="161.6" r="3" class="pawan-dot"/>
+<circle cx="474.4" cy="151.2" r="3" class="pawan-dot"/>
+<circle cx="490.1" cy="171.5" r="3" class="pawan-dot"/>
+<circle cx="505.8" cy="153.2" r="3" class="pawan-dot"/>
+<circle cx="553.0" cy="138.3" r="3" class="pawan-dot"/>
+<circle cx="568.7" cy="134.9" r="3" class="pawan-dot"/>
+<circle cx="584.5" cy="139.8" r="3" class="pawan-dot"/>
+<circle cx="600.2" cy="134.7" r="3" class="pawan-dot"/>
+<circle cx="631.6" cy="122.4" r="3" class="pawan-dot"/>
+<circle cx="647.4" cy="130.6" r="3" class="pawan-dot"/>
+<circle cx="663.1" cy="131.7" r="3" class="pawan-dot"/>
+<circle cx="678.8" cy="127.4" r="3" class="pawan-dot"/>
+<circle cx="694.5" cy="143.2" r="3" class="pawan-dot"/>
+<circle cx="710.3" cy="157.3" r="3" class="pawan-dot"/>
 <text x="34.0" y="252" class="pawan-axis" text-anchor="middle">16 Aug</text>
-<text x="726.0" y="252" class="pawan-axis" text-anchor="middle">28 Sep</text>
+<text x="726.0" y="252" class="pawan-axis" text-anchor="middle">29 Sep</text>
 </svg>
 
 The solid line is what the station at Model Town measured. The
@@ -47,7 +47,7 @@ yet.
 
 ## How it has done so far
 
-Since the service started issuing forecasts it has made **17** of them, **13** of which have an observation to be checked against. On those, the mean absolute error is **6.5 &micro;g/m&sup3;** and the AQI band was right **10 times out of 13**.
+Since the service started issuing forecasts it has made **17** of them, **17** of which have an observation to be checked against. On those, the mean absolute error is **5.6 &micro;g/m&sup3;** and the AQI band was right **14 times out of 17**.
 
 
 That is the live record, not the backtest. It is short, and it
@@ -56,16 +56,16 @@ is the number to argue with.
 
 | Day | Forecast | Observed | Error | Band |
 | --- | ---: | ---: | ---: | :--- |
+| 2026-09-28 | 13.8 | 12.9 | +0.8 | Good (correct) |
+| 2026-09-27 | 16.6 | 8.4 | +8.2 | Good (correct) |
+| 2026-09-26 | 19.7 | 19.0 | +0.7 | Good (correct) |
+| 2026-09-25 | 18.9 | 20.3 | -1.4 | Good (correct) |
 | 2026-09-24 | 19.1 | 33.4 | -14.3 | Good (missed) |
 | 2026-09-23 | 20.7 | 30.6 | -9.9 | Good (missed) |
 | 2026-09-21 | 18.3 | 33.3 | -15.0 | Good (missed) |
 | 2026-09-20 | 17.2 | 24.6 | -7.4 | Good (correct) |
 | 2026-09-19 | 18.2 | 18.5 | -0.3 | Good (correct) |
 | 2026-09-18 | 17.5 | 11.9 | +5.6 | Good (correct) |
-| 2026-09-15 | 14.6 | 17.7 | -3.1 | Good (correct) |
-| 2026-09-14 | 10.9 | 12.5 | -1.6 | Good (correct) |
-| 2026-09-13 | 15.0 | 9.9 | +5.1 | Good (correct) |
-| 2026-09-12 | 12.9 | 9.5 | +3.4 | Good (correct) |
 
 
 A forecast is written once and never revised. When the
@@ -74,4 +74,4 @@ original, untouched. Rewriting yesterday's forecast after
 yesterday happened is the easiest way to build a system that
 looks far better than it is.
 
-<small>Generated from `data/predictions.json` at 2026-09-29T14:25:12+05:30.</small>
+<small>Generated from `data/predictions.json` at 2026-09-30T14:24:02+05:30.</small>
