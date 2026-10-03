@@ -1,7 +1,7 @@
 # Results
 
-Walk-forward backtest over 2026-07-27 to 2026-09-29,
-57 days. The model is refitted from scratch
+Walk-forward backtest over 2026-07-27 to 2026-09-30,
+58 days. The model is refitted from scratch
 before each day and only ever sees days strictly before the one
 it is predicting. There is no shuffled train/test split anywhere
 in this project; the rows are a time series and shuffling them
@@ -9,16 +9,16 @@ would let the model read its own future.
 
 | Method | n | MAE | RMSE | Bias | Band correct |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| **Pawan** | 57 | **3.96** | 5.33 | -1.00 | 93% |
-| Persistence (textbook) | 55 | 4.08 | 5.30 | -0.46 | 96% |
-| Persistence (operational) | 57 | 6.34 | 8.29 | -0.86 | 88% |
-| Climatology | 57 | 8.89 | 9.92 | +7.16 | 93% |
-| Raw CAMS | 57 | 38.58 | 41.32 | +38.58 | 4% |
+| **Pawan** | 58 | **3.90** | 5.29 | -0.96 | 93% |
+| Persistence (textbook) | 56 | 4.01 | 5.25 | -0.44 | 96% |
+| Persistence (operational) | 58 | 6.26 | 8.22 | -0.88 | 88% |
+| Climatology | 58 | 8.76 | 9.84 | +7.06 | 93% |
+| Raw CAMS | 58 | 39.07 | 41.89 | +39.07 | 3% |
 
 ## Skill
 
-- Against operational persistence: **37.6% better** on MAE.
-- Against textbook persistence: **2.9% better** on MAE.
+- Against operational persistence: **37.7% better** on MAE.
+- Against textbook persistence: **2.7% better** on MAE.
 
 The two baselines are both persistence, and the difference
 between them is the whole argument.
@@ -46,8 +46,8 @@ compared with each other but not read as physics.
 
 | Feature | Weight |
 | --- | ---: |
-| `cams_log` | +0.097 |
-| `rh` | -0.056 |
+| `cams_log` | +0.096 |
+| `rh` | -0.057 |
 | `temp` | +0.054 |
 | `fire_log` | +0.047 |
 | `wind_u` | +0.040 |
