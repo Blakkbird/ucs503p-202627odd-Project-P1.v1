@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T14:00:09+05:30",
+  "generated_at": "2026-10-04T14:10:14+05:30",
   "model": {
     "alpha": 100.0,
     "features": [
@@ -404,6 +404,25 @@
         "cams_pm25": 93.88,
         "obs_age_days": 4.0,
         "persistence_operational": 20.9,
+        "forecast_provenance_live": true
+      }
+    },
+    {
+      "date": "2026-10-05",
+      "issued": "2026-10-04",
+      "pm25": 22.29,
+      "band": "Good",
+      "actual": null,
+      "error": null,
+      "interval": [
+        15.51,
+        31.86
+      ],
+      "inputs": {
+        "cams_log": 4.5129,
+        "cams_pm25": 90.19,
+        "obs_age_days": 4.0,
+        "persistence_operational": 34.2,
         "forecast_provenance_live": true
       }
     }
