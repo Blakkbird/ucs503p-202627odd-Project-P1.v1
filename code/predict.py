@@ -187,13 +187,22 @@ def main():
     # Why no forecast was issued, when none was. Kept as a value
     # rather than just printed, because the run has to be able to
     # fail on it at the end.
-    skipped = None
+    #
+    # Two versions of the reason: the log gets the exact one, the
+    # public page gets one a reader can make sense of.
+    skipped, reason = None, None
     target = next((s for s in samples if s.day == tomorrow), None)
     if target is None:
         skipped = "the ingest has not written a row for it"
+        reason = "the inputs for that day were not fetched"
     elif not target.complete:
         missing = [n for n, v in zip(target.names, target.x) if v is None]
         skipped = f"incomplete features, missing {missing}"
+        if "obs_recent_log" in missing:
+            reason = ("the station has not published a usable reading "
+                      "recent enough to work from")
+        else:
+            reason = "some of the inputs for that day are missing"
 
     if skipped:
         print(f"no forecast for {tomorrow}: {skipped}")
@@ -215,6 +224,15 @@ def main():
             "fitted_rows": len(features.usable(samples)),
         },
         "predictions": [history[d] for d in sorted(history)],
+        # What this run was trying to do and whether it managed.
+        # The page reads this rather than guessing from the record,
+        # so a failed morning says it failed instead of showing the
+        # last number it had.
+        "status": {
+            "target": tomorrow.isoformat(),
+            "issued": tomorrow.isoformat() in history,
+            "reason": reason,
+        },
     }
     config.DATA.mkdir(exist_ok=True)
     with open(config.PREDICTIONS_JSON, "w") as f:
