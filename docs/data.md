@@ -11,7 +11,7 @@ that is worth more than a database.
 | --- | --- |
 | `date` | The day the row describes, IST. |
 | `obs_pm25` | Observed daily mean PM2.5 at Model Town, µg/m³. The target. |
-| `obs_hours` | How many hourly readings that mean is built from. Blank for rows seeded by `bootstrap.py`, which used the daily endpoint. |
+| `obs_hours` | How many hourly readings that mean is built from. `bootstrap.py` did not record it; `extend_history.py` fills it in wherever the fetched reading matches the stored one. |
 | `cams_pm25` | CAMS global PM2.5 forecast for this day, daily mean, µg/m³. |
 | `cams_issue_date` | The day that forecast was issued. Blank means backfilled. |
 | `temp_mean` | Daily mean 2 m temperature, °C. |
@@ -52,17 +52,27 @@ Rows arrive by two routes and they are not equivalent.
 proves the forecast existed before the day it describes. These are
 the rows the final evaluation rests on.
 
-**Backfilled rows** were seeded once by `scripts/bootstrap.py`
-from the CAMS archive, and their meteorology was filled in later
-by `scripts/backfill_history.py`. They have no issue date, because
-the archive serves a series stitched from many model runs and does
-not say which run any given value came from. The lead time is
+**Backfilled rows** come from archives. The first 92 days were
+seeded by `scripts/bootstrap.py`, the history back to February
+2025 was added by `scripts/extend_history.py`, and the meteorology
+and fire counts for all of them were filled in by
+`scripts/backfill_history.py`. They have no issue date, because
+the CAMS archive serves a series stitched from many model runs and
+does not say which run any given value came from. The lead time is
 therefore unknown and probably shorter than a real day-ahead
 forecast, which makes these rows mildly optimistic.
 
-They are still used, because three months of slightly optimistic
-history beats three weeks of perfect history and a model that
-cannot be fitted at all. What they are not allowed to do is quietly
+They are still used, because a year and a half of slightly
+optimistic history, including the whole 2025 burning season,
+beats a few weeks of perfect history and a model that has never
+seen an October.
+
+The 92-day start was a mistake worth recording. `bootstrap.py`
+asked for `past_days=92` on the belief that this was as far back
+as the CAMS archive went. It is only the ceiling on that one
+parameter: an explicit `start_date` reaches back to August 2022.
+The sensor has reported since February 2025, so the 2025 burning
+season was available from the first day of the project. What they are not allowed to do is quietly
 become the headline number. `features.py` marks each row with
 `live`, the test suite refuses any row whose issue date is not
 strictly before its target day, and the honest comparison is the

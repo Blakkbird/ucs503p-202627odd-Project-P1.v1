@@ -13,6 +13,11 @@ so a partial run can simply be repeated.
     python scripts/backfill_history.py --dry-run  # just report
     python scripts/backfill_history.py --force    # redo the weather
 
+--force only ever touches backfilled rows. Rows the daily job
+wrote carry the weather forecast it actually saw the day before,
+which is the real thing every archive here is standing in for,
+and no archive is a better source for them than that.
+
 Weather comes from an archive of past forecast runs rather than
 from a reanalysis, because the model has to be fitted on the same
 kind of number it will be fed in production. Three archives are
@@ -32,7 +37,9 @@ tried in order, best provenance first:
      is the host the daily job already uses, so it is the one
      least likely to be down when the others are.
 
-Whichever one answers is printed and noted in the journal, because
+Each day is taken from the best archive that has it, and the next
+one down is only asked for the days still missing. Which archive
+supplied how many days is printed and goes in the journal, because
 it changes how the numbers should be read.
 """
 
@@ -42,6 +49,7 @@ import json
 import sys
 import urllib.parse
 import urllib.request
+from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -73,76 +81,124 @@ ARCHIVES = [
 COLUMNS = {"temperature_2m": "temp_mean",
            "relative_humidity_2m": "rh_mean"}
 
+WEATHER_COLUMNS = ["temp_mean", "rh_mean", "wind_speed_mean",
+                   "wind_dir_mean"]
 
-def weather(first, last):
-    """Daily means for every day in [first, last].
+# No request asks for more than this many days. Open-Meteo does not
+# publish a limit, but a year and a half of hourly values for four
+# variables in one URL is the kind of request that times out on a
+# slow morning, and retrying a small piece is cheaper than retrying
+# the whole range.
+CHUNK_DAYS = 120
 
-    Returns (rows, label). `rows` maps an ISO date to the column
-    values for that day; `label` names the archive that answered.
+
+def day_rows(times, hourly, suffix, days):
+    """Weather columns for each of `days` that has all four values.
+
+    A day missing any one of them is left out entirely rather than
+    filled in part, so no row ends up with temperature from one
+    archive and wind from another.
     """
+    index = defaultdict(list)
+    for i, t in enumerate(times):
+        index[t[:10]].append(i)
+
+    out = {}
+    for day in days:
+        picked = index.get(day.isoformat())
+        if not picked:
+            continue
+        sub = {name: [hourly[name + suffix][i] for i in picked]
+               for name in VARIABLES}
+        sub_times = [times[i] for i in picked]
+        row = {}
+        for variable in VARIABLES[:2]:
+            mean = ingest.day_mean(sub_times, sub[variable], day)
+            if mean is not None:
+                row[COLUMNS[variable]] = round(mean, 2)
+        speed, bearing = ingest.wind_day_mean(
+            sub_times, sub["wind_speed_10m"],
+            sub["wind_direction_10m"], day)
+        if speed is not None:
+            row["wind_speed_mean"] = round(speed, 2)
+            row["wind_dir_mean"] = round(bearing, 2)
+        if all(c in row for c in WEATHER_COLUMNS):
+            out[day.isoformat()] = row
+    return out
+
+
+def weather(days):
+    """Daily means for as many of `days` as the archives cover.
+
+    Returns (rows, sources). `rows` maps an ISO date to the column
+    values for that day; `sources` maps each archive's label to the
+    number of days it supplied.
+
+    The first version stopped at the first archive that answered at
+    all. An archive with a shorter reach than the table then left
+    the oldest rows blank without trying anything else, which is
+    the wrong way round: the better archive should get every day it
+    has, and the fallback only the ones it does not.
+    """
+    out, sources = {}, {}
+    today = datetime.now(IST).date()
     for label, host, suffix, reach in ARCHIVES:
-        # Some endpoints only keep a rolling window. Asking for
-        # more than they have is a 400, so clamp the request and
-        # say plainly which days are being given up.
-        start = first
+        wanted = [d for d in days if d.isoformat() not in out]
         if reach is not None:
             # IST, not the machine's idea of today: on a UTC runner
             # the boundary would land a day off after 18:30 local.
-            earliest = datetime.now(IST).date() - timedelta(days=reach)
-            start = max(start, earliest)
+            earliest = today - timedelta(days=reach)
+            wanted = [d for d in wanted if d >= earliest]
+        if not wanted:
+            continue
 
         names = [v + suffix for v in VARIABLES]
-        url = host + "?" + urllib.parse.urlencode({
-            "latitude": config.LAT,
-            "longitude": config.LON,
-            "hourly": ",".join(names),
-            "start_date": start.isoformat(),
-            "end_date": last.isoformat(),
-            "timezone": "Asia/Kolkata",
-        })
+        got = 0
+        for start, end in chunks(wanted[0], wanted[-1], CHUNK_DAYS):
+            inside = [d for d in wanted if start <= d <= end]
+            if not inside:
+                continue
+            url = host + "?" + urllib.parse.urlencode({
+                "latitude": config.LAT,
+                "longitude": config.LON,
+                "hourly": ",".join(names),
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+                "timezone": "Asia/Kolkata",
+            })
+            try:
+                payload = json.loads(ingest.fetch(url))
+            except ingest.SourceError as exc:
+                print(f"  {label} {start} .. {end}: unavailable ({exc})")
+                continue
 
-        try:
-            payload = json.loads(ingest.fetch(url))
-        except ingest.SourceError as exc:
-            print(f"  {label}: unavailable ({exc})")
-            continue
+            hourly = payload.get("hourly") or {}
+            if not all(n in hourly for n in names) or not hourly.get("time"):
+                print(f"  {label} {start} .. {end}: "
+                      f"response missing the requested variables")
+                continue
 
-        hourly = payload.get("hourly") or {}
-        if not all(n in hourly for n in names) or not hourly.get("time"):
-            print(f"  {label}: response missing the requested variables")
-            continue
+            found = day_rows(hourly["time"], hourly, suffix, inside)
+            out.update(found)
+            got += len(found)
 
-        times = hourly["time"]
-        out = {}
-        day = start
-        while day <= last:
-            row = {}
-            for variable in VARIABLES[:2]:
-                mean = ingest.day_mean(
-                    times, hourly[variable + suffix], day)
-                if mean is not None:
-                    row[COLUMNS[variable]] = round(mean, 2)
+        print(f"  {label}: {got} days")
+        if got:
+            sources[label] = got
 
-            speed, bearing = ingest.wind_day_mean(
-                times,
-                hourly["wind_speed_10m" + suffix],
-                hourly["wind_direction_10m" + suffix],
-                day)
-            if speed is not None:
-                row["wind_speed_mean"] = round(speed, 2)
-                row["wind_dir_mean"] = round(bearing, 2)
+    left = len([d for d in days if d.isoformat() not in out])
+    if left:
+        print(f"  {left} days not covered by any archive")
+    return out, sources
 
-            if row:
-                out[day.isoformat()] = row
-            day += timedelta(days=1)
 
-        if out:
-            missed = (start - first).days
-            note = f", {missed} oldest days out of reach" if missed else ""
-            print(f"  {label}: {len(out)} days{note}")
-            return out, label
-
-    return {}, "none"
+def chunks(first, last, size):
+    """[first, last] cut into consecutive (start, end) pieces."""
+    start = first
+    while start <= last:
+        end = min(start + timedelta(days=size - 1), last)
+        yield start, end
+        start = end + timedelta(days=1)
 
 
 def fires(days):
@@ -164,7 +220,9 @@ def fires(days):
         return {}
 
     out, refused = {}, 0
-    for day in days:
+    for i, day in enumerate(days, 1):
+        if i % 50 == 0:
+            print(f"  fires: {i}/{len(days)}")
         try:
             count = ingest.fire_count(day, sources)
         except ingest.SourceError as exc:
@@ -187,16 +245,39 @@ def report(rows, columns, title):
         print(f"    {column:18s} {got:3d}/{len(rows)}")
 
 
+def apply(rows, wx, fire, force=False):
+    """Write fetched weather and fires into `rows`. Returns cells filled.
+
+    Blanks always get filled. Existing weather is replaced only with
+    `force`, and only on backfilled rows (no cams_issue_date): a
+    live row's weather is the forecast that was really issued, and
+    an archive is only ever an imitation of that. Fire counts are
+    never replaced.
+    """
+    filled = 0
+    for key, row in rows.items():
+        live = bool(row.get("cams_issue_date"))
+        for column, value in (wx.get(key) or {}).items():
+            replace = not row.get(column) or (force and not live)
+            if replace and str(row.get(column, "")) != str(value):
+                row[column] = value
+                filled += 1
+        if not row.get("fire_count") and key in fire:
+            row["fire_count"] = fire[key]
+            filled += 1
+    return filled
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true",
                         help="report what would change, write nothing")
     parser.add_argument("--force", action="store_true",
-                        help="overwrite existing weather values. Use "
-                             "when a better archive comes back online, "
-                             "so the whole table has one lead time "
-                             "instead of a mixture. Observations, CAMS "
-                             "and fire counts are never touched.")
+                        help="refetch weather for every backfilled row, "
+                             "so the whole history comes from the best "
+                             "archive instead of a mixture. Live rows, "
+                             "observations, CAMS and fire counts are "
+                             "never touched.")
     args = parser.parse_args()
 
     with open(config.DAILY_CSV, newline="") as f:
@@ -205,35 +286,33 @@ def main():
         print("daily.csv is empty; run scripts/bootstrap.py first")
         return 1
 
-    tracked = ["temp_mean", "rh_mean", "wind_speed_mean",
-               "wind_dir_mean", "fire_count"]
+    tracked = WEATHER_COLUMNS + ["fire_count"]
     report(rows, tracked, f"Before ({len(rows)} rows):")
 
-    days = sorted(date.fromisoformat(d) for d in rows)
-    first, last = days[0], days[-1]
+    # Only days that happened. Tomorrow's row already carries the
+    # live forecast, and an archive cannot know a day in the future.
+    today = datetime.now(IST).date()
+    if args.force:
+        need = [k for k, r in rows.items() if not r.get("cams_issue_date")]
+    else:
+        need = [k for k, r in rows.items()
+                if any(not r.get(c) for c in WEATHER_COLUMNS)]
+    days = sorted(date.fromisoformat(k) for k in need)
+    days = [d for d in days if d < today]
 
-    print(f"\nFetching weather for {first} .. {last}")
-    wx, source = weather(first, last)
+    wx, sources = {}, {}
+    if days:
+        print(f"\nFetching weather for {len(days)} days, "
+              f"{days[0]} .. {days[-1]}")
+        wx, sources = weather(days)
 
-    wanted = [d for d in days
-              if not rows[d.isoformat()].get("fire_count")]
+    wanted = sorted(date.fromisoformat(k) for k, r in rows.items()
+                    if not r.get("fire_count")
+                    and date.fromisoformat(k) < today)
     print(f"\nFetching fire counts for {len(wanted)} days without one")
     fire = fires(wanted)
 
-    filled = 0
-    for key, row in rows.items():
-        for column, value in (wx.get(key) or {}).items():
-            # Blanks always get filled. Existing values only when
-            # asked, because a half-replaced table would carry two
-            # different lead times and nothing would say which row
-            # had which.
-            if args.force or not row.get(column):
-                row[column] = value
-                filled += 1
-        if not row.get("fire_count") and key in fire:
-            row["fire_count"] = fire[key]
-            filled += 1
-
+    filled = apply(rows, wx, fire, force=args.force)
     report(rows, tracked, f"After ({filled} cells filled):")
 
     if args.dry_run:
@@ -251,8 +330,10 @@ def main():
             writer.writerow({c: row.get(c, "") for c in config.COLUMNS})
 
     print(f"\nwrote {config.DAILY_CSV}")
-    print(f"weather source: {source}")
-    print("Record that source in the journal -- it decides whether the "
+    print("weather sources:")
+    for label, count in sources.items():
+        print(f"    {label:50s} {count:4d} days")
+    print("Record those in the journal -- they decide whether the "
           "meteorology is a true forecast or a stand-in.")
     return 0
 
