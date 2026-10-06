@@ -53,6 +53,14 @@ def test_normal_publication_delay_does_not_trip_the_limit():
     assert config.OBS_LATENCY_DAYS < config.OBS_STALENESS_LIMIT_DAYS
 
 
+def test_the_forecast_runs_dry_before_the_alarm_goes_off():
+    """If the lookback reached past the staleness limit, the job
+    could keep forecasting from a feed it has already declared
+    dead. The other way round, the alarm is the louder signal."""
+    reach = config.OBS_LATENCY_DAYS + config.OBS_LOOKBACK_DAYS
+    assert reach < config.OBS_STALENESS_LIMIT_DAYS
+
+
 def test_empty_record_reports_none_rather_than_zero():
     """Nothing at all is not the same as fresh, and returning 0
     here would read as the healthiest possible feed."""
