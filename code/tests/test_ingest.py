@@ -134,3 +134,35 @@ def test_observations_come_from_the_days_endpoint():
     src = inspect.getsource(run_daily.observed_window)
     assert "/days?" in src
     assert "/hours?" not in src
+
+
+def test_a_blank_observation_is_filled():
+    row = {"obs_pm25": "", "obs_hours": ""}
+    assert run_daily.merge_obs(row, 30.0, 24)
+    assert row["obs_pm25"] == 30.0 and row["obs_hours"] == 24
+
+
+def test_a_thin_observation_is_refreshed_when_more_hours_land():
+    row = {"obs_pm25": "41.2", "obs_hours": "14"}
+    assert run_daily.merge_obs(row, 37.5, 23)
+    assert row["obs_pm25"] == 37.5 and row["obs_hours"] == 23
+
+
+def test_a_full_observation_is_never_overwritten():
+    row = {"obs_pm25": "30.0", "obs_hours": "24"}
+    assert not run_daily.merge_obs(row, 99.0, 24)
+    assert row["obs_pm25"] == "30.0"
+
+
+def test_a_thin_observation_is_not_swapped_for_a_thinner_one():
+    row = {"obs_pm25": "41.2", "obs_hours": "14"}
+    assert not run_daily.merge_obs(row, 50.0, 10)
+    assert not run_daily.merge_obs(row, 50.0, None)
+    assert row["obs_pm25"] == "41.2"
+
+
+def test_an_uncounted_observation_is_left_alone():
+    """Bootstrap rows have no hour count. Nothing to compare, so
+    nothing is replaced."""
+    row = {"obs_pm25": "30.0", "obs_hours": ""}
+    assert not run_daily.merge_obs(row, 99.0, 24)

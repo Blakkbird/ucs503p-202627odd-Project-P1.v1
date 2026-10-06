@@ -134,6 +134,33 @@ def observed_window(start, end):
     return parse_days(data, start, end)
 
 
+def merge_obs(row, mean, hours):
+    """Write a fetched daily mean into `row`. True if it changed.
+
+    A blank cell always takes the value. A filled one is replaced
+    only when it was thin and the feed now has more hours behind
+    the same day. The feed publishes a day as soon as it has some
+    readings and fills the rest in later, and filling blanks only
+    froze the first partial version for good: 2 October went in at
+    14 hours and would have stayed at 14 however much more the
+    station sent afterwards.
+    """
+    if mean is None:
+        return False
+    if row.get("obs_pm25"):
+        try:
+            had = float(row.get("obs_hours"))
+        except (TypeError, ValueError):
+            return False   # no count to compare against, leave it
+        if had >= config.MIN_OBS_HOURS:
+            return False
+        if hours is None or hours <= had:
+            return False
+    row["obs_pm25"] = round(mean, 2)
+    row["obs_hours"] = "" if hours is None else hours
+    return True
+
+
 def day_mean(times, values, day):
     """Mean of the hourly values that fall on `day`."""
     picked = [v for t, v in zip(times, values)
@@ -295,14 +322,11 @@ def main():
         row = rows.get(day.isoformat(), blank(day))
         touched = False
 
-        if not row.get("obs_pm25"):
-            mean, hours = obs_window.get(day.isoformat(), (None, None))
-            if mean is not None:
-                row["obs_pm25"] = round(mean, 2)
-                row["obs_hours"] = "" if hours is None else hours
-                touched = True
-                print(f"obs   {day}: {mean:.1f} ug/m3"
-                      + ("" if hours is None else f" ({hours}h)"))
+        mean, hours = obs_window.get(day.isoformat(), (None, None))
+        if merge_obs(row, mean, hours):
+            touched = True
+            print(f"obs   {day}: {mean:.1f} ug/m3"
+                  + ("" if hours is None else f" ({hours}h)"))
 
         if not row.get("fire_count"):
             try:

@@ -88,8 +88,15 @@ def attach_outcomes(history, samples):
 
     The prediction itself is never touched here -- only `actual`
     and `error`, which did not exist when it was made.
+
+    Only days that count as a real 24-hour mean are scored, the
+    same days the backtest scores. A forecast checked against a
+    14-hour mean is being marked against a different quantity, and
+    the live record should not be easier or harder to pass than
+    the backtest it is compared with.
     """
-    truth = {s.day.isoformat(): s.y for s in samples if s.y is not None}
+    truth = {s.day.isoformat(): s.y for s in samples
+             if s.y is not None and s.valid_target}
     filled = 0
     for day, record in history.items():
         if record.get("actual") is not None:
@@ -102,6 +109,28 @@ def attach_outcomes(history, samples):
         record["band_hit"] = evaluate.band(actual) == record["band"]
         filled += 1
     return filled
+
+
+def unscore_thin(history, samples):
+    """Withdraw scores that were attached from a thin day.
+
+    Before attach_outcomes checked the hour count, a few forecasts
+    were scored against partial days. Those scores are taken back
+    here so the day can be scored properly once the rest of its
+    hours publish. The forecast itself stays exactly as issued.
+    A day that has already been scored against a full mean is
+    still never rescored.
+    """
+    thin = {s.day.isoformat() for s in samples
+            if s.y is not None and not s.valid_target}
+    cleared = 0
+    for day, record in history.items():
+        if day in thin and record.get("actual") is not None:
+            record["actual"] = None
+            record["error"] = None
+            record.pop("band_hit", None)
+            cleared += 1
+    return cleared
 
 
 def describe(sample, model, sd, today):
@@ -148,6 +177,9 @@ def main():
     samples = features.build(use_weather=weather)
     history = load_history()
 
+    cleared = unscore_thin(history, samples)
+    if cleared:
+        print(f"withdrew {cleared} score(s) taken from a thin day")
     filled = attach_outcomes(history, samples)
     if filled:
         print(f"attached {filled} observed outcome(s) to past forecasts")

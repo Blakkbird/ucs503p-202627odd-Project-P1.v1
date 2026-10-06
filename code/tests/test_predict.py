@@ -18,9 +18,10 @@ import predict
 class FakeSample:
     """Just enough of features.Sample for attach_outcomes."""
 
-    def __init__(self, day, y):
+    def __init__(self, day, y, valid_target=True):
         self.day = day
         self.y = y
+        self.valid_target = valid_target
 
 
 def record(day, pm25, actual=None):
@@ -88,3 +89,30 @@ def test_prediction_days_are_always_in_the_future_at_issue():
     }
     for day, rec in history.items():
         assert rec["issued"] < day
+
+
+def test_a_thin_day_is_not_scored():
+    """Scored on the same days as the backtest, or not at all."""
+    history = {"2026-09-02": record("2026-09-02", 20.0)}
+    filled = predict.attach_outcomes(
+        history, [FakeSample(date(2026, 9, 2), 41.0, valid_target=False)])
+    assert filled == 0
+    assert history["2026-09-02"]["actual"] is None
+
+
+def test_a_score_from_a_thin_day_is_withdrawn():
+    history = {"2026-09-02": record("2026-09-02", 20.0, actual=41.0)}
+    history["2026-09-02"]["band_hit"] = False
+    cleared = predict.unscore_thin(
+        history, [FakeSample(date(2026, 9, 2), 41.0, valid_target=False)])
+    assert cleared == 1
+    assert history["2026-09-02"]["actual"] is None
+    assert history["2026-09-02"]["pm25"] == 20.0, "the forecast stays"
+
+
+def test_a_full_day_score_is_not_withdrawn():
+    history = {"2026-09-02": record("2026-09-02", 20.0, actual=24.0)}
+    cleared = predict.unscore_thin(
+        history, [FakeSample(date(2026, 9, 2), 24.0)])
+    assert cleared == 0
+    assert history["2026-09-02"]["actual"] == 24.0
