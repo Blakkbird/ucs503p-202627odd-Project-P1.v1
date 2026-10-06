@@ -1,0 +1,88 @@
+name: Extend history
+
+# Run by hand, from the Actions tab. Pulls the record back to the
+# start of the live sensor, fills weather and fires for the new
+# rows, refits, rebuilds the pages and commits.
+#
+# Done here rather than on a laptop for two reasons. The keys are
+# already secrets here. And the daily job commits daily.csv every
+# morning, so a copy extended locally would have to be merged
+# against it; written on master, there is nothing to merge.
+#
+# Leave dry_run ticked the first time. It fetches everything and
+# prints what would change without writing a byte.
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "first day to fetch (YYYY-MM-DD)"
+        default: "2025-02-01"
+      dry_run:
+        description: "report only, commit nothing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+# Shared with the daily job, so the two never write daily.csv at
+# the same time. A queued run waits instead of being cancelled.
+concurrency:
+  group: data-writes
+  cancel-in-progress: false
+
+jobs:
+  extend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Extend observations and CAMS
+        env:
+          OPENAQ_KEY: ${{ secrets.OPENAQ_KEY }}
+          START: ${{ inputs.start }}
+          DRY: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: python scripts/extend_history.py --start "$START" $DRY
+
+      - name: Fill weather and fires
+        if: ${{ !inputs.dry_run }}
+        env:
+          FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+        run: python scripts/backfill_history.py --force
+
+      - name: Refit and rebuild the pages
+        if: ${{ !inputs.dry_run }}
+        run: |
+          python code/evaluate.py
+          python code/predict.py || true
+          python code/pages.py
+
+      - name: Validate what was written
+        if: ${{ !inputs.dry_run }}
+        run: python -m pytest code/tests/ -q
+
+      - name: Commit
+        if: ${{ !inputs.dry_run }}
+        env:
+          START: ${{ inputs.start }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ docs/forecast.md docs/results.md
+          if git diff --staged --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git commit -m "data: extend history back to $START"
+          git push
