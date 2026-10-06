@@ -63,7 +63,7 @@ $(ICONS_FOLDER)/simple $(ICONS_FOLDER) :
 ### The daily job runs these in the same order. Handy for
 ### reproducing a day's output locally when something looks off.
 
-.PHONY: ingest eval forecast site daily check history
+.PHONY: ingest eval forecast site daily check history compare
 
 ingest:
 	python code/ingest/run_daily.py
@@ -91,3 +91,8 @@ check:
 history:
 	python scripts/extend_history.py
 	python scripts/backfill_history.py --force
+
+# Candidate burning-season models against the current one. Reads
+# daily.csv, writes nothing.
+compare:
+	python scripts/compare_models.py

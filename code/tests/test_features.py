@@ -215,3 +215,37 @@ def test_walking_back_never_reaches_forward():
         taken = start + timedelta(days=int(sample.persistence_op))
         assert taken <= (sample.day - timedelta(days=1)
                          - timedelta(days=config.OBS_LATENCY_DAYS))
+
+
+def test_interactions_are_off_by_default():
+    sample = features.build(synthetic(10), use_weather=True)[-1]
+    assert not any(n in features.INTERACTIONS for n in sample.names)
+
+
+def test_an_interaction_is_zero_outside_burning_season():
+    built = features.build(synthetic(40), use_weather=True,
+                           extra=("burn_fire",))
+    # The first row has no earlier fire count to lag onto, so it is
+    # blank either way; every other January row should read zero.
+    filled = [s for s in built
+              if s.x[s.names.index("fire_log")] is not None]
+    assert filled
+    assert all(s.x[s.names.index("burn_fire")] == 0.0 for s in filled)
+
+
+def test_an_interaction_carries_the_input_in_burning_season():
+    built = features.build(synthetic(40, date(2026, 10, 1)),
+                           use_weather=True, extra=("burn_fire",))
+    for s in built:
+        fire = s.x[s.names.index("fire_log")]
+        if fire is not None:
+            assert s.x[s.names.index("burn_fire")] == fire
+
+
+def test_an_interaction_with_a_blank_input_is_blank():
+    """A missing fire count must void the product too, not zero it."""
+    rows = synthetic(40, date(2026, 10, 1))
+    for key in rows:
+        rows[key]["fire_count"] = ""
+    built = features.build(rows, use_weather=True, extra=("burn_fire",))
+    assert all(s.x[s.names.index("burn_fire")] is None for s in built)
