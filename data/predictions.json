@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-07T14:35:53+05:30",
+  "generated_at": "2026-10-08T14:51:03+05:30",
   "model": {
     "alpha": 100.0,
     "features": [
@@ -13,7 +13,7 @@
       "wind_v",
       "fire_log"
     ],
-    "fitted_rows": 98
+    "fitted_rows": 101
   },
   "predictions": [
     {
@@ -374,8 +374,8 @@
       "issued": "2026-10-02",
       "pm25": 22.31,
       "band": "Good",
-      "actual": null,
-      "error": null,
+      "actual": 37.8,
+      "error": -15.49,
       "interval": [
         15.49,
         31.94
@@ -386,15 +386,16 @@
         "obs_age_days": 4.0,
         "persistence_operational": 21.4,
         "forecast_provenance_live": true
-      }
+      },
+      "band_hit": false
     },
     {
       "date": "2026-10-04",
       "issued": "2026-10-03",
       "pm25": 21.94,
       "band": "Good",
-      "actual": null,
-      "error": null,
+      "actual": 42.4,
+      "error": -20.46,
       "interval": [
         15.26,
         31.37
@@ -405,15 +406,16 @@
         "obs_age_days": 4.0,
         "persistence_operational": 20.9,
         "forecast_provenance_live": true
-      }
+      },
+      "band_hit": false
     },
     {
       "date": "2026-10-05",
       "issued": "2026-10-04",
       "pm25": 22.29,
       "band": "Good",
-      "actual": null,
-      "error": null,
+      "actual": 38.1,
+      "error": -15.81,
       "interval": [
         15.51,
         31.86
@@ -423,6 +425,26 @@
         "cams_pm25": 90.19,
         "obs_age_days": 4.0,
         "persistence_operational": 34.2,
+        "forecast_provenance_live": true
+      },
+      "band_hit": false
+    },
+    {
+      "date": "2026-10-09",
+      "issued": "2026-10-08",
+      "pm25": 26.14,
+      "band": "Good",
+      "actual": null,
+      "error": null,
+      "interval": [
+        18.29,
+        37.18
+      ],
+      "inputs": {
+        "cams_log": 4.6821,
+        "cams_pm25": 107.0,
+        "obs_age_days": 4.0,
+        "persistence_operational": 38.1,
         "forecast_provenance_live": true
       }
     }
