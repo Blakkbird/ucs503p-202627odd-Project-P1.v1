@@ -88,8 +88,15 @@ def attach_outcomes(history, samples):
 
     The prediction itself is never touched here -- only `actual`
     and `error`, which did not exist when it was made.
+
+    Only days that count as a real 24-hour mean are scored, the
+    same days the backtest scores. A forecast checked against a
+    14-hour mean is being marked against a different quantity, and
+    the live record should not be easier or harder to pass than
+    the backtest it is compared with.
     """
-    truth = {s.day.isoformat(): s.y for s in samples if s.y is not None}
+    truth = {s.day.isoformat(): s.y for s in samples
+             if s.y is not None and s.valid_target}
     filled = 0
     for day, record in history.items():
         if record.get("actual") is not None:
@@ -102,6 +109,28 @@ def attach_outcomes(history, samples):
         record["band_hit"] = evaluate.band(actual) == record["band"]
         filled += 1
     return filled
+
+
+def unscore_thin(history, samples):
+    """Withdraw scores that were attached from a thin day.
+
+    Before attach_outcomes checked the hour count, a few forecasts
+    were scored against partial days. Those scores are taken back
+    here so the day can be scored properly once the rest of its
+    hours publish. The forecast itself stays exactly as issued.
+    A day that has already been scored against a full mean is
+    still never rescored.
+    """
+    thin = {s.day.isoformat() for s in samples
+            if s.y is not None and not s.valid_target}
+    cleared = 0
+    for day, record in history.items():
+        if day in thin and record.get("actual") is not None:
+            record["actual"] = None
+            record["error"] = None
+            record.pop("band_hit", None)
+            cleared += 1
+    return cleared
 
 
 def describe(sample, model, sd, today):
@@ -148,6 +177,9 @@ def main():
     samples = features.build(use_weather=weather)
     history = load_history()
 
+    cleared = unscore_thin(history, samples)
+    if cleared:
+        print(f"withdrew {cleared} score(s) taken from a thin day")
     filled = attach_outcomes(history, samples)
     if filled:
         print(f"attached {filled} observed outcome(s) to past forecasts")
@@ -155,13 +187,22 @@ def main():
     # Why no forecast was issued, when none was. Kept as a value
     # rather than just printed, because the run has to be able to
     # fail on it at the end.
-    skipped = None
+    #
+    # Two versions of the reason: the log gets the exact one, the
+    # public page gets one a reader can make sense of.
+    skipped, reason = None, None
     target = next((s for s in samples if s.day == tomorrow), None)
     if target is None:
         skipped = "the ingest has not written a row for it"
+        reason = "the inputs for that day were not fetched"
     elif not target.complete:
         missing = [n for n, v in zip(target.names, target.x) if v is None]
         skipped = f"incomplete features, missing {missing}"
+        if "obs_recent_log" in missing:
+            reason = ("the station has not published a usable reading "
+                      "recent enough to work from")
+        else:
+            reason = "some of the inputs for that day are missing"
 
     if skipped:
         print(f"no forecast for {tomorrow}: {skipped}")
@@ -183,6 +224,15 @@ def main():
             "fitted_rows": len(features.usable(samples)),
         },
         "predictions": [history[d] for d in sorted(history)],
+        # What this run was trying to do and whether it managed.
+        # The page reads this rather than guessing from the record,
+        # so a failed morning says it failed instead of showing the
+        # last number it had.
+        "status": {
+            "target": tomorrow.isoformat(),
+            "issued": tomorrow.isoformat() in history,
+            "reason": reason,
+        },
     }
     config.DATA.mkdir(exist_ok=True)
     with open(config.PREDICTIONS_JSON, "w") as f:

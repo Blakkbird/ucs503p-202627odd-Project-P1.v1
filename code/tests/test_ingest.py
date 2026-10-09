@@ -53,6 +53,14 @@ def test_normal_publication_delay_does_not_trip_the_limit():
     assert config.OBS_LATENCY_DAYS < config.OBS_STALENESS_LIMIT_DAYS
 
 
+def test_the_forecast_runs_dry_before_the_alarm_goes_off():
+    """If the lookback reached past the staleness limit, the job
+    could keep forecasting from a feed it has already declared
+    dead. The other way round, the alarm is the louder signal."""
+    reach = config.OBS_LATENCY_DAYS + config.OBS_LOOKBACK_DAYS
+    assert reach < config.OBS_STALENESS_LIMIT_DAYS
+
+
 def test_empty_record_reports_none_rather_than_zero():
     """Nothing at all is not the same as fresh, and returning 0
     here would read as the healthiest possible feed."""
@@ -126,3 +134,35 @@ def test_observations_come_from_the_days_endpoint():
     src = inspect.getsource(run_daily.observed_window)
     assert "/days?" in src
     assert "/hours?" not in src
+
+
+def test_a_blank_observation_is_filled():
+    row = {"obs_pm25": "", "obs_hours": ""}
+    assert run_daily.merge_obs(row, 30.0, 24)
+    assert row["obs_pm25"] == 30.0 and row["obs_hours"] == 24
+
+
+def test_a_thin_observation_is_refreshed_when_more_hours_land():
+    row = {"obs_pm25": "41.2", "obs_hours": "14"}
+    assert run_daily.merge_obs(row, 37.5, 23)
+    assert row["obs_pm25"] == 37.5 and row["obs_hours"] == 23
+
+
+def test_a_full_observation_is_never_overwritten():
+    row = {"obs_pm25": "30.0", "obs_hours": "24"}
+    assert not run_daily.merge_obs(row, 99.0, 24)
+    assert row["obs_pm25"] == "30.0"
+
+
+def test_a_thin_observation_is_not_swapped_for_a_thinner_one():
+    row = {"obs_pm25": "41.2", "obs_hours": "14"}
+    assert not run_daily.merge_obs(row, 50.0, 10)
+    assert not run_daily.merge_obs(row, 50.0, None)
+    assert row["obs_pm25"] == "41.2"
+
+
+def test_an_uncounted_observation_is_left_alone():
+    """Bootstrap rows have no hour count. Nothing to compare, so
+    nothing is replaced."""
+    row = {"obs_pm25": "30.0", "obs_hours": ""}
+    assert not run_daily.merge_obs(row, 99.0, 24)

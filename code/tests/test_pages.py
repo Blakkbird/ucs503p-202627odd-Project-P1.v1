@@ -68,7 +68,8 @@ def test_chart_is_well_formed():
 
 def test_forecast_page_reports_the_live_record():
     samples = features.build(synthetic(30))
-    page = pages.forecast_page(sample_predictions(), samples)
+    page = pages.forecast_page(sample_predictions(), samples,
+                               today=date(2026, 9, 4))
 
     assert "# Tomorrow in Patiala" in page
     assert "3" in page and "band" in page.lower()
@@ -77,8 +78,42 @@ def test_forecast_page_reports_the_live_record():
 
 def test_forecast_page_says_so_when_there_is_no_forecast():
     page = pages.forecast_page({"predictions": []},
-                                    features.build(synthetic(30)))
+                               features.build(synthetic(30)),
+                               today=date(2026, 9, 4))
     assert "No forecast" in page
+
+
+def test_a_stale_forecast_is_not_shown_as_tomorrows():
+    """Records run to 6 September. On the 10th, tomorrow is the
+    11th, and the page must not dress the 6th up as it."""
+    blob = sample_predictions()
+    blob["status"] = {"target": "2026-09-11", "issued": False,
+                      "reason": "the station has not published a "
+                                "usable reading recent enough to work from"}
+    page = pages.forecast_page(blob, features.build(synthetic(30)),
+                               today=date(2026, 9, 10))
+    assert "No forecast" in page
+    assert "Friday 11 September" in page
+    assert "station has not published" in page
+    assert "last forecast on record was for Sunday 06 September" in page
+
+
+def test_a_reason_for_some_other_day_is_not_reused():
+    blob = sample_predictions()
+    blob["status"] = {"target": "2026-09-08", "issued": False,
+                      "reason": "something that happened on the 7th"}
+    page = pages.forecast_page(blob, features.build(synthetic(30)),
+                               today=date(2026, 9, 10))
+    assert "happened on the 7th" not in page
+    assert "has not issued one yet" in page
+
+
+def test_tomorrows_forecast_is_shown_when_it_exists():
+    page = pages.forecast_page(sample_predictions(),
+                               features.build(synthetic(30)),
+                               today=date(2026, 9, 5))
+    assert "No forecast" not in page
+    assert "Sunday 06 September" in page
 
 
 def test_results_page_reports_both_baselines():

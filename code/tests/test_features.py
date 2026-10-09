@@ -157,3 +157,61 @@ def test_fire_count_is_lagged_behind_the_issue_date():
     fire = sample.x[sample.names.index("fire_log")]
     assert fire is not None
     assert fire < 3.0, "the forecast saw fires that had not been reported yet"
+
+
+def _sample_for(rows, day):
+    return next(s for s in features.build(rows) if s.day == day)
+
+
+def test_walks_back_when_the_cutoff_day_is_missing():
+    """The feed publishes in batches, so the cutoff day is often
+    not there yet. The row should take the day before, not give up."""
+    rows = synthetic(30)
+    target = date(2026, 1, 20)
+    cutoff = target - timedelta(days=1 + config.OBS_LATENCY_DAYS)
+    rows[cutoff.isoformat()]["obs_pm25"] = ""
+
+    sample = _sample_for(rows, target)
+    before = cutoff - timedelta(days=1)
+    assert sample.persistence_op == float((before - date(2026, 1, 1)).days)
+    assert sample.obs_age == float(config.OBS_LATENCY_DAYS + 2)
+    assert sample.complete
+
+
+def test_walks_back_past_a_thin_cutoff_day():
+    rows = synthetic(30)
+    target = date(2026, 1, 20)
+    cutoff = target - timedelta(days=1 + config.OBS_LATENCY_DAYS)
+    rows[cutoff.isoformat()]["obs_hours"] = str(config.MIN_OBS_HOURS - 2)
+
+    sample = _sample_for(rows, target)
+    assert sample.persistence_op != float((cutoff - date(2026, 1, 1)).days)
+    assert sample.complete
+
+
+def test_gives_up_past_the_lookback():
+    """A feed that has been quiet longer than the lookback leaves
+    the row without an observation rather than reaching further."""
+    rows = synthetic(30)
+    target = date(2026, 1, 25)
+    cutoff = target - timedelta(days=1 + config.OBS_LATENCY_DAYS)
+    for k in range(config.OBS_LOOKBACK_DAYS + 1):
+        rows[(cutoff - timedelta(days=k)).isoformat()]["obs_pm25"] = ""
+
+    sample = _sample_for(rows, target)
+    assert sample.persistence_op is None
+    assert not sample.complete
+
+
+def test_walking_back_never_reaches_forward():
+    """Blanking the cutoff must not let a newer day slip in."""
+    rows = synthetic(30)
+    start = date(2026, 1, 1)
+    for i in range(5, 30, 3):
+        rows[(start + timedelta(days=i)).isoformat()]["obs_pm25"] = ""
+    for sample in features.build(rows):
+        if sample.persistence_op is None:
+            continue
+        taken = start + timedelta(days=int(sample.persistence_op))
+        assert taken <= (sample.day - timedelta(days=1)
+                         - timedelta(days=config.OBS_LATENCY_DAYS))

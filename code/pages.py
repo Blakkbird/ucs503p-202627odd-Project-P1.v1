@@ -138,12 +138,32 @@ def chart(observed, forecasts, width=760, height=260):
     return "\n".join(out)
 
 
+def missing(day, reason=None, last=None):
+    """Shown in place of the card when tomorrow has no forecast.
+
+    The page used to fall back to the newest record it had, under a
+    heading that still said tomorrow, so a run that failed on a
+    Tuesday kept showing Monday's number as though it were
+    Wednesday's. Showing nothing is better than showing something
+    stale, and saying why is better than both.
+    """
+    why = (f"The daily job could not issue one: {reason}."
+           if reason else "The daily job has not issued one yet.")
+    if last:
+        when = date.fromisoformat(last["date"]).strftime("%A %d %B")
+        why += (f" The last forecast on record was for {when}, at "
+                f"{last['pm25']:.0f} &micro;g/m&sup3;.")
+    return (
+        '<div class="pawan-card" style="border-left-color:#9e9e9e">\n'
+        f'  <div class="pawan-when">{day.strftime("%A %d %B")}</div>\n'
+        '  <div class="pawan-value">No forecast</div>\n'
+        f'  <div class="pawan-note">{why}</div>\n'
+        "</div>\n"
+    )
+
+
 def headline(record):
     """The card at the top of the page: one number, read at a glance."""
-    if not record:
-        return ("!!! warning \"No forecast on record\"\n\n"
-                "    The daily job has not issued one for tomorrow yet.\n")
-
     colour = BAND_COLOUR.get(record["band"], "#666")
     day = date.fromisoformat(record["date"])
     low, high = record.get("interval", [None, None])
@@ -177,15 +197,30 @@ def outcomes_table(records, limit=10):
     return "\n".join(lines) + "\n"
 
 
-def forecast_page(predictions, samples):
-    """docs/forecast.md -- what the service is actually for."""
+def forecast_page(predictions, samples, today=None):
+    """docs/forecast.md -- what the service is actually for.
+
+    `today` is a parameter so the tests can pin it. Left to the
+    clock, a test written with September data quietly stopped
+    drawing its chart once September fell out of the window, and
+    that failure would have blocked the daily commit.
+    """
     records = predictions.get("predictions", []) if predictions else []
     by_day = {r["date"]: r for r in records}
 
-    tomorrow = (datetime.now(IST).date() + timedelta(days=1)).isoformat()
-    latest = by_day.get(tomorrow) or (records[-1] if records else None)
+    today = today or datetime.now(IST).date()
+    tomorrow = today + timedelta(days=1)
+    record = by_day.get(tomorrow.isoformat())
+    if record:
+        top = headline(record)
+    else:
+        status = (predictions or {}).get("status") or {}
+        reason = (status.get("reason")
+                  if status.get("target") == tomorrow.isoformat() else None)
+        earlier = [r for r in records if r["date"] < tomorrow.isoformat()]
+        top = missing(tomorrow, reason, earlier[-1] if earlier else None)
 
-    cutoff = datetime.now(IST).date() - timedelta(days=CHART_DAYS)
+    cutoff = today - timedelta(days=CHART_DAYS)
     observed = [(s.day, s.y) for s in samples
                 if s.y is not None and s.day >= cutoff]
     drawn = [(date.fromisoformat(r["date"]), r["pm25"],
@@ -210,7 +245,7 @@ def forecast_page(predictions, samples):
     stamp = (predictions or {}).get("generated_at", "unknown")
     return f"""# Tomorrow in Patiala
 
-{headline(latest)}
+{top}
 
 {chart(observed, drawn)}
 

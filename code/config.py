@@ -47,12 +47,23 @@ HORIZON_DAYS = 1
 # issue date. Persistence gets scored both ways, see evaluate.py.
 OBS_LATENCY_DAYS = 3
 
+# The feed does not publish one day at a time. It lands in batches
+# every two to five days, and now and then a day arrives with too
+# few hours to count. Reading only the single day at the cutoff
+# meant either of those left the forecast with no recent
+# observation at all: 10 of the 31 target days between 7 September
+# and 7 October went out with nothing. So the reader walks back up
+# to this many extra days to the freshest valid reading. Backwards
+# only, so the information set is never widened.
+OBS_LOOKBACK_DAYS = 3
+
 # How stale the freshest observation may get before the daily job
 # treats it as a broken feed rather than a slow one. A day or two
 # with no reading is ordinary; a week means nobody is writing
 # ground truth any more and the training set has stopped growing.
-# Kept comfortably above OBS_LATENCY_DAYS so normal publication
-# delay never trips it.
+# Kept above OBS_LATENCY_DAYS + OBS_LOOKBACK_DAYS, so normal
+# publication delay never trips it, and so that by the time it
+# does trip the forecast has already run out of readings to use.
 OBS_STALENESS_LIMIT_DAYS = 7
 
 # FIRMS reports detections for days that have already happened,

@@ -20,6 +20,13 @@ had published was for 14 August. So on the morning of D-1, the
 freshest reading is roughly D-4, not D-1. `config.OBS_LATENCY_DAYS`
 holds that lag, and `features.py` refuses to read anything newer.
 
+The feed also publishes in batches rather than once a day, so the
+day at that cutoff is sometimes not there yet, or arrives with too
+few hours to count. When that happens the reader walks back, up to
+`config.OBS_LOOKBACK_DAYS` more days, to the freshest valid
+reading. It only ever walks backwards, so the forecast never sees
+anything it would not have had at 09:00.
+
 This matters more than it sounds, because it changes what
 "persistence" means.
 

@@ -6,7 +6,9 @@ morning of D-1, when the job that produces the forecast actually
 runs. Three things make that awkward:
 
   * the CPCB feed lags, so the freshest observation on D-1 is
-    roughly D-4 rather than D-2 (config.OBS_LATENCY_DAYS);
+    roughly D-4 rather than D-2 (config.OBS_LATENCY_DAYS), and it
+    publishes in batches, so that day is not always there yet
+    (config.OBS_LOOKBACK_DAYS);
   * rows written by scripts/bootstrap.py have no cams_issue_date,
     so we cannot prove which model run they came from;
   * some days are published with only a handful of hours behind
@@ -174,7 +176,13 @@ def build(rows=None, use_weather=True):
         issue = day - timedelta(days=1)
         cutoff = issue - timedelta(days=config.OBS_LATENCY_DAYS)
 
-        recent = _observed_upto(obs, cutoff, 1)
+        # The freshest valid reading at or before the cutoff. This
+        # used to look at the cutoff day alone, and when that day
+        # had not been published yet (or came in thin) the row had
+        # no observation at all and no forecast went out. Training
+        # rows use the same rule, so the model is fitted on the
+        # same kind of input it is fed.
+        recent = _observed_upto(obs, cutoff, config.OBS_LOOKBACK_DAYS + 1)
         obs_recent = recent[-1] if recent else None
 
         # How stale that reading is. Not a feature any more, but
@@ -182,7 +190,7 @@ def build(rows=None, use_weather=True):
         # be read back against a half-dead feed later.
         age = None
         if obs_recent is not None:
-            for k in range(config.OBS_LATENCY_DAYS + 8):
+            for k in range(config.OBS_LOOKBACK_DAYS + 1):
                 if obs.get(cutoff - timedelta(days=k)) is not None:
                     age = float(k + config.OBS_LATENCY_DAYS + 1)
                     break
