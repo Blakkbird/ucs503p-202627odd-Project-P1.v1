@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   ingest:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # master is protected and requires a pull request, and the
       # default GITHUB_TOKEN is not on the ruleset bypass list.
