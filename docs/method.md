@@ -148,44 +148,39 @@ model, because the physically correct signal was the lagged one
 all along — smoke lifted off a field upwind takes the better part
 of a day to arrive.
 
+## A year and a half of history
+
+Everything above was first fitted on about a hundred days, all of
+them summer and monsoon. The table began on 15 May 2026 because
+the bootstrap asked Open-Meteo for `past_days=92`, on the belief
+that this was as far back as the CAMS archive went. It was only the
+ceiling on that one parameter. The live sensor has reported since
+February 2025, so the 2025 burning season had been available from
+the start.
+
+It mattered in October. On 3 and 5 October the live forecast was
+22 µg/m³ against an observed 38: the model had never seen the
+season begin. `scripts/extend_history.py` pulled the table back to
+19 February 2025, and every day of October and November 2025 came
+with it. Refitted on that history, the backtest gives 33 and 42 for
+the same two days. The data page has the details.
+
+With a burning season in the table, four ways of letting the season
+change the model were tested against the current one by
+`scripts/compare_models.py`: interactions on fire count and
+eastward wind, on persistence and CAMS, all four, and a separate
+burning-season fit. The bar was fixed first: clearly better in
+burning season, no more than a point or two worse in calm. None
+cleared it, so the model is unchanged.
+
 ## Where it stands
 
-Over 40 backtested days, 27 July to 11 September:
-
-| | MAE | RMSE | band hit |
-| --- | --- | --- | --- |
-| model | 3.29 | 4.26 | 1.00 |
-| persistence | 3.48 | 4.26 | 1.00 |
-| persistence (operational) | 4.60 | 5.89 | 1.00 |
-| climatology | 9.55 | 10.51 | 1.00 |
-| raw CAMS | 40.96 | 43.75 | 0.00 |
-
-Against the baseline it shares an information set with, that is a
-28.3% improvement, comfortably past the 10% calm-season target.
-Against the textbook baseline it is 5.2% ahead, which was not
-expected and is a small enough margin to be worth rechecking on a
-longer window.
-
-The caveats have not gone away, and three are worth stating.
-
-The window is calm season, when the observed mean sits near 23
-µg/m³ and moves slowly, which is exactly the regime where
-persistence is strongest and a forecast adds least. The band hit
-rate is close to meaningless here: almost every day falls in Good,
-so guessing Good every time would score nearly as well.
-
-The 20% burning-season target rests on a feature that has never
-fired. No training row falls in October or November, so `burning`
-carries no weight yet. `fire_log` does vary and does carry weight,
-which is the tested half of the mechanism.
-
-And the feature set was chosen on this window. Each change above
-has a reason that stands independently of its effect on the score,
-which is why the reasons are written out rather than just the
-numbers. But the reasons and the scores were looked at together,
-and forty days is not enough to fully separate the two. October is
-the honest test.
-
-The live results page rebuilds from `data/metrics.json` on every
-ingest, so the figures in this section are a snapshot and
-[Results](results.md) is the current one.
+[Results](results.md) is regenerated every morning and is the
+current evaluation, split by season and with a live-only line. In
+short: both targets against operational persistence are met,
+textbook persistence still wins, and the model does not see spikes
+coming. Its highest forecast across the whole backtest is about
+75 µg/m³, against a worst observed day of 141, and it flagged none
+of the days that reached the Poor band. The
+[prototype report](https://github.com/Blakkbird/ucs503p-202627odd-Project-P1.v1/blob/master/project-report-prototype-stage/main.pdf)
+sets out the numbers and the plan for that.
