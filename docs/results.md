@@ -1,7 +1,7 @@
 # Results
 
-Walk-forward backtest over 2026-07-27 to 2026-10-07,
-61 days. The model is refitted from scratch
+Walk-forward backtest over 2026-07-26 to 2026-10-07,
+67 days. The model is refitted from scratch
 before each day and only ever sees days strictly before the one
 it is predicting. There is no shuffled train/test split anywhere
 in this project; the rows are a time series and shuffling them
@@ -9,16 +9,16 @@ would let the model read its own future.
 
 | Method | n | MAE | RMSE | Bias | Band correct |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| **Pawan** | 61 | **4.14** | 5.65 | -1.35 | 90% |
-| Persistence (textbook) | 57 | 4.09 | 5.34 | -0.28 | 95% |
-| Persistence (operational) | 61 | 6.51 | 8.48 | -0.94 | 85% |
-| Climatology | 61 | 8.84 | 9.97 | +6.21 | 90% |
-| Raw CAMS | 61 | 39.34 | 42.06 | +39.34 | 3% |
+| **Pawan** | 67 | **4.07** | 5.42 | -1.38 | 88% |
+| Persistence (textbook) | 63 | 4.15 | 5.42 | -0.34 | 94% |
+| Persistence (operational) | 67 | 6.47 | 8.42 | -0.85 | 85% |
+| Climatology | 67 | 8.96 | 10.02 | +5.92 | 88% |
+| Raw CAMS | 67 | 40.42 | 43.22 | +40.42 | 3% |
 
 ## Skill
 
-- Against operational persistence: **36.3% better** on MAE.
-- Against textbook persistence: **1.2% worse** on MAE.
+- Against operational persistence: **37.0% better** on MAE.
+- Against textbook persistence: **1.8% better** on MAE.
 
 The two baselines are both persistence, and the difference
 between them is the whole argument.
@@ -46,15 +46,15 @@ compared with each other but not read as physics.
 
 | Feature | Weight |
 | --- | ---: |
-| `cams_log` | +0.100 |
-| `rh` | -0.058 |
-| `fire_log` | +0.051 |
-| `temp` | +0.049 |
-| `wind_u` | +0.041 |
-| `burning` | +0.038 |
-| `obs_recent_log` | +0.034 |
-| `wind_v` | -0.028 |
-| `wind_speed` | +0.009 |
+| `cams_log` | +0.101 |
+| `rh` | -0.059 |
+| `fire_log` | +0.053 |
+| `temp` | +0.048 |
+| `burning` | +0.046 |
+| `wind_u` | +0.042 |
+| `obs_recent_log` | +0.035 |
+| `wind_v` | -0.030 |
+| `wind_speed` | +0.010 |
 
 
 ## What is wrong with this
