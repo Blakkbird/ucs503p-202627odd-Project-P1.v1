@@ -63,7 +63,7 @@ $(ICONS_FOLDER)/simple $(ICONS_FOLDER) :
 ### The daily job runs these in the same order. Handy for
 ### reproducing a day's output locally when something looks off.
 
-.PHONY: ingest eval forecast site daily check history compare
+.PHONY: ingest eval forecast site daily check history compare report
 
 ingest:
 	python code/ingest/run_daily.py
@@ -96,3 +96,9 @@ history:
 # daily.csv, writes nothing.
 compare:
 	python scripts/compare_models.py
+
+# The prototype report: regenerate its numbers from data/, then
+# build the PDF.
+report:
+	python scripts/report_figures.py
+	cd project-report-prototype-stage && latexmk -pdf main.tex
