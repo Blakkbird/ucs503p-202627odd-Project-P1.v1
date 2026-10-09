@@ -50,6 +50,28 @@ import config
 CORE = ["cams_log", "obs_recent_log", "burning"]
 WEATHER = ["temp", "rh", "wind_speed", "wind_u", "wind_v", "fire_log"]
 
+# Burning-season interactions. None of these is fitted by default.
+# `burning` on its own can only shift the whole season up or down;
+# these let the season change how much the model leans on each
+# input. scripts/compare_models.py backtests them against the plain
+# set, and one only moves into the fitted list if it earns it on
+# burning-season days without costing more than that on calm ones.
+#
+#   burn_fire     smoke is a burning-season mechanism; in June a
+#                 fire count is mostly noise
+#   burn_wind_u   the stubble is west and northwest of Patiala, so
+#                 the eastward wind component is what carries it in
+#   burn_obs      a four-day-old reading says less when the level
+#                 can double inside a week
+#   burn_cams     CAMS gets its fire emissions from satellites and
+#                 may be worth more, or less, once they matter
+INTERACTIONS = {
+    "burn_fire": ("burning", "fire_log"),
+    "burn_wind_u": ("burning", "wind_u"),
+    "burn_obs": ("burning", "obs_recent_log"),
+    "burn_cams": ("burning", "cams_log"),
+}
+
 
 @dataclass
 class Sample:
@@ -125,16 +147,20 @@ def _observed_upto(obs, cutoff, window):
     return out
 
 
-def build(rows=None, use_weather=True):
+def build(rows=None, use_weather=True, extra=()):
     """Build one Sample per target day, oldest first.
 
     `use_weather` is on by default now that the meteorology
     backfill has been run. Turning it off reproduces the earlier
     CAMS-plus-persistence model, which is the ablation quoted in
     the report; it is not something the daily job should do.
+
+    `extra` names INTERACTIONS to append. Each is the product of
+    two columns already in the row, so it adds nothing the row did
+    not already know at issue time.
     """
     rows = load() if rows is None else rows
-    names = CORE + (WEATHER if use_weather else [])
+    names = CORE + (WEATHER if use_weather else []) + list(extra)
 
     # Two views of the observations. `measured` is everything the
     # station published, and is what a target day's label and the
@@ -233,6 +259,11 @@ def build(rows=None, use_weather=True):
                 "fire_log": (math.log1p(recent_fires)
                              if recent_fires is not None else None),
             })
+
+        for name in extra:
+            left, right = INTERACTIONS[name]
+            a, b = values.get(left), values.get(right)
+            values[name] = None if a is None or b is None else a * b
 
         samples.append(Sample(
             day=day,

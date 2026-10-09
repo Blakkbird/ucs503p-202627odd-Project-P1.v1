@@ -127,6 +127,7 @@ def backtest(samples):
             "model": model.predict_one(target.x),
             "alpha": model.alpha,
             "n_train": len(train),
+            "live": target.live,
         })
 
     return runs
@@ -171,6 +172,15 @@ def season_split(runs):
     return {"calm": calm, "burning": burn}
 
 
+def breakdown(samples, subset):
+    """The model and every baseline, scored on one subset of runs."""
+    days = [r["day"] for r in subset]
+    entry = {"model": score([(r["truth"], r["model"]) for r in subset])}
+    for name, pairs in baselines(samples, days).items():
+        entry[name] = score(pairs)
+    return entry
+
+
 def report(use_weather=False):
     samples = features.build(use_weather=use_weather)
     runs = backtest(samples)
@@ -193,6 +203,7 @@ def report(use_weather=False):
         "min_obs_hours": config.MIN_OBS_HOURS,
         "overall": scored,
         "by_season": {},
+        "by_provenance": {},
         "skill": {},
     }
 
@@ -224,13 +235,25 @@ def report(use_weather=False):
     out["skill_vs_persistence"] = out["skill"].get("textbook")
 
     for season, subset in season_split(runs).items():
-        if not subset:
-            continue
-        sub_days = [r["day"] for r in subset]
-        entry = {"model": score([(r["truth"], r["model"]) for r in subset])}
-        for name, pairs in baselines(samples, sub_days).items():
-            entry[name] = score(pairs)
-        out["by_season"][season] = entry
+        if subset:
+            out["by_season"][season] = breakdown(samples, subset)
+
+    # The same scores split by where the inputs came from. Archive
+    # rows read CAMS and weather from series stitched out of many
+    # model runs, which are a little kinder than a real day-ahead
+    # forecast. Live rows carry the forecast that was actually
+    # issued, so they are the check on how much the archive
+    # flatters the totals.
+    for kind, live in (("live", True), ("backfilled", False)):
+        subset = [r for r in runs if r["live"] == live]
+        if subset:
+            out["by_provenance"][kind] = breakdown(samples, subset)
+
+    burning = [r for r in runs if r["day"].month in config.BURNING_MONTHS]
+    out["counts"] = {
+        "burning_live": sum(1 for r in burning if r["live"]),
+        "burning_backfilled": sum(1 for r in burning if not r["live"]),
+    }
 
     return out, runs
 
@@ -261,11 +284,13 @@ def show(out, runs):
               f"{abs(gain) * 100:5.1f}% MAE")
     print("(target: 10% calm, 20% burning season, against operational)")
 
-    for season, entry in out["by_season"].items():
+    groups = list(out["by_season"].items())
+    groups += list(out.get("by_provenance", {}).items())
+    for label, entry in groups:
         if entry.get("model") and entry.get("persistence_operational"):
             m = entry["model"]["mae"]
             p = entry["persistence_operational"]["mae"]
-            print(f"  {season:8s} n={entry['model']['n']:3d}  "
+            print(f"  {label:10s} n={entry['model']['n']:3d}  "
                   f"model {m:6.2f}  persistence_op {p:6.2f}  "
                   f"({(p - m) / p * 100:+.1f}%)")
 

@@ -2,7 +2,12 @@
 in the proposal. No model involved, just arithmetic.
 
 Rows written here have no cams_issue_date, so they are valid
-for baselines but not for training."""
+for baselines but not for training.
+
+Kept for the record of how the proposal numbers were made. To add
+history to a table that already exists, use extend_history.py:
+this script starts daily.csv from scratch, and refuses to run over
+an existing one unless told to."""
 
 import csv
 import json
@@ -18,7 +23,10 @@ import config
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
-PAST_DAYS = 92  # the CAMS archive window Open-Meteo exposes
+# 92 is the ceiling on `past_days`, which is what this asks for.
+# It is not how far back the CAMS archive goes: an explicit
+# start_date reaches August 2022. See extend_history.py.
+PAST_DAYS = 92
 
 
 def fetch(url, headers=None):
@@ -111,6 +119,13 @@ def mae(pairs):
 
 
 def main():
+    if config.DAILY_CSV.exists() and "--overwrite" not in sys.argv:
+        print(f"{config.DAILY_CSV} already exists, and this would "
+              "replace it with 92 days.")
+        print("Use scripts/extend_history.py to add history, or pass "
+              "--overwrite if starting over is really the point.")
+        return 1
+
     print("Pulling observations ...")
     obs = observed_daily()
     print(f"  {len(obs)} days of observed daily means")

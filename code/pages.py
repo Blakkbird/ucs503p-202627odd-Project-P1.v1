@@ -287,6 +287,114 @@ def weights_table(model):
     return "\n".join(lines) + "\n"
 
 
+# Skill targets from the proposal, against operational persistence.
+TARGETS = {"calm": 0.10, "burning": 0.20}
+SEASONS = {"calm": "Calm (Dec to Sep)", "burning": "Burning (Oct, Nov)"}
+
+
+def gain(entry):
+    """Skill over operational persistence for one score block."""
+    model = (entry or {}).get("model")
+    ref = (entry or {}).get("persistence_operational")
+    if not model or not ref or not ref["mae"]:
+        return None
+    return (ref["mae"] - model["mae"]) / ref["mae"]
+
+
+def season_table(metrics):
+    """One row per season, against the target the proposal set."""
+    seasons = metrics.get("by_season") or {}
+    head = ("| Season | Days | Pawan MAE | Operational persistence MAE "
+            "| Skill | Target |")
+    lines = [head, "| --- | ---: | ---: | ---: | ---: | :--- |"]
+    for key, label in SEASONS.items():
+        entry = seasons.get(key) or {}
+        target = TARGETS[key]
+        skill = gain(entry)
+        if skill is None:
+            lines.append(f"| {label} | 0 | - | - | - "
+                         f"| {target * 100:.0f}%, not yet scored |")
+            continue
+        verdict = "met" if skill >= target else "not met"
+        lines.append(
+            f"| {label} | {entry['model']['n']} "
+            f"| {entry['model']['mae']:.2f} "
+            f"| {entry['persistence_operational']['mae']:.2f} "
+            f"| {skill * 100:+.1f}% | {target * 100:.0f}%, {verdict} |")
+    return "\n".join(lines) + "\n"
+
+
+def live_line(metrics):
+    """The live-only score, which no archive has had a hand in."""
+    live = (metrics.get("by_provenance") or {}).get("live")
+    skill = gain(live)
+    if skill is None:
+        return ""
+    return (f"On the **{live['model']['n']}** days whose CAMS forecast "
+            f"was recorded live rather than read back from an archive, "
+            f"Pawan's MAE is **{live['model']['mae']:.2f}** against "
+            f"{live['persistence_operational']['mae']:.2f} for "
+            f"operational persistence, **{skill * 100:+.1f}%**. No "
+            f"archive has flattered those days, so if this figure and "
+            f"the totals drift apart, this is the one to believe.\n")
+
+
+def caveats(metrics):
+    """What is wrong with the numbers, worked out from the numbers.
+
+    This used to be fixed prose, and it said `burning` had never
+    fired. The moment the history reached back into October that
+    would have become false, on a page whose whole job is to be
+    the honest one.
+    """
+    burn = ((metrics.get("by_season") or {}).get("burning") or {})
+    counts = metrics.get("counts") or {}
+    notes = []
+
+    if not burn.get("model"):
+        notes.append(
+            "- **`burning` has never fired.** No scored day falls in "
+            "October or November, so the burning-season flag carries no "
+            "weight yet and the 20% target rests on a feature the model "
+            "has not seen. `fire_log` does vary and does carry weight, "
+            "which is the part of the mechanism that has been tested.")
+        notes.append(
+            "- **The window is calm season only.** The band accuracy in "
+            "particular is close to meaningless here, because almost "
+            "every day falls in Good and a method that guessed Good every "
+            "time would score nearly as well.")
+    else:
+        back = counts.get("burning_backfilled", 0)
+        live = counts.get("burning_live", 0)
+        n = burn["model"]["n"]
+        days = "day is" if n == 1 else "days are"
+        notes.append(
+            f"- **Burning season is a small sample.** {n} burning-season "
+            f"{days} scored: {back} read back from archives and {live} "
+            f"recorded live. That is one or two seasons at most, and a "
+            f"dry year, a wet one or a shift in when the stubble is burnt "
+            f"would each move these numbers.")
+        notes.append(
+            "- **Band accuracy only means much in burning season.** On "
+            "calm days almost everything falls in Good, and a method "
+            "that guessed Good every time would score nearly as well.")
+
+    notes.append(
+        "- **Archive rows are mildly optimistic.** Rows read back from "
+        "archives take CAMS and weather from series stitched out of the "
+        "opening hours of successive model runs, which sit a little "
+        "closer to what happened than a forecast issued a day ahead. "
+        "The live-only figure, where there is one, is the check on how "
+        "much that flatters the totals.")
+    notes.append(
+        "- **The feature set was chosen on calm-season data.** Every "
+        "change was made for a stated reason and not only because it "
+        "scored better, but the reasons and the scores were looked at "
+        "together. This year's burning season, scored live as it "
+        "happens, is the test nothing here was tuned against.")
+    return "\n".join(notes) + "\n"
+
+
 def results_page(metrics, model):
     """docs/results.md -- the numbers, including the awkward ones."""
     if not metrics:
@@ -334,6 +442,14 @@ would let the model read its own future.
 
 {table}
 
+## By season
+
+The targets are set per season because the two are different
+problems. Calm-season air moves slowly and persistence is hard to
+beat; burning season is when a forecast is worth having.
+
+{season_table(metrics)}
+{live_line(metrics)}
 ## Skill
 
 {verdict("operational", "operational persistence")}{verdict("textbook", "textbook persistence")}
@@ -365,27 +481,9 @@ compared with each other but not read as physics.
 
 ## What is wrong with this
 
-Worth saying plainly, because all of it will matter by November.
+Worth saying plainly.
 
-- **The window is short and quiet.** Every scored day is calm
-  season. The band accuracy in particular is close to meaningless
-  here, because almost every day falls in Good and a method that
-  guessed Good every time would score nearly as well.
-- **`burning` has never fired.** No training row falls in October
-  or November, so the burning-season flag carries no weight yet
-  and the 20% target for that season rests on a feature the model
-  has not seen. `fire_log` does vary and does carry weight, which
-  is the part of the mechanism that has been tested.
-- **Meteorology starts late.** Open-Meteo's archive reaches back
-  about 92 days, so the earliest rows have no weather and drop
-  out of the fit. The usable set grows by one row a day.
-- **The feature set was chosen on this window.** Every change was
-  made for a stated reason and not only because it scored better,
-  but the reasons and the scores were looked at together, and a
-  40-day window is not enough to separate the two. The honest
-  test is how this holds up in October, on days nothing here has
-  been tuned against.
-
+{caveats(metrics)}
 <small>Generated from `data/metrics.json` and `data/model.json`.</small>
 """
 

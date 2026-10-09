@@ -63,7 +63,7 @@ $(ICONS_FOLDER)/simple $(ICONS_FOLDER) :
 ### The daily job runs these in the same order. Handy for
 ### reproducing a day's output locally when something looks off.
 
-.PHONY: ingest eval forecast site daily check
+.PHONY: ingest eval forecast site daily check history compare
 
 ingest:
 	python code/ingest/run_daily.py
@@ -83,3 +83,16 @@ daily: ingest eval forecast site
 check:
 	ruff check code/ scripts/
 	python -m pytest code/tests/ -q
+
+# One-off: the record back to the start of the live sensor, then
+# weather and fires for the new rows. Normally run from the
+# "Extend history" workflow instead, so daily.csv is written on
+# GitHub and there is no merge to untangle.
+history:
+	python scripts/extend_history.py
+	python scripts/backfill_history.py --force
+
+# Candidate burning-season models against the current one. Reads
+# daily.csv, writes nothing.
+compare:
+	python scripts/compare_models.py

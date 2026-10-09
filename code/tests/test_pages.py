@@ -143,3 +143,69 @@ def test_results_page_reports_both_baselines():
 
 def test_results_page_survives_a_missing_backtest():
     assert "No backtest" in pages.results_page(None, None)
+
+
+def metrics_with(by_season, by_provenance=None, counts=None):
+    block = {"n": 50, "mae": 4.0, "rmse": 5.0, "bias": 0.1,
+             "band_hit_rate": 0.9}
+    return {
+        "window": {"first": "2025-04-01", "last": "2026-10-05"},
+        "min_train": 40,
+        "overall": {"model": block, "persistence_operational": block},
+        "skill": {"operational": 0.3, "textbook": 0.02},
+        "by_season": by_season,
+        "by_provenance": by_provenance or {},
+        "counts": counts or {},
+    }
+
+
+def scores(model_mae, ref_mae, n=50):
+    def block(mae):
+        return {"n": n, "mae": mae, "rmse": mae, "bias": 0.0,
+                "band_hit_rate": 0.9}
+    return {"model": block(model_mae),
+            "persistence_operational": block(ref_mae)}
+
+
+def test_results_page_admits_burning_has_not_been_scored():
+    page = pages.results_page(
+        metrics_with({"calm": scores(4.0, 6.0)}), None)
+    assert "has never fired" in page
+    assert "not yet scored" in page
+
+
+def test_results_page_stops_saying_never_fired_once_it_has():
+    page = pages.results_page(metrics_with(
+        {"calm": scores(4.0, 6.0), "burning": scores(40.0, 55.0, n=48)},
+        counts={"burning_backfilled": 44, "burning_live": 4}), None)
+    assert "has never fired" not in page
+    assert "48 burning-season days" in page
+    assert "44 read back from archives and 4 recorded live" in page
+
+
+def test_season_table_judges_each_target_separately():
+    """Calm beats its 10% target here, burning misses its 20%."""
+    page = pages.results_page(metrics_with(
+        {"calm": scores(4.0, 6.0), "burning": scores(50.0, 55.0)}), None)
+    assert "+33.3% | 10%, met" in page
+    assert "+9.1% | 20%, not met" in page
+
+
+def test_live_only_line_appears_when_there_are_live_days():
+    page = pages.results_page(metrics_with(
+        {"calm": scores(4.0, 6.0)},
+        by_provenance={"live": scores(4.0, 7.4, n=43)}), None)
+    assert "43" in page and "recorded live" in page
+
+
+def test_live_only_line_is_skipped_without_live_days():
+    page = pages.results_page(metrics_with({"calm": scores(4.0, 6.0)}),
+                              None)
+    assert "recorded live rather than" not in page
+
+
+def test_one_burning_day_reads_as_one_day():
+    page = pages.results_page(metrics_with(
+        {"calm": scores(4.0, 6.0), "burning": scores(12.6, 15.2, n=1)},
+        counts={"burning_backfilled": 0, "burning_live": 1}), None)
+    assert "1 burning-season day is scored" in page

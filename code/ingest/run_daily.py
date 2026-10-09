@@ -225,6 +225,23 @@ def forecast(target_day):
     }
 
 
+def source_rank(name):
+    """Sort key for FIRMS products: one satellite first, SP over NRT.
+
+    fire_count takes the first product that covers a date, and the
+    availability list comes back in whatever order the server
+    likes. With a year and a half of history that could stitch the
+    series together from different satellites, which see different
+    numbers of fires. So the order is fixed: Suomi NPP first, since
+    its record reaches furthest back, then NOAA-20, then the rest;
+    and within a satellite the reprocessed science product (SP)
+    before the near-real-time one.
+    """
+    upper = name.upper()
+    sat = (0 if "SNPP" in upper else 1 if "NOAA20" in upper else 2)
+    return (sat, 0 if upper.endswith("_SP") else 1, upper)
+
+
 def firms_sources():
     """Available FIRMS products with their date coverage."""
     # NRT products cover only a recent window and return an empty
@@ -237,7 +254,7 @@ def firms_sources():
         lo, hi = r.get("min_date", ""), r.get("max_date", "")
         if "VIIRS" in name.upper() and lo and hi:
             out.append((name, lo, hi))
-    return out
+    return sorted(out, key=lambda item: source_rank(item[0]))
 
 
 def fire_count(day, sources):
