@@ -13,4 +13,8 @@ Name: Gurkirpa Singh
    working](./w4-ticket-resolution.md)
 +  [W5 : A model that lost to the baseline it was built to
    beat](./w5-ticket-resolution.md)
++  [W6 : A forecast that was not
+   there](./w6-ticket-resolution.md)
++  [W7 : A model trained on summer, forecasting
+   October](./w7-ticket-resolution.md)
 +  […]
