@@ -1,7 +1,7 @@
 # Results
 
-Walk-forward backtest over 2025-04-04 to 2026-10-13,
-494 days. The model is refitted from scratch
+Walk-forward backtest over 2025-04-04 to 2026-10-17,
+498 days. The model is refitted from scratch
 before each day and only ever sees days strictly before the one
 it is predicting. There is no shuffled train/test split anywhere
 in this project; the rows are a time series and shuffling them
@@ -9,11 +9,11 @@ would let the model read its own future.
 
 | Method | n | MAE | RMSE | Bias | Band correct |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| **Pawan** | 494 | **8.64** | 13.09 | +0.21 | 75% |
-| Persistence (textbook) | 461 | 7.64 | 11.43 | -0.32 | 79% |
-| Persistence (operational) | 494 | 12.34 | 17.98 | +0.60 | 66% |
-| Climatology | 494 | 17.12 | 21.24 | +5.14 | 35% |
-| Raw CAMS | 494 | 42.05 | 49.97 | +40.01 | 13% |
+| **Pawan** | 498 | **8.66** | 13.08 | +0.30 | 75% |
+| Persistence (textbook) | 465 | 7.63 | 11.41 | -0.33 | 79% |
+| Persistence (operational) | 498 | 12.27 | 17.91 | +0.56 | 67% |
+| Climatology | 498 | 17.08 | 21.18 | +5.20 | 35% |
+| Raw CAMS | 498 | 42.20 | 50.07 | +40.17 | 13% |
 
 ## By season
 
@@ -24,14 +24,14 @@ beat; burning season is when a forecast is worth having.
 | Season | Days | Pawan MAE | Operational persistence MAE | Skill | Target |
 | --- | ---: | ---: | ---: | ---: | :--- |
 | Calm (Dec to Sep) | 425 | 8.11 | 11.35 | +28.5% | 10%, met |
-| Burning (Oct, Nov) | 69 | 11.94 | 18.40 | +35.1% | 20%, met |
+| Burning (Oct, Nov) | 73 | 11.89 | 17.64 | +32.6% | 20%, met |
 
-On the **53** days whose CAMS forecast was recorded live rather than read back from an archive, Pawan's MAE is **4.93** against 7.86 for operational persistence, **+37.3%**. No archive has flattered those days, so if this figure and the totals drift apart, this is the one to believe.
+On the **57** days whose CAMS forecast was recorded live rather than read back from an archive, Pawan's MAE is **5.36** against 7.61 for operational persistence, **+29.6%**. No archive has flattered those days, so if this figure and the totals drift apart, this is the one to believe.
 
 ## Skill
 
-- Against operational persistence: **29.9% better** on MAE.
-- Against textbook persistence: **13.2% worse** on MAE.
+- Against operational persistence: **29.4% better** on MAE.
+- Against textbook persistence: **13.5% worse** on MAE.
 
 The two baselines are both persistence, and the difference
 between them is the whole argument.
@@ -59,22 +59,22 @@ compared with each other but not read as physics.
 
 | Feature | Weight |
 | --- | ---: |
-| `rh` | -0.254 |
-| `cams_log` | +0.196 |
-| `temp` | -0.160 |
-| `wind_speed` | -0.124 |
+| `rh` | -0.251 |
+| `cams_log` | +0.192 |
+| `temp` | -0.158 |
+| `wind_speed` | -0.121 |
+| `obs_recent_log` | +0.120 |
 | `fire_log` | +0.116 |
-| `obs_recent_log` | +0.114 |
-| `wind_u` | +0.047 |
-| `wind_v` | +0.025 |
-| `burning` | +0.025 |
+| `wind_u` | +0.050 |
+| `wind_v` | +0.026 |
+| `burning` | +0.017 |
 
 
 ## What is wrong with this
 
 Worth saying plainly.
 
-- **Burning season is a small sample.** 69 burning-season days are scored: 58 read back from archives and 11 recorded live. That is one or two seasons at most, and a dry year, a wet one or a shift in when the stubble is burnt would each move these numbers.
+- **Burning season is a small sample.** 73 burning-season days are scored: 58 read back from archives and 15 recorded live. That is one or two seasons at most, and a dry year, a wet one or a shift in when the stubble is burnt would each move these numbers.
 - **Band accuracy only means much in burning season.** On calm days almost everything falls in Good, and a method that guessed Good every time would score nearly as well.
 - **Archive rows are mildly optimistic.** Rows read back from archives take CAMS and weather from series stitched out of the opening hours of successive model runs, which sit a little closer to what happened than a forecast issued a day ahead. The live-only figure, where there is one, is the check on how much that flatters the totals.
 - **The feature set was chosen on calm-season data.** Every change was made for a stated reason and not only because it scored better, but the reasons and the scores were looked at together. This year's burning season, scored live as it happens, is the test nothing here was tuned against.
