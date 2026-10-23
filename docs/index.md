@@ -5,6 +5,9 @@
 
 # Pawan: Next-Day Air Quality Forecasting for Patiala
 
+[Open the live dashboard](dashboard/index.html){ .md-button .md-button--primary }
+[Tomorrow's forecast, plain](forecast.md){ .md-button }
+
 **Author(s)**:
 
 `(GS)` Gurkirpa Singh `<gsarao_be24 -at- thapar -dot- edu>`  

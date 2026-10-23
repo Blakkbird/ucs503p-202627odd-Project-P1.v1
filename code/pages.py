@@ -6,12 +6,17 @@ the pages cannot drift away from what the model actually did --
 which is exactly what happened to the prose in docs/index.md
 before this existed.
 
-Two pages come out:
+Three things come out:
 
-  docs/forecast.md   tomorrow's number, the recent record, how
-                     the last few forecasts turned out
-  docs/results.md    the backtest, the baselines it is measured
-                     against, and what is wrong with it
+  docs/forecast.md         tomorrow's number, the recent record,
+                           how the last few forecasts turned out
+  docs/results.md          the backtest, the baselines it is
+                           measured against, and what is wrong
+                           with it
+  docs/dashboard/data.json everything the dashboard draws. The
+                           page itself (index.html, dashboard.js)
+                           is written by hand and never changes
+                           from day to day; only this file does
 
 Named pages.py rather than the more obvious site.py, because
 `site` is a standard library module that Python has already
@@ -25,13 +30,16 @@ ways to fail than a CDN.
 """
 
 import json
+import math
 import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import config
+import evaluate
 import features
+from model import Ridge
 
 IST = timezone(timedelta(hours=5, minutes=30))
 DOCS = config.ROOT / "docs"
@@ -244,6 +252,9 @@ def forecast_page(predictions, samples, today=None):
 
     stamp = (predictions or {}).get("generated_at", "unknown")
     return f"""# Tomorrow in Patiala
+
+[Open the live dashboard](dashboard/index.html) for the fire map,
+the full history and a panel to try different inputs.
 
 {top}
 
@@ -488,6 +499,352 @@ Worth saying plainly.
 """
 
 
+# --- dashboard --------------------------------------------------
+
+# What each band means for a person deciding about tomorrow. Worded
+# after the health statements CPCB publishes with the National AQI,
+# shortened to fit under a number.
+ADVICE = {
+    "Good": "Clean air. Nothing to plan around.",
+    "Satisfactory": ("Fine for almost everyone. People who are unusually "
+                     "sensitive may notice slight discomfort."),
+    "Moderate": ("People with asthma, heart or lung conditions, children "
+                 "and older adults may feel it. Go easier on long outdoor "
+                 "exercise."),
+    "Poor": ("Most people may feel some discomfort over long exposure. "
+             "Sensitive groups should cut down time outdoors."),
+    "Very Poor": ("Long exposure can bring on breathing trouble. Skip "
+                  "outdoor exercise and keep windows shut at the worst "
+                  "hours."),
+    "Severe": ("Affects healthy people too. Stay indoors where you can; "
+               "sensitive groups should not go out."),
+}
+
+# The model's inputs, grouped the way a reader would name them.
+# Wind's two components are one thing to a person, and so is a
+# fire count and its burning-season interaction, if one is ever
+# fitted. Anything not listed here is shown under its own name.
+GROUPS = {
+    "cams_log": "cams", "burn_cams": "cams",
+    "obs_recent_log": "station", "burn_obs": "station",
+    "fire_log": "fires", "burn_fire": "fires",
+    "rh": "rh",
+    "temp": "temp",
+    "wind_speed": "wind_speed",
+    "wind_u": "wind_dir", "wind_v": "wind_dir", "burn_wind_u": "wind_dir",
+    "burning": "season",
+}
+GROUP_LABELS = {
+    "cams": "CAMS global forecast",
+    "station": "Latest station reading",
+    "fires": "Fires detected yesterday",
+    "rh": "Humidity",
+    "temp": "Temperature",
+    "wind_speed": "Wind speed",
+    "wind_dir": "Wind direction",
+    "season": "Burning season",
+}
+
+# A fire counts as upwind of the station when it lies within this
+# many degrees of the bearing the wind is coming from, and within
+# this distance. Shown on the map only; the model reads the plain
+# count over the whole box.
+UPWIND_HALF_ANGLE = 30
+UPWIND_RANGE_KM = 400
+
+# How many recent forecasts the track record strip shows.
+RECORD_TILES = 30
+
+
+def bearing_km(lat1, lon1, lat2, lon2):
+    """Compass bearing and great-circle distance from point 1 to 2."""
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dl = math.radians(lon2 - lon1)
+    y = math.sin(dl) * math.cos(p2)
+    x = (math.cos(p1) * math.sin(p2)
+         - math.sin(p1) * math.cos(p2) * math.cos(dl))
+    bearing = math.degrees(math.atan2(y, x)) % 360
+    h = (math.sin((p2 - p1) / 2) ** 2
+         + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2)
+    return bearing, 2 * 6371.0 * math.asin(math.sqrt(h))
+
+
+def upwind(bearing, wind_from):
+    """True when a bearing sits inside the upwind wedge."""
+    if wind_from is None:
+        return False
+    gap = abs((bearing - wind_from + 180) % 360 - 180)
+    return gap <= UPWIND_HALF_ANGLE
+
+
+def explain(model, x):
+    """Each input's push on the forecast, grouped and ordered.
+
+    For a linear model this is exact rather than an estimate: the
+    fitted response is the intercept plus one term per input, so
+    the terms are the explanation. Under a log target they add in
+    log space, which means each one multiplies the forecast, and
+    `effect` is that multiplier minus one (+0.25 is 25% higher).
+    """
+    terms = {}
+    for name, coef, mean, dev, value in zip(model.names, model.coef,
+                                            model.means, model.devs, x):
+        key = GROUPS.get(name, name)
+        terms[key] = terms.get(key, 0.0) + coef * (value - mean) / dev
+    out = []
+    for key, term in terms.items():
+        effect = math.expm1(term) if model.log_target else term
+        out.append({"key": key, "label": GROUP_LABELS.get(key, key),
+                    "term": round(term, 6), "effect": round(effect, 4)})
+    return sorted(out, key=lambda t: -abs(t["term"]))
+
+
+def r1(value):
+    return None if value is None else round(value, 1)
+
+
+def history_series(rows, records, backtest, tomorrow):
+    """Day-by-day columns for the history chart, oldest first.
+
+    Observed is everything the station published, thin days
+    included but flagged, since a chart with holes where the thin
+    days were would look like an outage that never happened.
+    """
+    measured = {}
+    for key, row in rows.items():
+        value = features.num(row.get("obs_pm25"))
+        if value is not None:
+            measured[key] = (value, features.num(row.get("obs_hours")))
+    cams = {k: features.num(r.get("cams_pm25")) for k, r in rows.items()}
+    back = {r["date"]: r["model"] for r in (backtest or {}).get("runs", [])}
+    live = {r["date"]: r for r in records}
+
+    known = [k for k in rows if cams.get(k) is not None or k in measured]
+    if not known:
+        return None
+    day, last = date.fromisoformat(min(known)), tomorrow
+    out = {k: [] for k in ("dates", "observed", "thin", "cams", "backtest",
+                           "forecast", "low", "high")}
+    while day <= last:
+        key = day.isoformat()
+        value, hours = measured.get(key, (None, None))
+        rec = live.get(key) or {}
+        low, high = rec.get("interval") or (None, None)
+        out["dates"].append(key)
+        out["observed"].append(r1(value))
+        out["thin"].append(hours is not None and hours < config.MIN_OBS_HOURS)
+        out["cams"].append(r1(cams.get(key)))
+        out["backtest"].append(r1(back.get(key)))
+        out["forecast"].append(r1(rec.get("pm25")))
+        out["low"].append(r1(low))
+        out["high"].append(r1(high))
+        day += timedelta(days=1)
+    return out
+
+
+def live_record(records):
+    """How the issued forecasts have done, in the terms the page uses."""
+    scored = [r for r in records if r.get("actual") is not None]
+    out = {"issued": len(records), "scored": len(scored),
+           "first": records[0]["date"] if records else None}
+    if not scored:
+        return out
+    out["mae"] = round(sum(abs(r["error"]) for r in scored) / len(scored), 2)
+    out["band_hits"] = sum(1 for r in scored if r.get("band_hit"))
+
+    # Operational persistence on exactly the same days, from the
+    # reading each forecast had in front of it when it was issued.
+    pairs = [((r.get("inputs") or {}).get("persistence_operational"),
+              r["actual"]) for r in scored]
+    pairs = [(p, a) for p, a in pairs if p is not None]
+    if pairs:
+        out["persistence_mae"] = round(
+            sum(abs(p - a) for p, a in pairs) / len(pairs), 2)
+        out["persistence_n"] = len(pairs)
+
+    ranged = [r for r in scored if r.get("interval")]
+    if ranged:
+        out["with_range"] = len(ranged)
+        out["in_range"] = sum(1 for r in ranged
+                              if r["interval"][0] <= r["actual"]
+                              <= r["interval"][1])
+    return out
+
+
+def backtest_summary(metrics):
+    """The backtest, reduced to what the dashboard prints."""
+    if not metrics:
+        return None
+    overall = metrics.get("overall") or {}
+
+    def mae(block, key):
+        got = (block or {}).get(key)
+        return got["mae"] if got else None
+
+    seasons = {}
+    for key, entry in (metrics.get("by_season") or {}).items():
+        skill = gain(entry)
+        if skill is None:
+            continue
+        seasons[key] = {"days": entry["model"]["n"],
+                        "mae": mae(entry, "model"),
+                        "persistence_mae": mae(entry,
+                                               "persistence_operational"),
+                        "skill": round(skill, 4),
+                        "target": TARGETS.get(key)}
+    return {"first": (metrics.get("window") or {}).get("first"),
+            "last": (metrics.get("window") or {}).get("last"),
+            "days": (overall.get("model") or {}).get("n"),
+            "mae": mae(overall, "model"),
+            "persistence_mae": mae(overall, "persistence_operational"),
+            "cams_mae": mae(overall, "raw_cams"),
+            "skill": (metrics.get("skill") or {}).get("operational"),
+            "seasons": seasons}
+
+
+def fire_map(fires, target):
+    """Recent fires with an upwind flag, against tomorrow's wind."""
+    days = sorted((fires or {}).get("days") or {}, reverse=True)
+    if not days:
+        return None
+    raw = target.raw if target else {}
+    wind_from, speed = raw.get("wind_dir"), raw.get("wind_speed")
+
+    points, counts = [], []
+    for age, day in enumerate(days):
+        n_up = 0
+        for lat, lon, frp, conf in fires["days"][day]:
+            bearing, km = bearing_km(config.LAT, config.LON, lat, lon)
+            up = upwind(bearing, wind_from) and km <= UPWIND_RANGE_KM
+            n_up += up
+            # [lat, lon, fire power, upwind, days before the newest,
+            #  low confidence]
+            points.append([lat, lon, frp, int(up), age, int(conf == "l")])
+        counts.append({"day": day, "fires": len(fires["days"][day]),
+                       "upwind": n_up})
+
+    w, s_, e, n = (float(v) for v in config.FIRMS_BBOX.split(","))
+    return {"days": counts, "points": points,
+            "wind_from": wind_from, "wind_speed": speed,
+            "half_angle": UPWIND_HALF_ANGLE, "range_km": UPWIND_RANGE_KM,
+            "bbox": [w, s_, e, n]}
+
+
+def pipeline_health(rows, records, samples, model, today):
+    """The numbers that show the pipeline is running, not just built."""
+    observed = [k for k, r in rows.items() if r.get("obs_pm25")]
+    stamps = [r.get("ingested_at") for r in rows.values()
+              if r.get("ingested_at")]
+    tomorrow = today + timedelta(days=1)
+    newest = max(observed) if observed else None
+
+    # Days in a row, ending tomorrow, with a forecast on record.
+    # More telling than a total: it resets the first morning the
+    # job fails to issue one.
+    issued = {r["date"] for r in records}
+    streak, day = 0, tomorrow
+    while day.isoformat() in issued:
+        streak += 1
+        day -= timedelta(days=1)
+    return {
+        "last_ingest": max(stamps) if stamps else None,
+        "newest_obs": newest,
+        "obs_age_days": ((today - date.fromisoformat(newest)).days
+                         if newest else None),
+        "usual_age_days": config.OBS_LATENCY_DAYS + 1,
+        "stale_after_days": config.OBS_STALENESS_LIMIT_DAYS,
+        "first_forecast": records[0]["date"] if records else None,
+        "issued": len(records),
+        "streak": streak,
+        "rows": len(rows),
+        "first_row": min(rows) if rows else None,
+        "usable_rows": len(features.usable(samples)),
+        "inputs": len((model or {}).get("names") or []),
+    }
+
+
+def dashboard_data(predictions, samples, rows, metrics, model,
+                   backtest=None, fires=None, today=None):
+    """Everything docs/dashboard/ draws, as one JSON-ready dict.
+
+    `today` is a parameter for the same reason as in forecast_page.
+    """
+    today = today or datetime.now(IST).date()
+    tomorrow = today + timedelta(days=1)
+    records = sorted((predictions or {}).get("predictions", []),
+                     key=lambda r: r["date"])
+    record = next((r for r in records
+                   if r["date"] == tomorrow.isoformat()), None)
+    target = next((s for s in samples if s.day == tomorrow), None)
+
+    status = (predictions or {}).get("status") or {}
+    reason = (status.get("reason")
+              if status.get("target") == tomorrow.isoformat() else None)
+
+    out = {
+        "generated_at": datetime.now(IST).isoformat(timespec="seconds"),
+        "today": today.isoformat(),
+        "tomorrow": tomorrow.isoformat(),
+        "station": {"name": config.STATION_NAME, "city": config.CITY,
+                    "lat": config.LAT, "lon": config.LON},
+        "bands": [{"name": name, "upper": None if math.isinf(edge) else edge,
+                   "colour": BAND_COLOUR[name], "advice": ADVICE[name]}
+                  for edge, name in evaluate.BANDS],
+        "forecast": record,
+        "missing_reason": None if record else (
+            reason or "the daily job has not issued one yet"),
+    }
+
+    # What tomorrow's forecast was built from, and the model that
+    # turned it into a number. The page's what-if panel rebuilds
+    # the vector from `raw` and checks it against `x` before it
+    # trusts its own arithmetic.
+    if target is not None:
+        out["inputs"] = {"names": target.names, "x": target.x,
+                         "raw": target.raw, "burning": target.burning,
+                         "complete": target.complete}
+    if model and target is not None and model.get("names") == target.names:
+        fitted = Ridge.from_dict(model)
+        out["model"] = {k: model[k] for k in ("names", "coef", "means",
+                                              "devs", "intercept",
+                                              "log_target", "alpha")}
+        out["model"]["interactions"] = features.INTERACTIONS
+        out["model"]["groups"] = GROUPS
+        out["model"]["typical"] = (math.expm1(fitted.intercept)
+                                   if fitted.log_target else fitted.intercept)
+        if target.complete:
+            out["model"]["now"] = fitted.predict_one(target.x)
+            out["why"] = explain(fitted, target.x)
+
+    out["history"] = history_series(rows, records, backtest, tomorrow)
+    out["record"] = live_record([r for r in records
+                                 if r["date"] <= tomorrow.isoformat()])
+    out["recent"] = [
+        {"date": r["date"], "pm25": r["pm25"], "band": r["band"],
+         "actual": r.get("actual"),
+         "actual_band": (evaluate.band(r["actual"])
+                         if r.get("actual") is not None else None)}
+        for r in records if r["date"] <= tomorrow.isoformat()
+    ][-RECORD_TILES:]
+    out["backtest"] = backtest_summary(metrics)
+    out["fires"] = fire_map(fires, target)
+    out["health"] = pipeline_health(rows, records, samples, model, today)
+    return out
+
+
+def write_dashboard(data, path=None):
+    """Write the dashboard's data file.
+
+    allow_nan is off because JSON has no NaN and the browser's
+    parser rejects the whole file over a single one. Better to
+    fail here, where the run log shows it, than on the page.
+    """
+    path = Path(path or config.DASHBOARD_JSON)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, allow_nan=False,
+                               separators=(",", ":")))
+
+
 def main():
     metrics = read(config.METRICS_JSON)
     model = read(config.MODEL_JSON)
@@ -502,6 +859,25 @@ def main():
         written.append(name)
 
     print(f"wrote {', '.join(f'docs/{n}' for n in written)}")
+
+    # The dashboard comes last and is not allowed to fail the run.
+    # This step sits in front of the daily commit, so an exception
+    # here would throw away the morning's observations along with
+    # the page. Instead the page gets told what went wrong and
+    # says so, and the log carries the traceback.
+    try:
+        data = dashboard_data(predictions, samples, features.load(),
+                              metrics, model, read(config.BACKTEST_JSON),
+                              read(config.FIRES_JSON))
+        write_dashboard(data)
+        print(f"wrote {config.DASHBOARD_JSON.relative_to(config.ROOT)}")
+    except Exception as e:  # noqa: BLE001 -- see above
+        import traceback
+        traceback.print_exc()
+        print(f"ERROR: dashboard data not built: {e}")
+        write_dashboard({"error": f"{type(e).__name__}: {e}",
+                         "generated_at": datetime.now(IST).isoformat(
+                             timespec="seconds")})
     return 0
 
 

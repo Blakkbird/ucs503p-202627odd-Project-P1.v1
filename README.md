@@ -6,6 +6,7 @@ running it. It takes the CAMS global forecast, which overshoots
 badly at this station, and corrects it using the station's own
 history, forecast weather and satellite fire detections upwind.
 
+**[Live dashboard](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/dashboard/)** ·
 **[Tomorrow's forecast](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/forecast/)** ·
 **[Results](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/results/)** ·
 **[Project page](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/)** ·
@@ -14,6 +15,15 @@ history, forecast weather and satellite fire detections upwind.
 
 UCS503P Software Engineering, TIET Patiala, 2026-27 odd semester.
 Instructor: Dr. Paramveer Kaur.
+
+[![The Pawan dashboard: tomorrow's forecast against the national AQI scale](assets/dashboard.png)](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/dashboard/)
+
+The dashboard shows tomorrow's number on the CPCB scale next to
+the raw CAMS figure it corrects, a map of yesterday's fires with
+tomorrow's wind laid over them, an exact breakdown of what pushed
+the forecast up or down (with sliders to try other inputs), the
+full history against the backtest, and whether the pipeline ran
+this morning. It is rebuilt from `data/` on every ingest.
 
 ## Where it stands
 
@@ -46,8 +56,8 @@ Once a day, at 08:00 IST, a GitHub Actions job:
 2. refits the model from scratch and re-runs the walk-forward
    backtest (`code/evaluate.py`);
 3. issues tomorrow's forecast and freezes it (`code/predict.py`);
-4. rebuilds the forecast and results pages from the data
-   (`code/pages.py`);
+4. rebuilds the forecast and results pages, and the dashboard's
+   data file, from the data (`code/pages.py`);
 5. runs the full test suite, and only then commits.
 
 There is no server and no database. The dataset is a CSV in git,
@@ -67,15 +77,17 @@ code/
   model.py           ridge regression, by hand
   evaluate.py        baselines and the walk-forward backtest
   predict.py         issues tomorrow's forecast, once, and freezes it
-  pages.py           renders forecast.md and results.md
-  tests/             100 tests, run on every PR and every data commit
+  pages.py           renders forecast.md, results.md and the dashboard's data
+  tests/             117 tests, run on every PR and every data commit
 scripts/
   extend_history.py  pulls the record back to the sensor's start
   backfill_history.py  weather and fire counts for archive rows
   compare_models.py  backtests candidate models side by side
   report_figures.py  every number in the prototype report
-data/                daily.csv, model.json, metrics.json, predictions.json
+data/                daily.csv, model.json, metrics.json, predictions.json,
+                     backtest.json, fires.json
 docs/                the project page (MkDocs)
+docs/dashboard/      the live dashboard: hand-written page, generated data.json
 journals/            weekly entries, one folder per member
 project-proposal/              LaTeX, week 4
 project-report-prototype-stage/  LaTeX, week 7
@@ -89,7 +101,7 @@ pip install -r requirements.txt
 python code/ingest/run_daily.py     # needs OPENAQ_KEY and FIRMS_MAP_KEY
 python code/evaluate.py             # backtest; writes data/metrics.json
 python code/predict.py              # tomorrow's forecast
-python code/pages.py                # docs/forecast.md, docs/results.md
+python code/pages.py                # the two pages and docs/dashboard/data.json
 python -m pytest code/tests/ -q
 ```
 
