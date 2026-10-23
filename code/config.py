@@ -96,6 +96,7 @@ PREDICTIONS_JSON = DATA / "predictions.json"
 METRICS_JSON = DATA / "metrics.json"
 MODEL_JSON = DATA / "model.json"
 BACKTEST_JSON = DATA / "backtest.json"  # one walk-forward forecast per day
+FIRES_JSON = DATA / "fires.json"  # where the most recent fires were
 
 # --- credentials 
 

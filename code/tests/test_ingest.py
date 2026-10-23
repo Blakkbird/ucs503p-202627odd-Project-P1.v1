@@ -166,3 +166,52 @@ def test_an_uncounted_observation_is_left_alone():
     nothing is replaced."""
     row = {"obs_pm25": "30.0", "obs_hours": ""}
     assert not run_daily.merge_obs(row, 99.0, 24)
+
+
+# --- fire locations for the map
+
+FIRMS_CSV = """latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_ti5,frp,daynight
+30.71234,75.48765,330.1,0.4,0.37,2026-10-22,0812,N,VIIRS,n,2.0NRT,290.2,4.27,D
+29.9,74.95,345.6,0.5,0.4,2026-10-22,0812,N,VIIRS,h,2.0NRT,295.1,,D
+bad,75.1,330.1,0.4,0.37,2026-10-22,0812,N,VIIRS,l,2.0NRT,290.2,1.0,D
+"""
+
+
+def firms_rows():
+    import csv
+    import io
+    return list(csv.DictReader(io.StringIO(FIRMS_CSV)))
+
+
+def test_fire_points_keep_position_power_and_confidence():
+    points = run_daily.fire_points(firms_rows())
+    assert points[0] == [30.712, 75.488, 4.3, "n"]
+    # A blank fire power is zero, not a reason to drop the fire.
+    assert points[1] == [29.9, 74.95, 0.0, "h"]
+
+
+def test_a_fire_that_does_not_parse_is_skipped():
+    assert len(run_daily.fire_points(firms_rows())) == 2
+
+
+def test_fire_map_reuses_rows_the_count_already_fetched(tmp_path):
+    import json
+
+    today = date(2026, 10, 23)
+    fetched = {today - timedelta(days=1): firms_rows(),
+               today - timedelta(days=2): []}
+    path = tmp_path / "fires.json"
+    # No sources: anything not already fetched cannot be asked for.
+    assert run_daily.save_fires(today, [], fetched, path)
+
+    blob = json.loads(path.read_text())
+    assert sorted(blob["days"]) == ["2026-10-21", "2026-10-22"]
+    assert len(blob["days"]["2026-10-22"]) == 2
+    assert blob["days"]["2026-10-21"] == []
+
+
+def test_fire_map_left_alone_when_nothing_came_back(tmp_path):
+    path = tmp_path / "fires.json"
+    path.write_text("old")
+    assert not run_daily.save_fires(date(2026, 10, 23), [], {}, path)
+    assert path.read_text() == "old"
