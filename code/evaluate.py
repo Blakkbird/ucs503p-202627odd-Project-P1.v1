@@ -258,6 +258,21 @@ def report(use_weather=False):
     return out, runs
 
 
+def write_backtest(out, runs, path=None):
+    """data/backtest.json: one walk-forward forecast per scored day."""
+    path = path or config.BACKTEST_JSON
+    blob = {
+        "window": out["window"],
+        "runs": [{"date": r["day"].isoformat(),
+                  "truth": round(r["truth"], 2),
+                  "model": round(r["model"], 2),
+                  "live": r["live"]} for r in runs],
+    }
+    with open(path, "w") as f:
+        json.dump(blob, f, separators=(",", ":"))
+    print(f"wrote {path} ({len(runs)} days)")
+
+
 def show(out, runs):
     print(f"\nBacktest {out['window']['first']} to {out['window']['last']}"
           f"  ({len(runs)} days, refit each day)")
@@ -310,6 +325,13 @@ def main():
     with open(config.METRICS_JSON, "w") as f:
         json.dump(out, f, indent=2)
     print(f"\nwrote {config.METRICS_JSON}")
+
+    # The day-by-day forecasts behind those totals. The dashboard
+    # draws them under the live record, so its chart reaches back
+    # through last year's burning season instead of starting in
+    # September. Each one came from a model fitted only on the days
+    # before it, the same as the totals.
+    write_backtest(out, runs)
 
     # Ship a model fitted on the whole record, ready for tomorrow.
     ready = features.usable(features.build(use_weather=weather))

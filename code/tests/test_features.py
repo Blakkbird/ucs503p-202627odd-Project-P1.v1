@@ -249,3 +249,29 @@ def test_an_interaction_with_a_blank_input_is_blank():
         rows[key]["fire_count"] = ""
     built = features.build(rows, use_weather=True, extra=("burn_fire",))
     assert all(s.x[s.names.index("burn_fire")] is None for s in built)
+
+
+def test_transform_rebuilds_every_row_from_its_raw_readings():
+    """The dashboard repeats transform() in JavaScript from `raw`.
+
+    That only works if `raw` alone is enough to get x back, for
+    every row and for the interactions as well.
+    """
+    names = (features.CORE + features.WEATHER
+             + list(features.INTERACTIONS))
+    built = features.build(synthetic(start=date(2026, 9, 20)),
+                           extra=tuple(features.INTERACTIONS))
+    assert built
+    for s in built:
+        again = features.transform(s.raw, s.burning, names)
+        assert again == s.x, s.day
+
+
+def test_raw_says_which_days_the_readings_came_from():
+    start = date(2026, 1, 1)
+    s = _sample_for(synthetic(start=start), start + timedelta(days=30))
+    assert s.raw["obs_day"] is not None
+    # The reading is the day number, so its value names its day.
+    taken = start + timedelta(days=int(s.raw["obs_recent"]))
+    assert s.raw["obs_day"] == taken.isoformat()
+    assert s.raw["fire_day"] < (s.day - timedelta(days=1)).isoformat()
