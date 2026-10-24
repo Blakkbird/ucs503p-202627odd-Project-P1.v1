@@ -1,5 +1,8 @@
 # Tomorrow in Patiala
 
+[Open the live dashboard](dashboard/index.html) for the fire map,
+the full history and a panel to try different inputs.
+
 <div class="pawan-card" style="border-left-color:#9dc63d">
   <div class="pawan-when">Sunday 25 October</div>
   <div class="pawan-value">49<span class="pawan-unit">&micro;g/m&sup3;</span></div>
@@ -94,4 +97,4 @@ original, untouched. Rewriting yesterday's forecast after
 yesterday happened is the easiest way to build a system that
 looks far better than it is.
 
-<small>Generated from `data/predictions.json` at 2026-10-24T13:02:14+05:30.</small>
+<small>Generated from `data/predictions.json` at 2026-10-24T13:25:24+05:30.</small>
