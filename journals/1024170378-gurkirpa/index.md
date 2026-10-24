@@ -17,4 +17,6 @@ Name: Gurkirpa Singh
    there](./w6-ticket-resolution.md)
 +  [W7 : A model trained on summer, forecasting
    October](./w7-ticket-resolution.md)
++  [W8 : A model that could only be run from the
+   inside](./w8-ticket-resolution.md)
 +  […]

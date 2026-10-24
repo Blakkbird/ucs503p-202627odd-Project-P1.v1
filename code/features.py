@@ -86,6 +86,7 @@ class Sample:
     obs_hours: float | None = None  # hours behind y, when known
     obs_age: float | None = None    # days between issue and that reading
     names: list[str] = field(default_factory=list)
+    raw: dict = field(default_factory=dict)  # readings x was built from
 
     @property
     def burning(self):
@@ -145,6 +146,52 @@ def _observed_upto(obs, cutoff, window):
         if got is not None:
             out.append(got)
     return out
+
+
+def transform(raw, burning, names):
+    """Model inputs from the plain readings they are built from.
+
+    `raw` holds the readings in their own units: micrograms for
+    CAMS and the station, a count for fires, degrees and km/h for
+    the weather. Any of them can be None, and whatever depends on
+    a missing one comes out None too.
+
+    Kept as one small function on purpose. The dashboard's "what
+    if" panel does the same arithmetic in JavaScript, so that
+    sliding a reading moves the forecast exactly the way the model
+    would. Two copies of a formula drift apart, so the page checks
+    its copy against the vector this function produced before it
+    lets anyone touch a slider. Change something here and that
+    check is what will notice.
+    """
+    def log1p(v):
+        return None if v is None else math.log1p(v)
+
+    speed, bearing = raw.get("wind_speed"), raw.get("wind_dir")
+    # Wind splits into components so the model can tell a
+    # northwesterly (residue smoke) from a southeasterly of the
+    # same strength.
+    if speed is not None and bearing is not None:
+        rad = math.radians(bearing)
+        u, v = -speed * math.sin(rad), -speed * math.cos(rad)
+    else:
+        u = v = None
+
+    values = {
+        "cams_log": log1p(raw.get("cams")),
+        "obs_recent_log": log1p(raw.get("obs_recent")),
+        "burning": 1.0 if burning else 0.0,
+        "temp": raw.get("temp"),
+        "rh": raw.get("rh"),
+        "wind_speed": speed,
+        "wind_u": u,
+        "wind_v": v,
+        "fire_log": log1p(raw.get("fires")),
+    }
+    for name, (left, right) in INTERACTIONS.items():
+        a, b = values.get(left), values.get(right)
+        values[name] = None if a is None or b is None else a * b
+    return [values[n] for n in names]
 
 
 def build(rows=None, use_weather=True, extra=()):
@@ -211,63 +258,45 @@ def build(rows=None, use_weather=True, extra=()):
         recent = _observed_upto(obs, cutoff, config.OBS_LOOKBACK_DAYS + 1)
         obs_recent = recent[-1] if recent else None
 
-        # How stale that reading is. Not a feature any more, but
-        # the daily job still publishes it, so a bad forecast can
-        # be read back against a half-dead feed later.
-        age = None
+        # How stale that reading is, and which day it is from. Not
+        # a feature, but the daily job still publishes it, so a bad
+        # forecast can be read back against a half-dead feed later.
+        age, obs_day = None, None
         if obs_recent is not None:
             for k in range(config.OBS_LOOKBACK_DAYS + 1):
                 if obs.get(cutoff - timedelta(days=k)) is not None:
                     age = float(k + config.OBS_LATENCY_DAYS + 1)
+                    obs_day = cutoff - timedelta(days=k)
                     break
 
-        values = {
-            "cams_log": math.log1p(cams),
-            "obs_recent_log": (math.log1p(obs_recent)
-                               if obs_recent is not None else None),
-            "burning": 1.0 if day.month in config.BURNING_MONTHS else 0.0,
-        }
+        raw = {"cams": cams, "obs_recent": obs_recent,
+               "obs_day": obs_day.isoformat() if obs_day else None}
 
         if use_weather:
-            speed = num(row.get("wind_speed_mean"))
-            bearing = num(row.get("wind_dir_mean"))
             # Walk back from the last day whose count was complete
             # at issue time until one is found. A few days of gap
             # is tolerable; beyond a week the row simply has no
             # fire feature and drops out of the fit.
             burn_day = issue - timedelta(days=config.FIRE_LATENCY_DAYS)
-            recent_fires = None
+            recent_fires, fire_day = None, None
             for k in range(7):
                 got = fires.get(burn_day - timedelta(days=k))
                 if got is not None:
                     recent_fires = got
+                    fire_day = burn_day - timedelta(days=k)
                     break
-            # Wind splits into components so the model can tell a
-            # northwesterly (residue smoke) from a southeasterly of
-            # the same strength.
-            if speed is not None and bearing is not None:
-                rad = math.radians(bearing)
-                u, v = -speed * math.sin(rad), -speed * math.cos(rad)
-            else:
-                u = v = None
-            values.update({
+            raw.update({
                 "temp": num(row.get("temp_mean")),
                 "rh": num(row.get("rh_mean")),
-                "wind_speed": speed,
-                "wind_u": u,
-                "wind_v": v,
-                "fire_log": (math.log1p(recent_fires)
-                             if recent_fires is not None else None),
+                "wind_speed": num(row.get("wind_speed_mean")),
+                "wind_dir": num(row.get("wind_dir_mean")),
+                "fires": recent_fires,
+                "fire_day": fire_day.isoformat() if fire_day else None,
             })
-
-        for name in extra:
-            left, right = INTERACTIONS[name]
-            a, b = values.get(left), values.get(right)
-            values[name] = None if a is None or b is None else a * b
 
         samples.append(Sample(
             day=day,
-            x=[values[n] for n in names],
+            x=transform(raw, day.month in config.BURNING_MONTHS, names),
             y=measured.get(day),
             live=bool(row.get("cams_issue_date")),
             persistence=obs.get(day - timedelta(days=1)),
@@ -275,6 +304,7 @@ def build(rows=None, use_weather=True, extra=()):
             obs_hours=hours.get(day),
             obs_age=age,
             names=names,
+            raw=raw,
         ))
 
     return samples

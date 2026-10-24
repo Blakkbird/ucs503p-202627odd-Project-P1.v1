@@ -7,6 +7,7 @@ malformed SVG when the record is thin, and a page that quietly
 renders with no numbers in it.
 """
 
+import itertools
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -209,3 +210,121 @@ def test_one_burning_day_reads_as_one_day():
         {"calm": scores(4.0, 6.0), "burning": scores(12.6, 15.2, n=1)},
         counts={"burning_backfilled": 0, "burning_live": 1}), None)
     assert "1 burning-season day is scored" in page
+
+
+# --- dashboard data
+
+def dashboard_fixture(today=date(2026, 10, 20), with_record=True, fires=None):
+    """A small but complete set of inputs for dashboard_data."""
+    import evaluate
+
+    rows = synthetic(n=60, start=date(2026, 9, 1))
+    samples = features.build(rows)
+    model = evaluate.fit(features.usable(samples)).to_dict()
+    tomorrow = today + timedelta(days=1)
+    records = sample_predictions()["predictions"]
+    if with_record:
+        records.append({"date": tomorrow.isoformat(),
+                        "issued": today.isoformat(), "pm25": 31.0,
+                        "band": "Satisfactory", "actual": None,
+                        "error": None, "interval": [20.0, 48.0]})
+    predictions = {"generated_at": "2026-10-20T08:00:00+05:30",
+                   "predictions": records,
+                   "status": {"target": tomorrow.isoformat(),
+                              "issued": with_record,
+                              "reason": None if with_record else
+                              "some of the inputs for that day are missing"}}
+    backtest = {"runs": [{"date": "2026-10-01", "truth": 30.0,
+                          "model": 28.0, "live": True}]}
+    return pages.dashboard_data(predictions, samples, rows, None, model,
+                                backtest, fires, today=today)
+
+
+def test_dashboard_data_is_strict_json():
+    import json
+
+    data = dashboard_fixture()
+    text = json.dumps(data, allow_nan=False)
+    for key in ("forecast", "inputs", "model", "why", "history",
+                "record", "recent", "health", "bands"):
+        assert data.get(key) is not None, key
+    assert "NaN" not in text and "Infinity" not in text
+
+
+def test_breakdown_adds_back_up_to_the_forecast():
+    """The bars on the page are exact, not an approximation."""
+    import math
+
+    data = dashboard_fixture()
+    m = data["model"]
+    total = m["intercept"] + sum(t["term"] for t in data["why"])
+    assert math.isclose(math.expm1(total), m["now"], rel_tol=1e-4)
+
+
+def test_raw_inputs_survive_the_trip_to_the_browser():
+    """What the page gets must rebuild x exactly, after JSON."""
+    import json
+
+    blob = json.loads(json.dumps(dashboard_fixture()))
+    i = blob["inputs"]
+    assert features.transform(i["raw"], i["burning"], i["names"]) == i["x"]
+
+
+def test_every_model_input_has_a_readable_group():
+    names = features.CORE + features.WEATHER + list(features.INTERACTIONS)
+    for name in names:
+        assert name in pages.GROUPS, name
+        assert pages.GROUPS[name] in pages.GROUP_LABELS
+
+
+def test_history_runs_day_by_day_up_to_tomorrow():
+    h = dashboard_fixture()["history"]
+    days = [date.fromisoformat(d) for d in h["dates"]]
+    assert days[-1] == date(2026, 10, 21)
+    gaps = {(b - a).days for a, b in itertools.pairwise(days)}
+    assert gaps == {1}
+    assert len({len(v) for v in h.values()}) == 1
+
+
+def test_no_forecast_is_reported_with_its_reason():
+    data = dashboard_fixture(with_record=False)
+    assert data["forecast"] is None
+    assert "inputs" in data["missing_reason"]
+
+
+def test_bearings_point_where_they_should():
+    north, _ = pages.bearing_km(30.0, 76.0, 31.0, 76.0)
+    west, _ = pages.bearing_km(30.0, 76.0, 30.0, 75.0)
+    _, km = pages.bearing_km(30.0, 76.0, 31.0, 76.0)
+    assert north < 1 or north > 359
+    assert 269 < west < 271
+    assert 110 < km < 112  # one degree of latitude
+
+
+def test_upwind_wedge_wraps_around_north():
+    assert pages.upwind(5, 355)
+    assert pages.upwind(320, 323.6)
+    assert not pages.upwind(140, 323.6)
+    assert not pages.upwind(320, None)
+
+
+def test_fire_map_flags_only_fires_inside_the_wedge():
+    # The synthetic wind comes from 310 degrees. One fire sits
+    # north-west of the station, one south-east, one far beyond
+    # the range in the right direction.
+    fires = {"days": {"2026-10-19": [[30.6, 76.0, 3.2, "n"],
+                                     [30.0, 76.8, 3.2, "h"],
+                                     [35.0, 70.0, 3.2, "n"]],
+                      "2026-10-18": [[30.6, 76.0, 1.0, "l"]]}}
+    got = dashboard_fixture(fires=fires)["fires"]
+    assert got["days"][0] == {"day": "2026-10-19", "fires": 3, "upwind": 1}
+    newest = [p for p in got["points"] if p[4] == 0]
+    assert [p[3] for p in newest] == [1, 0, 0]
+    assert any(p[5] == 1 for p in got["points"])  # low confidence kept
+
+
+def test_write_dashboard_refuses_nan(tmp_path):
+    import pytest
+
+    with pytest.raises(ValueError):
+        pages.write_dashboard({"x": float("nan")}, tmp_path / "d.json")

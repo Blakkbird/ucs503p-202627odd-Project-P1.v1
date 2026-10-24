@@ -257,8 +257,8 @@ def firms_sources():
     return sorted(out, key=lambda item: source_rank(item[0]))
 
 
-def fire_count(day, sources):
-    """Fire detections in the bbox for one date."""
+def fire_rows(day, sources):
+    """Fire detections in the bbox for one date, one dict per fire."""
     source = next((n for n, lo, hi in sources
                    if lo <= day.isoformat() <= hi), None)
     if source is None:
@@ -268,7 +268,75 @@ def fire_count(day, sources):
                  f"{config.FIRMS_BBOX}/1/{day.isoformat()}")
     if text.strip().lower().startswith(("invalid", "error")):
         return None
-    return len(list(csv.DictReader(io.StringIO(text))))
+    return list(csv.DictReader(io.StringIO(text)))
+
+
+def fire_count(day, sources):
+    """Number of fire detections in the bbox for one date."""
+    rows = fire_rows(day, sources)
+    return None if rows is None else len(rows)
+
+
+# How many recent days of fire locations the dashboard map gets.
+# Yesterday's are the ones tomorrow's forecast reads; the day
+# before is drawn fainter, for a sense of which way it is moving.
+MAP_FIRE_DAYS = 2
+
+
+def fire_points(rows):
+    """FIRMS rows cut down to [lat, lon, frp, confidence].
+
+    Everything else in the csv (scan geometry, brightness bands,
+    satellite) is dropped. A peak October day is a few thousand
+    fires, so the file has to stay small enough to commit daily.
+    Rows that do not parse are skipped rather than guessed at.
+    """
+    out = []
+    for r in rows:
+        try:
+            lat, lon = float(r["latitude"]), float(r["longitude"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        try:
+            frp = float(r.get("frp") or 0.0)
+        except ValueError:
+            frp = 0.0
+        conf = (r.get("confidence") or "").strip()[:1].lower()
+        out.append([round(lat, 3), round(lon, 3), round(frp, 1), conf])
+    return out
+
+
+def save_fires(today, sources, fetched, path=None):
+    """data/fires.json: where the last MAP_FIRE_DAYS days' fires were.
+
+    `fetched` holds rows the count loop already pulled, so a day is
+    not asked for twice. When nothing at all comes back the old
+    file is left as it is. Its dates are inside it, and the
+    dashboard prints them, so a stale map says it is stale instead
+    of turning up empty.
+    """
+    path = path or config.FIRES_JSON
+    days = {}
+    for k in range(1, MAP_FIRE_DAYS + 1):
+        day = today - timedelta(days=k)
+        rows = fetched.get(day)
+        if rows is None and sources:
+            rows = fire_rows(day, sources)
+        if rows is not None:
+            days[day.isoformat()] = fire_points(rows)
+    if not days:
+        return False
+
+    blob = {
+        "generated_at": datetime.now(IST).isoformat(timespec="seconds"),
+        "bbox": config.FIRMS_BBOX,
+        "columns": ["lat", "lon", "frp", "confidence"],
+        "days": days,
+    }
+    Path(path).parent.mkdir(exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(blob, f, separators=(",", ":"))
+    return True
 
 
 def load():
@@ -318,6 +386,7 @@ def main():
     changed = 0
     sources = None
     failures = []
+    fetched = {}  # fire rows by day, kept for the map below
 
     # Backfill any gap in the recent window, not just yesterday.
     # A failure on one source or one day must not abort the rest:
@@ -349,11 +418,12 @@ def main():
             try:
                 if sources is None:
                     sources = firms_sources()
-                n_fires = fire_count(day, sources)
-                if n_fires is not None:
-                    row["fire_count"] = n_fires
+                got = fire_rows(day, sources)
+                if got is not None:
+                    fetched[day] = got
+                    row["fire_count"] = len(got)
                     touched = True
-                    print(f"fires {day}: {n_fires}")
+                    print(f"fires {day}: {len(got)}")
             except SourceError as e:
                 failures.append(f"fires {day}: {e}")
                 sources = sources or []   # do not retry all ten days
@@ -362,6 +432,17 @@ def main():
             row["ingested_at"] = stamp
             rows[day.isoformat()] = row
             changed += 1
+
+    # Where the recent fires were, for the dashboard's map. Not
+    # part of the dataset, so a failure here is reported and
+    # otherwise ignored.
+    try:
+        if sources is None:
+            sources = firms_sources()
+        if save_fires(today, sources, fetched):
+            print(f"wrote {config.FIRES_JSON}")
+    except SourceError as e:
+        failures.append(f"fire map: {e}")
 
     # tomorrow: the forecast issued today, with its issue date
     row = rows.get(tomorrow.isoformat(), blank(tomorrow))

@@ -163,3 +163,20 @@ def test_model_survives_a_save_and_load(tmp_path):
     assert json.loads(json.dumps(again.to_dict()))["names"] == ["a", "b"]
     for row in x:
         assert abs(again.predict_one(row) - fitted.predict_one(row)) < 1e-9
+
+
+def test_backtest_file_keeps_one_forecast_per_scored_day(tmp_path):
+    import json
+
+    samples = features.build(synthetic(n=80))
+    runs = evaluate.backtest(samples)
+    out = {"window": {"first": runs[0]["day"].isoformat(),
+                      "last": runs[-1]["day"].isoformat()}}
+    path = tmp_path / "backtest.json"
+    evaluate.write_backtest(out, runs, path)
+
+    blob = json.loads(path.read_text())
+    days = [r["date"] for r in blob["runs"]]
+    assert len(days) == len(runs) == len(set(days))
+    assert days == sorted(days)
+    assert all(r["model"] >= 0 for r in blob["runs"])

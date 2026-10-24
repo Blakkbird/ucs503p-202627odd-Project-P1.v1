@@ -43,6 +43,12 @@ with an empty CSV rather than an error outside it, so the ingest
 picks a product per date from the availability endpoint and
 records nothing when none of them reaches back far enough.
 
+Only the count goes into the dataset. The positions of the last
+two days' fires are kept separately in `data/fires.json`,
+overwritten every morning, for the dashboard map. Each fire is cut
+down to latitude, longitude, fire radiative power and the VIIRS
+confidence flag.
+
 ## Two kinds of row, and why it matters
 
 Rows arrive by two routes and they are not equivalent.
