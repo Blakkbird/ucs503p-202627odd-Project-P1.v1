@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-27T13:45:36+05:30",
+  "generated_at": "2026-10-28T14:23:02+05:30",
   "model": {
     "alpha": 10.0,
     "features": [
@@ -819,10 +819,29 @@
         "persistence_operational": 59.0,
         "forecast_provenance_live": true
       }
+    },
+    {
+      "date": "2026-10-29",
+      "issued": "2026-10-28",
+      "pm25": 46.5,
+      "band": "Satisfactory",
+      "actual": null,
+      "error": null,
+      "interval": [
+        30.6,
+        70.4
+      ],
+      "inputs": {
+        "cams_log": 4.5675,
+        "cams_pm25": 95.3,
+        "obs_age_days": 6.0,
+        "persistence_operational": 59.0,
+        "forecast_provenance_live": true
+      }
     }
   ],
   "status": {
-    "target": "2026-10-28",
+    "target": "2026-10-29",
     "issued": true,
     "reason": null
   }
