@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-10-28T14:23:02+05:30",
+  "generated_at": "2026-10-29T14:16:43+05:30",
   "model": {
-    "alpha": 10.0,
+    "alpha": 3.0,
     "features": [
       "cams_log",
       "obs_recent_log",
@@ -13,7 +13,7 @@
       "wind_v",
       "fire_log"
     ],
-    "fitted_rows": 543
+    "fitted_rows": 544
   },
   "predictions": [
     {
@@ -806,8 +806,8 @@
       "issued": "2026-10-27",
       "pm25": 52.0,
       "band": "Satisfactory",
-      "actual": null,
-      "error": null,
+      "actual": 34.5,
+      "error": 17.5,
       "interval": [
         34.26,
         78.66
@@ -818,7 +818,8 @@
         "obs_age_days": 5.0,
         "persistence_operational": 59.0,
         "forecast_provenance_live": true
-      }
+      },
+      "band_hit": true
     },
     {
       "date": "2026-10-29",
@@ -838,10 +839,29 @@
         "persistence_operational": 59.0,
         "forecast_provenance_live": true
       }
+    },
+    {
+      "date": "2026-10-30",
+      "issued": "2026-10-29",
+      "pm25": 36.64,
+      "band": "Satisfactory",
+      "actual": null,
+      "error": null,
+      "interval": [
+        24.04,
+        55.58
+      ],
+      "inputs": {
+        "cams_log": 3.5412,
+        "cams_pm25": 33.51,
+        "obs_age_days": 7.0,
+        "persistence_operational": 59.0,
+        "forecast_provenance_live": true
+      }
     }
   ],
   "status": {
-    "target": "2026-10-29",
+    "target": "2026-10-30",
     "issued": true,
     "reason": null
   }
