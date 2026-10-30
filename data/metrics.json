@@ -1,8 +1,8 @@
 {
-  "generated_for": "2026-10-28",
+  "generated_for": "2026-10-29",
   "window": {
     "first": "2025-04-04",
-    "last": "2026-10-28"
+    "last": "2026-10-29"
   },
   "features": [
     "cams_log",
@@ -20,44 +20,44 @@
   "min_obs_hours": 16,
   "overall": {
     "model": {
-      "n": 504,
-      "mae": 8.682,
-      "rmse": 13.065,
-      "bias": 0.338,
-      "band_hit_rate": 0.75,
-      "r": 0.782
+      "n": 505,
+      "mae": 8.719,
+      "rmse": 13.11,
+      "bias": 0.391,
+      "band_hit_rate": 0.749,
+      "r": 0.78
     },
     "persistence": {
-      "n": 469,
-      "mae": 7.642,
-      "rmse": 11.394,
-      "bias": -0.395,
-      "band_hit_rate": 0.793,
+      "n": 470,
+      "mae": 7.659,
+      "rmse": 11.405,
+      "bias": -0.361,
+      "band_hit_rate": 0.791,
       "r": 0.854
     },
     "persistence_operational": {
-      "n": 504,
-      "mae": 12.358,
-      "rmse": 17.949,
-      "bias": 0.422,
-      "band_hit_rate": 0.663,
-      "r": 0.638
+      "n": 505,
+      "mae": 12.413,
+      "rmse": 18.019,
+      "bias": 0.5,
+      "band_hit_rate": 0.661,
+      "r": 0.636
     },
     "climatology": {
-      "n": 504,
-      "mae": 16.978,
-      "rmse": 21.096,
-      "bias": 5.07,
-      "band_hit_rate": 0.355,
-      "r": 0.202
+      "n": 505,
+      "mae": 16.974,
+      "rmse": 21.086,
+      "bias": 5.09,
+      "band_hit_rate": 0.354,
+      "r": 0.203
     },
     "raw_cams": {
-      "n": 504,
-      "mae": 42.44,
-      "rmse": 50.271,
-      "bias": 40.438,
+      "n": 505,
+      "mae": 42.507,
+      "rmse": 50.336,
+      "bias": 40.509,
       "band_hit_rate": 0.125,
-      "r": 0.444
+      "r": 0.442
     }
   },
   "by_season": {
@@ -105,88 +105,88 @@
     },
     "burning": {
       "model": {
-        "n": 79,
-        "mae": 11.758,
-        "rmse": 18.181,
-        "bias": -4.322,
-        "band_hit_rate": 0.671,
-        "r": 0.745
+        "n": 80,
+        "mae": 11.955,
+        "rmse": 18.327,
+        "bias": -3.924,
+        "band_hit_rate": 0.662,
+        "r": 0.737
       },
       "persistence": {
-        "n": 72,
-        "mae": 10.495,
-        "rmse": 15.198,
-        "bias": -1.497,
-        "band_hit_rate": 0.75,
-        "r": 0.84
+        "n": 73,
+        "mae": 10.564,
+        "rmse": 15.202,
+        "bias": -1.264,
+        "band_hit_rate": 0.74,
+        "r": 0.839
       },
       "persistence_operational": {
-        "n": 79,
-        "mae": 17.782,
-        "rmse": 25.275,
-        "bias": -1.052,
-        "band_hit_rate": 0.557,
-        "r": 0.546
+        "n": 80,
+        "mae": 18.059,
+        "rmse": 25.512,
+        "bias": -0.539,
+        "band_hit_rate": 0.55,
+        "r": 0.535
       },
       "climatology": {
-        "n": 79,
-        "mae": 22.036,
-        "rmse": 29.696,
-        "bias": -15.035,
-        "band_hit_rate": 0.392,
-        "r": 0.343
+        "n": 80,
+        "mae": 21.949,
+        "rmse": 29.558,
+        "bias": -14.658,
+        "band_hit_rate": 0.388,
+        "r": 0.342
       },
       "raw_cams": {
-        "n": 79,
-        "mae": 34.621,
-        "rmse": 40.412,
-        "bias": 29.685,
-        "band_hit_rate": 0.215,
-        "r": 0.359
+        "n": 80,
+        "mae": 35.142,
+        "rmse": 41.055,
+        "bias": 30.268,
+        "band_hit_rate": 0.212,
+        "r": 0.344
       }
     }
   },
   "by_provenance": {
     "live": {
       "model": {
-        "n": 63,
-        "mae": 5.816,
-        "rmse": 7.243,
-        "bias": 3.146,
-        "band_hit_rate": 0.81,
-        "r": 0.751
+        "n": 64,
+        "mae": 6.155,
+        "rmse": 7.966,
+        "bias": 3.527,
+        "band_hit_rate": 0.797,
+        "r": 0.705
       },
       "persistence": {
-        "n": 57,
-        "mae": 4.878,
-        "rmse": 6.468,
-        "bias": -0.868,
-        "band_hit_rate": 0.877,
-        "r": 0.745
+        "n": 58,
+        "mae": 5.061,
+        "rmse": 6.727,
+        "bias": -0.586,
+        "band_hit_rate": 0.862,
+        "r": 0.72
       },
       "persistence_operational": {
-        "n": 63,
-        "mae": 8.751,
-        "rmse": 11.064,
-        "bias": -0.965,
-        "band_hit_rate": 0.73,
-        "r": 0.304
+        "n": 64,
+        "mae": 9.239,
+        "rmse": 12.062,
+        "bias": -0.325,
+        "band_hit_rate": 0.719,
+        "r": 0.25
       },
       "climatology": {
-        "n": 63,
-        "mae": 14.062,
-        "rmse": 15.948,
-        "bias": 12.485,
-        "band_hit_rate": 0.222,
-        "r": -0.558
+        "n": 64,
+        "mae": 14.079,
+        "rmse": 15.935,
+        "bias": 12.527,
+        "band_hit_rate": 0.219,
+        "r": -0.547
       },
       "raw_cams": {
-        "n": 63,
-        "mae": 45.923,
-        "rmse": 49.202,
-        "bias": 45.923,
-        "band_hit_rate": 0.032,
-        "r": 0.66
+        "n": 64,
+        "mae": 46.398,
+        "rmse": 49.74,
+        "bias": 46.398,
+        "band_hit_rate": 0.031,
+        "r": 0.646
       }
     },
     "backfilled": {
@@ -233,12 +233,12 @@
     }
   },
   "skill": {
-    "operational": 0.2975,
-    "textbook": -0.1361
+    "operational": 0.2976,
+    "textbook": -0.1384
   },
-  "skill_vs_persistence": -0.1361,
+  "skill_vs_persistence": -0.1384,
   "counts": {
-    "burning_live": 21,
+    "burning_live": 22,
     "burning_backfilled": 58
   }
 }
