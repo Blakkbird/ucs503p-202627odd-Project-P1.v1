@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-30T14:22:36+05:30",
+  "generated_at": "2026-10-31T14:12:53+05:30",
   "model": {
     "alpha": 10.0,
     "features": [
@@ -13,7 +13,7 @@
       "wind_v",
       "fire_log"
     ],
-    "fitted_rows": 545
+    "fitted_rows": 546
   },
   "predictions": [
     {
@@ -846,8 +846,8 @@
       "issued": "2026-10-29",
       "pm25": 36.64,
       "band": "Satisfactory",
-      "actual": null,
-      "error": null,
+      "actual": 11.4,
+      "error": 25.24,
       "interval": [
         24.04,
         55.58
@@ -858,12 +858,32 @@
         "obs_age_days": 7.0,
         "persistence_operational": 59.0,
         "forecast_provenance_live": true
+      },
+      "band_hit": false
+    },
+    {
+      "date": "2026-11-01",
+      "issued": "2026-10-31",
+      "pm25": 47.41,
+      "band": "Satisfactory",
+      "actual": null,
+      "error": null,
+      "interval": [
+        31.0,
+        72.23
+      ],
+      "inputs": {
+        "cams_log": 4.5747,
+        "cams_pm25": 96.0,
+        "obs_age_days": 4.0,
+        "persistence_operational": 34.5,
+        "forecast_provenance_live": true
       }
     }
   ],
   "status": {
-    "target": "2026-10-31",
-    "issued": false,
-    "reason": "the station has not published a usable reading recent enough to work from"
+    "target": "2026-11-01",
+    "issued": true,
+    "reason": null
   }
 }
