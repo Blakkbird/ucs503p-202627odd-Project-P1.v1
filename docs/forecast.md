@@ -4,62 +4,63 @@
 the full history and a panel to try different inputs.
 
 <div class="pawan-card" style="border-left-color:#9dc63d">
-  <div class="pawan-when">Sunday 01 November</div>
-  <div class="pawan-value">47<span class="pawan-unit">&micro;g/m&sup3;</span></div>
+  <div class="pawan-when">Monday 02 November</div>
+  <div class="pawan-value">40<span class="pawan-unit">&micro;g/m&sup3;</span></div>
   <div class="pawan-band-name" style="color:#9dc63d">Satisfactory</div>
-  <div class="pawan-note">likely range 31 to 72 &middot; issued 2026-10-31</div>
+  <div class="pawan-note">likely range 26 to 62 &middot; issued 2026-11-01</div>
 </div>
 
 
 <svg viewBox="0 0 760 260" class="pawan-chart" role="img" aria-label="Observed and forecast PM2.5">
-<line x1="34" y1="173.3" x2="726" y2="173.3" class="pawan-grid"/>
-<text x="28" y="177.3" class="pawan-axis" text-anchor="end">25</text>
-<line x1="34" y1="120.6" x2="726" y2="120.6" class="pawan-grid"/>
-<text x="28" y="124.6" class="pawan-axis" text-anchor="end">50</text>
-<line x1="34" y1="68.0" x2="726" y2="68.0" class="pawan-grid"/>
-<text x="28" y="72.0" class="pawan-axis" text-anchor="end">75</text>
-<polygon points="64.1,174.6 79.1,172.7 94.2,175.5 109.2,172.6 139.3,163.4 154.3,168.2 169.4,168.9 184.4,165.9 199.5,175.4 214.5,183.9 274.7,157.3 289.7,158.7 304.8,159.9 319.8,158.9 380.0,147.7 395.0,149.4 410.1,161.2 425.1,120.1 440.2,121.6 455.2,96.5 470.3,146.9 485.3,114.7 500.3,110.8 515.4,107.0 530.4,85.0 545.5,88.4 560.5,96.3 575.6,96.8 590.6,90.3 605.7,96.5 620.7,68.4 635.7,59.0 650.8,64.1 665.8,60.2 680.9,77.7 695.9,108.9 726.0,73.8 726.0,160.7 695.9,175.3 680.9,161.5 665.8,153.8 650.8,155.5 635.7,153.3 620.7,157.4 605.7,169.9 590.6,167.2 575.6,170.1 560.5,169.8 545.5,166.3 530.4,164.7 515.4,174.5 500.3,176.1 485.3,177.9 470.3,192.2 455.2,169.6 440.2,180.7 425.1,180.1 410.1,193.8 395.0,188.3 380.0,187.5 319.8,193.3 304.8,193.8 289.7,193.4 274.7,192.6 214.5,206.3 199.5,202.1 184.4,197.4 169.4,198.5 154.3,198.2 139.3,195.7 109.2,198.4 94.2,200.0 79.1,198.5 64.1,199.6" class="pawan-band"/>
-<polyline points="34.0,182.0 49.0,192.9 64.1,200.9 79.1,187.0 94.2,174.2 109.2,155.8 124.3,156.9 139.3,161.5 154.3,155.6 169.4,183.2 184.4,186.0 199.5,208.3 214.5,198.8 229.6,180.9 244.6,182.0 259.7,153.9 274.7,139.4 289.7,146.3 304.8,136.7 319.8,145.7 334.9,156.3 349.9,174.8 365.0,173.3 380.0,153.1 395.0,184.3 410.1,198.0 425.1,187.4 440.2,188.1 455.2,169.5 470.3,191.9 485.3,185.3 500.3,174.0 515.4,176.7 530.4,168.9 545.5,146.1 560.5,148.5 575.6,133.3 590.6,101.7 650.8,120.2 665.8,153.3 680.9,186.0 695.9,202.0" class="pawan-observed"/>
-<polyline points="64.1,189.0 79.1,187.6 94.2,189.7 109.2,187.5 139.3,182.3 154.3,185.8 169.4,186.2 184.4,184.4 199.5,191.1 214.5,197.0 274.7,178.0 289.7,179.0 304.8,179.8 319.8,179.0 380.0,170.9 395.0,172.2 410.1,180.2 425.1,156.1 440.2,157.1 455.2,140.3 470.3,174.1 485.3,152.6 500.3,150.0 515.4,147.5 530.4,132.9 545.5,135.2 560.5,140.5 575.6,140.8 590.6,136.5 605.7,140.6 620.7,121.8 635.7,115.6 650.8,119.0 665.8,116.4 680.9,128.0 695.9,148.8 726.0,126.1" class="pawan-forecast"/>
-<circle cx="64.1" cy="189.0" r="3" class="pawan-dot"/>
-<circle cx="79.1" cy="187.6" r="3" class="pawan-dot"/>
-<circle cx="94.2" cy="189.7" r="3" class="pawan-dot"/>
-<circle cx="109.2" cy="187.5" r="3" class="pawan-dot"/>
-<circle cx="139.3" cy="182.3" r="3" class="pawan-dot"/>
-<circle cx="154.3" cy="185.8" r="3" class="pawan-dot"/>
-<circle cx="169.4" cy="186.2" r="3" class="pawan-dot"/>
-<circle cx="184.4" cy="184.4" r="3" class="pawan-dot"/>
-<circle cx="199.5" cy="191.1" r="3" class="pawan-dot"/>
-<circle cx="214.5" cy="197.0" r="3" class="pawan-dot"/>
-<circle cx="274.7" cy="178.0" r="3" class="pawan-dot"/>
-<circle cx="289.7" cy="179.0" r="3" class="pawan-dot"/>
-<circle cx="304.8" cy="179.8" r="3" class="pawan-dot"/>
-<circle cx="319.8" cy="179.0" r="3" class="pawan-dot"/>
-<circle cx="380.0" cy="170.9" r="3" class="pawan-dot"/>
-<circle cx="395.0" cy="172.2" r="3" class="pawan-dot"/>
-<circle cx="410.1" cy="180.2" r="3" class="pawan-dot"/>
-<circle cx="425.1" cy="156.1" r="3" class="pawan-dot"/>
-<circle cx="440.2" cy="157.1" r="3" class="pawan-dot"/>
-<circle cx="455.2" cy="140.3" r="3" class="pawan-dot"/>
-<circle cx="470.3" cy="174.1" r="3" class="pawan-dot"/>
-<circle cx="485.3" cy="152.6" r="3" class="pawan-dot"/>
-<circle cx="500.3" cy="150.0" r="3" class="pawan-dot"/>
-<circle cx="515.4" cy="147.5" r="3" class="pawan-dot"/>
-<circle cx="530.4" cy="132.9" r="3" class="pawan-dot"/>
-<circle cx="545.5" cy="135.2" r="3" class="pawan-dot"/>
-<circle cx="560.5" cy="140.5" r="3" class="pawan-dot"/>
-<circle cx="575.6" cy="140.8" r="3" class="pawan-dot"/>
-<circle cx="590.6" cy="136.5" r="3" class="pawan-dot"/>
-<circle cx="605.7" cy="140.6" r="3" class="pawan-dot"/>
-<circle cx="620.7" cy="121.8" r="3" class="pawan-dot"/>
-<circle cx="635.7" cy="115.6" r="3" class="pawan-dot"/>
-<circle cx="650.8" cy="119.0" r="3" class="pawan-dot"/>
-<circle cx="665.8" cy="116.4" r="3" class="pawan-dot"/>
-<circle cx="680.9" cy="128.0" r="3" class="pawan-dot"/>
-<circle cx="695.9" cy="148.8" r="3" class="pawan-dot"/>
-<circle cx="726.0" cy="126.1" r="3" class="pawan-dot"/>
-<text x="34.0" y="252" class="pawan-axis" text-anchor="middle">16 Sep</text>
-<text x="726.0" y="252" class="pawan-axis" text-anchor="middle">01 Nov</text>
+<line x1="34" y1="173.4" x2="726" y2="173.4" class="pawan-grid"/>
+<text x="28" y="177.4" class="pawan-axis" text-anchor="end">25</text>
+<line x1="34" y1="120.7" x2="726" y2="120.7" class="pawan-grid"/>
+<text x="28" y="124.7" class="pawan-axis" text-anchor="end">50</text>
+<line x1="34" y1="68.1" x2="726" y2="68.1" class="pawan-grid"/>
+<text x="28" y="72.1" class="pawan-axis" text-anchor="end">75</text>
+<polygon points="49.0,174.6 64.1,172.7 79.1,175.6 94.2,172.6 124.3,163.4 139.3,168.3 154.3,169.0 169.4,166.0 184.4,175.4 199.5,183.9 259.7,157.3 274.7,158.8 289.7,160.0 304.8,158.9 365.0,147.7 380.0,149.5 395.0,161.3 410.1,120.2 425.1,121.7 440.2,96.6 455.2,147.0 470.3,114.8 485.3,110.9 500.3,107.1 515.4,85.2 530.4,88.5 545.5,96.4 560.5,97.0 575.6,90.4 590.6,96.6 605.7,68.5 620.7,59.2 635.7,64.3 650.8,60.4 665.8,77.8 680.9,109.0 711.0,73.9 726.0,96.4 726.0,170.5 711.0,160.7 680.9,175.4 665.8,161.6 650.8,153.9 635.7,155.6 620.7,153.3 605.7,157.5 590.6,170.0 575.6,167.2 560.5,170.1 545.5,169.9 530.4,166.4 515.4,164.8 500.3,174.5 485.3,176.2 470.3,177.9 455.2,192.2 440.2,169.6 425.1,180.8 410.1,180.1 395.0,193.8 380.0,188.4 365.0,187.5 304.8,193.3 289.7,193.9 274.7,193.4 259.7,192.7 199.5,206.3 184.4,202.1 169.4,197.5 154.3,198.5 139.3,198.2 124.3,195.7 94.2,198.4 79.1,200.0 64.1,198.5 49.0,199.6" class="pawan-band"/>
+<polyline points="34.0,192.9 49.0,200.9 64.1,187.1 79.1,174.2 94.2,155.9 109.2,156.9 124.3,161.6 139.3,155.7 154.3,183.3 169.4,186.0 184.4,208.3 199.5,198.8 214.5,180.9 229.6,182.0 244.6,154.0 259.7,139.5 274.7,146.4 289.7,136.7 304.8,145.8 319.8,156.3 334.9,174.8 349.9,173.4 365.0,153.2 380.0,184.3 395.0,198.0 410.1,187.5 425.1,188.1 440.2,169.6 455.2,191.9 470.3,185.4 485.3,174.0 500.3,176.7 515.4,168.9 530.4,146.2 545.5,148.5 560.5,133.4 575.6,101.8 635.7,120.3 650.8,153.4 665.8,186.0 680.9,202.0 695.9,59.0" class="pawan-observed"/>
+<polyline points="49.0,189.1 64.1,187.6 79.1,189.7 94.2,187.5 124.3,182.4 139.3,185.8 154.3,186.3 169.4,184.5 184.4,191.1 199.5,197.1 259.7,178.0 274.7,179.0 289.7,179.8 304.8,179.1 365.0,171.0 380.0,172.2 395.0,180.2 410.1,156.1 425.1,157.1 440.2,140.4 455.2,174.1 470.3,152.7 485.3,150.1 500.3,147.6 515.4,133.0 530.4,135.3 545.5,140.5 560.5,140.9 575.6,136.6 590.6,140.6 605.7,121.9 620.7,115.7 635.7,119.1 650.8,116.5 665.8,128.1 680.9,148.9 711.0,126.2 726.0,141.0" class="pawan-forecast"/>
+<circle cx="49.0" cy="189.1" r="3" class="pawan-dot"/>
+<circle cx="64.1" cy="187.6" r="3" class="pawan-dot"/>
+<circle cx="79.1" cy="189.7" r="3" class="pawan-dot"/>
+<circle cx="94.2" cy="187.5" r="3" class="pawan-dot"/>
+<circle cx="124.3" cy="182.4" r="3" class="pawan-dot"/>
+<circle cx="139.3" cy="185.8" r="3" class="pawan-dot"/>
+<circle cx="154.3" cy="186.3" r="3" class="pawan-dot"/>
+<circle cx="169.4" cy="184.5" r="3" class="pawan-dot"/>
+<circle cx="184.4" cy="191.1" r="3" class="pawan-dot"/>
+<circle cx="199.5" cy="197.1" r="3" class="pawan-dot"/>
+<circle cx="259.7" cy="178.0" r="3" class="pawan-dot"/>
+<circle cx="274.7" cy="179.0" r="3" class="pawan-dot"/>
+<circle cx="289.7" cy="179.8" r="3" class="pawan-dot"/>
+<circle cx="304.8" cy="179.1" r="3" class="pawan-dot"/>
+<circle cx="365.0" cy="171.0" r="3" class="pawan-dot"/>
+<circle cx="380.0" cy="172.2" r="3" class="pawan-dot"/>
+<circle cx="395.0" cy="180.2" r="3" class="pawan-dot"/>
+<circle cx="410.1" cy="156.1" r="3" class="pawan-dot"/>
+<circle cx="425.1" cy="157.1" r="3" class="pawan-dot"/>
+<circle cx="440.2" cy="140.4" r="3" class="pawan-dot"/>
+<circle cx="455.2" cy="174.1" r="3" class="pawan-dot"/>
+<circle cx="470.3" cy="152.7" r="3" class="pawan-dot"/>
+<circle cx="485.3" cy="150.1" r="3" class="pawan-dot"/>
+<circle cx="500.3" cy="147.6" r="3" class="pawan-dot"/>
+<circle cx="515.4" cy="133.0" r="3" class="pawan-dot"/>
+<circle cx="530.4" cy="135.3" r="3" class="pawan-dot"/>
+<circle cx="545.5" cy="140.5" r="3" class="pawan-dot"/>
+<circle cx="560.5" cy="140.9" r="3" class="pawan-dot"/>
+<circle cx="575.6" cy="136.6" r="3" class="pawan-dot"/>
+<circle cx="590.6" cy="140.6" r="3" class="pawan-dot"/>
+<circle cx="605.7" cy="121.9" r="3" class="pawan-dot"/>
+<circle cx="620.7" cy="115.7" r="3" class="pawan-dot"/>
+<circle cx="635.7" cy="119.1" r="3" class="pawan-dot"/>
+<circle cx="650.8" cy="116.5" r="3" class="pawan-dot"/>
+<circle cx="665.8" cy="128.1" r="3" class="pawan-dot"/>
+<circle cx="680.9" cy="148.9" r="3" class="pawan-dot"/>
+<circle cx="711.0" cy="126.2" r="3" class="pawan-dot"/>
+<circle cx="726.0" cy="141.0" r="3" class="pawan-dot"/>
+<text x="34.0" y="252" class="pawan-axis" text-anchor="middle">17 Sep</text>
+<text x="726.0" y="252" class="pawan-axis" text-anchor="middle">02 Nov</text>
 </svg>
 
 The solid line is what the station at Model Town measured. The
@@ -70,7 +71,7 @@ yet.
 
 ## How it has done so far
 
-Since the service started issuing forecasts it has made **44** of them, **35** of which have an observation to be checked against. On those, the mean absolute error is **9.6 &micro;g/m&sup3;** and the AQI band was right **21 times out of 35**.
+Since the service started issuing forecasts it has made **45** of them, **35** of which have an observation to be checked against. On those, the mean absolute error is **9.6 &micro;g/m&sup3;** and the AQI band was right **21 times out of 35**.
 
 
 That is the live record, not the backtest. It is short, and it
@@ -97,4 +98,4 @@ original, untouched. Rewriting yesterday's forecast after
 yesterday happened is the easiest way to build a system that
 looks far better than it is.
 
-<small>Generated from `data/predictions.json` at 2026-10-31T14:12:53+05:30.</small>
+<small>Generated from `data/predictions.json` at 2026-11-01T15:03:08+05:30.</small>
