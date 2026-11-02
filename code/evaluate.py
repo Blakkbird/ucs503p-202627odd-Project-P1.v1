@@ -110,13 +110,34 @@ def fit(train):
     return Ridge(best, names, LOG_TARGET).fit(x, y)
 
 
+def published(ready, target):
+    """The rows a forecast for `target` could have learnt from.
+
+    Not simply every row before the target day. A row only becomes
+    training data once its own reading is published, and the
+    freshest published reading is the one `target` was built from,
+    `obs_age` days back. The days between that one and the target
+    were still unknown when the forecast went out.
+
+    For a long time this was ready[:i], every earlier row, which let
+    each backtest step learn from the one or two days just before
+    it. That is a leak, if a small one, and measured on the 2026
+    record it was worth about 0.2 µg/m3 of MAE. The live forecast
+    never had it: daily.csv simply does not hold those readings yet.
+    """
+    newest = target.day - timedelta(days=int(target.obs_age))
+    return [s for s in ready if s.day <= newest]
+
+
 def backtest(samples):
     """Walk forward one day at a time, refitting as we go."""
     ready = features.usable(samples)
     runs = []
 
-    for i in range(MIN_TRAIN, len(ready)):
-        train, target = ready[:i], ready[i]
+    for i, target in enumerate(ready):
+        train = published(ready[:i], target)
+        if len(train) < MIN_TRAIN:
+            continue
         try:
             model = fit(train)
         except ValueError as exc:
@@ -128,6 +149,7 @@ def backtest(samples):
             "model": model.predict_one(target.x),
             "alpha": model.alpha,
             "n_train": len(train),
+            "trained_to": train[-1].day,
             "live": target.live,
         })
 
