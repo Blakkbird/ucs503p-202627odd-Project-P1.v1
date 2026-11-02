@@ -25,7 +25,7 @@ error. That is the record the accuracy claims come from.
 import json
 import math
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -34,7 +34,7 @@ import evaluate
 import features
 from model import Ridge
 
-IST = timezone(timedelta(hours=5, minutes=30))
+IST = config.IST
 
 # An interval this wide would hold roughly four out of five days
 # if the errors were normal and the backtest spread still
@@ -133,12 +133,33 @@ def unscore_thin(history, samples):
     return cleared
 
 
+def ensure_model(blob, age, samples, path=None):
+    """The model to forecast with, fitted at the reading's age.
+
+    evaluate.py normally ships exactly this. But predict.py can be
+    run on its own, and the feed can land a fresher reading between
+    the two, so the age on the file is checked rather than trusted.
+    A model fitted on five-day-old readings would read a two-day-old
+    one with the wrong weight. Returns (model, refitted).
+    """
+    names = samples[0].names if samples else None
+    if blob and blob.get("obs_age") == age and blob.get("names") == names:
+        return Ridge.from_dict(blob), False
+    ready = features.usable(samples)
+    if len(ready) <= evaluate.MIN_TRAIN:
+        return None, False
+    model = evaluate.fit(ready)
+    evaluate.save_model(model, age, path or config.MODEL_JSON)
+    return model, True
+
+
 def describe(sample, model, sd, today):
     """One prediction record, with enough context to explain it."""
     point = model.predict_one(sample.x)
     record = {
         "date": sample.day.isoformat(),
         "issued": today.isoformat(),
+        "issued_at": datetime.now(IST).isoformat(timespec="minutes"),
         "pm25": round(point, 2),
         "band": evaluate.band(point),
         "actual": None,
@@ -156,6 +177,7 @@ def describe(sample, model, sd, today):
         "cams_log": round(named.get("cams_log", 0.0), 4),
         "cams_pm25": round(math.expm1(named.get("cams_log", 0.0)), 2),
         "obs_age_days": sample.obs_age,
+        "obs_day": sample.raw.get("obs_day"),
         "persistence_operational": (
             None if sample.persistence_op is None
             else round(sample.persistence_op, 2)),
@@ -172,9 +194,16 @@ def main():
     if not config.MODEL_JSON.exists():
         print(f"no model at {config.MODEL_JSON}; run evaluate.py first")
         return 1
-    model = Ridge.load(config.MODEL_JSON)
+    with open(config.MODEL_JSON) as f:
+        blob = json.load(f)
 
-    samples = features.build(use_weather=weather)
+    # The freshest reading on file decides which model forecasts.
+    # Outcomes are attached from the same build: a day's observed
+    # value does not depend on the age the features were read at.
+    rows = features.load()
+    age = features.freshest_age(rows, tomorrow)
+    samples = features.build(rows, use_weather=weather,
+                             age=age or features.default_age())
     history = load_history()
 
     cleared = unscore_thin(history, samples)
@@ -190,9 +219,14 @@ def main():
     #
     # Two versions of the reason: the log gets the exact one, the
     # public page gets one a reader can make sense of.
-    skipped, reason = None, None
+    skipped, reason, model = None, None, None
     target = next((s for s in samples if s.day == tomorrow), None)
-    if target is None:
+    if age is None:
+        skipped = (f"no valid reading in the {config.OBS_MAX_AGE} days "
+                   f"before {tomorrow}")
+        reason = ("the station has not published a usable reading "
+                  "recent enough to work from")
+    elif target is None:
         skipped = "the ingest has not written a row for it"
         reason = "the inputs for that day were not fetched"
     elif not target.complete:
@@ -204,6 +238,14 @@ def main():
         else:
             reason = "some of the inputs for that day are missing"
 
+    if not skipped:
+        model, refitted = ensure_model(blob, age, samples)
+        if model is None:
+            skipped = "too few usable rows to fit a model"
+            reason = "the model could not be fitted"
+        elif refitted:
+            print(f"model.json was not fitted at age {age}; refitted it")
+
     if skipped:
         print(f"no forecast for {tomorrow}: {skipped}")
     elif tomorrow.isoformat() in history:
@@ -214,14 +256,16 @@ def main():
         record = describe(target, model, spread(model), today)
         history[record["date"]] = record
         print(f"{record['date']}: {record['pm25']} ug/m3 "
-              f"({record['band']}), issued {record['issued']}")
+              f"({record['band']}), issued {record['issued']}, from a "
+              f"reading {age} days old")
 
     out = {
         "generated_at": datetime.now(IST).isoformat(timespec="seconds"),
         "model": {
-            "alpha": model.alpha,
-            "features": model.names,
+            "alpha": model.alpha if model else blob.get("alpha"),
+            "features": model.names if model else blob.get("names"),
             "fitted_rows": len(features.usable(samples)),
+            "obs_age": age,
         },
         "predictions": [history[d] for d in sorted(history)],
         # What this run was trying to do and whether it managed.
@@ -232,6 +276,7 @@ def main():
             "target": tomorrow.isoformat(),
             "issued": tomorrow.isoformat() in history,
             "reason": reason,
+            "obs_age": age,
         },
     }
     config.DATA.mkdir(exist_ok=True)

@@ -13,6 +13,7 @@ writes data/metrics.json.
 import json
 import math
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -181,8 +182,16 @@ def breakdown(samples, subset):
     return entry
 
 
-def report(use_weather=False):
-    samples = features.build(use_weather=use_weather)
+def report(use_weather=True, age=None, rows=None):
+    """The headline backtest, at one reading age.
+
+    Left alone, `age` is config.OBS_REFERENCE_AGE: the freshness
+    the feed actually delivers now. The model lab scores the other
+    ages, so a slower feed shows up as a measured cost rather than
+    a surprise.
+    """
+    age = features.default_age() if age is None else age
+    samples = features.build(rows, use_weather=use_weather, age=age)
     runs = backtest(samples)
     if not runs:
         print(f"Not enough usable rows to backtest "
@@ -198,6 +207,7 @@ def report(use_weather=False):
         "generated_for": days[-1].isoformat(),
         "window": {"first": days[0].isoformat(), "last": days[-1].isoformat()},
         "features": samples[0].names,
+        "obs_age": age,
         "log_target": LOG_TARGET,
         "min_train": MIN_TRAIN,
         "min_obs_hours": config.MIN_OBS_HOURS,
@@ -273,9 +283,39 @@ def write_backtest(out, runs, path=None):
     print(f"wrote {path} ({len(runs)} days)")
 
 
+def ship(rows, use_weather=True, target=None):
+    """Fit the model tomorrow's forecast will use, and save it.
+
+    Fitted at the age of the freshest reading actually on file for
+    tomorrow, which on a normal day is the reference age and on a
+    slow one is older. Saved with that age, so predict.py and the
+    dashboard can check they are holding the right one.
+    """
+    target = target or datetime.now(config.IST).date() + timedelta(days=1)
+    age = (features.freshest_age(rows, target)
+           or features.default_age())
+    ready = features.usable(features.build(rows, use_weather=use_weather,
+                                           age=age))
+    if len(ready) <= MIN_TRAIN:
+        return None
+    final = fit(ready)
+    save_model(final, age, config.MODEL_JSON)
+    return final, age, len(ready)
+
+
+def save_model(model, age, path, horizon=1):
+    """model.json: the fitted weights, plus the age they were fitted at."""
+    blob = model.to_dict()
+    blob["obs_age"] = age
+    blob["horizon"] = horizon
+    with open(path, "w") as f:
+        json.dump(blob, f, indent=2)
+
+
 def show(out, runs):
     print(f"\nBacktest {out['window']['first']} to {out['window']['last']}"
-          f"  ({len(runs)} days, refit each day)")
+          f"  ({len(runs)} days, refit each day, readings "
+          f"{out['obs_age']} days old)")
     print(f"Features: {', '.join(out['features'])}\n")
 
     head = f"{'':26s}{'n':>5s}{'MAE':>9s}{'RMSE':>9s}{'bias':>9s}{'band':>8s}"
@@ -315,7 +355,8 @@ def main():
     # reproduces the pre-review model and is how the ablation
     # table in the report was generated.
     weather = "--no-weather" not in sys.argv
-    built = report(use_weather=weather)
+    rows = features.load()
+    built = report(use_weather=weather, rows=rows)
     if built is None:
         return 1
     out, runs = built
@@ -333,13 +374,13 @@ def main():
     # before it, the same as the totals.
     write_backtest(out, runs)
 
-    # Ship a model fitted on the whole record, ready for tomorrow.
-    ready = features.usable(features.build(use_weather=weather))
-    if len(ready) > MIN_TRAIN:
-        final = fit(ready)
-        final.save(config.MODEL_JSON)
-        print(f"wrote {config.MODEL_JSON} "
-              f"(alpha={final.alpha}, fitted on {len(ready)} rows)")
+    # Ship a model fitted on the whole record, at the age tomorrow's
+    # reading will actually have.
+    shipped = ship(rows, use_weather=weather)
+    if shipped:
+        final, age, n = shipped
+        print(f"wrote {config.MODEL_JSON} (alpha={final.alpha}, "
+              f"fitted on {n} rows, readings {age} days old)")
         print("\nstandardised weights, strongest first:")
         for name, weight in final.weights():
             print(f"    {name:16s}{weight:+8.3f}")

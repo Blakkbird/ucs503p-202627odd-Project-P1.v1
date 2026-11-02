@@ -14,6 +14,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import predict
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 
 class FakeSample:
     """Just enough of features.Sample for attach_outcomes."""
@@ -116,3 +118,40 @@ def test_a_full_day_score_is_not_withdrawn():
         history, [FakeSample(date(2026, 9, 2), 24.0)])
     assert cleared == 0
     assert history["2026-09-02"]["actual"] == 24.0
+
+
+def test_the_model_on_file_is_used_when_its_age_matches(tmp_path):
+    import evaluate
+    import features
+    from test_features import synthetic
+
+    samples = features.build(synthetic(90), age=2)
+    fitted = evaluate.fit(features.usable(samples))
+    blob = fitted.to_dict() | {"obs_age": 2}
+
+    model, refitted = predict.ensure_model(blob, 2, samples,
+                                           tmp_path / "m.json")
+    assert not refitted
+    assert model.coef == fitted.coef
+
+
+def test_a_model_fitted_at_another_age_is_refitted(tmp_path):
+    """Handing a two-day-old reading to a model that learnt from
+    five-day-old ones would weigh it wrongly. The file says which
+    age it was fitted at, and a mismatch means a refit."""
+    import json
+
+    import evaluate
+    import features
+    from test_features import synthetic
+
+    rows = synthetic(90)
+    old = evaluate.fit(features.usable(features.build(rows, age=5)))
+    blob = old.to_dict() | {"obs_age": 5}
+
+    samples = features.build(rows, age=2)
+    path = tmp_path / "m.json"
+    model, refitted = predict.ensure_model(blob, 2, samples, path)
+    assert refitted
+    assert json.loads(path.read_text())["obs_age"] == 2
+    assert model.names == samples[0].names

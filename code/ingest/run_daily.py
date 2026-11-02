@@ -11,13 +11,13 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import config
 
-IST = timezone(timedelta(hours=5, minutes=30))
+IST = config.IST
 
 # Observations arrive with a lag of a day or two, so a job that
 # only ever looks at yesterday leaves permanent holes. Re-check a
