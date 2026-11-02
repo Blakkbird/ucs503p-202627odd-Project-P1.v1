@@ -19,4 +19,6 @@ Name: Gurkirpa Singh
    October](./w7-ticket-resolution.md)
 +  [W8 : A model that could only be run from the
    inside](./w8-ticket-resolution.md)
++  [W9 : A forecast that would not use what it
+   had](./w9-ticket-resolution.md)
 +  […]
