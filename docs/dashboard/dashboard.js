@@ -460,7 +460,8 @@
     const box = $("drivers");
     box.replaceChildren();
     if (!D.why || !D.model) {
-      $("why-lede").textContent = "Tomorrow's inputs are incomplete, so there is no forecast to break down.";
+      $("why-lede").textContent = D.why_skipped ||
+        "Tomorrow's inputs are incomplete, so there is no forecast to break down.";
       return;
     }
 

@@ -826,8 +826,22 @@ def dashboard_data(predictions, samples, rows, metrics, model,
         out["model"]["typical"] = (math.expm1(fitted.intercept)
                                    if fitted.log_target else fitted.intercept)
         if target.complete:
-            out["model"]["now"] = fitted.predict_one(target.x)
-            out["why"] = explain(fitted, target.x)
+            now = fitted.predict_one(target.x)
+            # The breakdown has to add up to the number at the top of
+            # the page. It will not when tomorrow's forecast was frozen
+            # by an earlier fit: on the morning a new version is
+            # merged, or when a fresher reading lands between the
+            # forecast and a rerun. No breakdown beats one that
+            # explains a different number.
+            if record and abs(now - record["pm25"]) > 0.05:
+                out["why_skipped"] = (
+                    "Tomorrow's forecast was frozen by an earlier fit of "
+                    "the model, so a breakdown from this morning's fit "
+                    "would explain a different number. It comes back "
+                    "with the next forecast.")
+            else:
+                out["model"]["now"] = now
+                out["why"] = explain(fitted, target.x)
 
     out["history"] = history_series(rows, records, backtest, tomorrow)
     out["record"] = live_record([r for r in records

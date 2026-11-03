@@ -214,18 +214,26 @@ def test_one_burning_day_reads_as_one_day():
 
 # --- dashboard data
 
-def dashboard_fixture(today=date(2026, 10, 20), with_record=True, fires=None):
-    """A small but complete set of inputs for dashboard_data."""
+def dashboard_fixture(today=date(2026, 10, 20), with_record=True, fires=None,
+                      frozen=None):
+    """A small but complete set of inputs for dashboard_data.
+
+    Tomorrow's record holds what the model itself predicts, as a real
+    one does, unless `frozen` says otherwise.
+    """
     import evaluate
 
     rows = synthetic(n=60, start=date(2026, 9, 1))
     samples = features.build(rows)
-    model = evaluate.fit(features.usable(samples)).to_dict()
+    fitted = evaluate.fit(features.usable(samples))
+    model = fitted.to_dict()
     tomorrow = today + timedelta(days=1)
+    target = next(s for s in samples if s.day == tomorrow)
+    pm25 = round(fitted.predict_one(target.x), 2) if frozen is None else frozen
     records = sample_predictions()["predictions"]
     if with_record:
         records.append({"date": tomorrow.isoformat(),
-                        "issued": today.isoformat(), "pm25": 31.0,
+                        "issued": today.isoformat(), "pm25": pm25,
                         "band": "Satisfactory", "actual": None,
                         "error": None, "interval": [20.0, 48.0]})
     predictions = {"generated_at": "2026-10-20T08:00:00+05:30",
@@ -328,3 +336,19 @@ def test_write_dashboard_refuses_nan(tmp_path):
 
     with pytest.raises(ValueError):
         pages.write_dashboard({"x": float("nan")}, tmp_path / "d.json")
+
+
+def test_the_breakdown_explains_the_number_on_the_page():
+    data = dashboard_fixture()
+    assert data["why"]
+    assert abs(data["model"]["now"] - data["forecast"]["pm25"]) <= 0.05
+    assert "why_skipped" not in data
+
+
+def test_no_breakdown_for_a_forecast_frozen_by_another_fit():
+    """The morning a new version is merged, tomorrow's forecast was
+    already issued by the old one. The page must not break down a
+    different number from the one it shows."""
+    data = dashboard_fixture(frozen=99.0)
+    assert "why" not in data
+    assert "earlier fit" in data["why_skipped"]
