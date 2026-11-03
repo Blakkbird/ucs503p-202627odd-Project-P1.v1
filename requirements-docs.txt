@@ -1,10 +1,17 @@
 # Transcribed from .github/workflows/mkdocs.yml so that a local
 # `mkdocs serve` matches what CI builds. See journal W1.
-mkdocs-material
-mkdocstrings[python]
-mkdocs-gen-files
-mkdocs-literate-nav
-mkdocs-section-index
-mkdocs-git-revision-date-localized-plugin
-mkdocs-git-authors-plugin
-pymdown-extensions
+#
+# Pinned. Material for MkDocs warns that MkDocs 2.0 drops the plugin
+# system and the theme overrides this site depends on, and the site
+# carries the live dashboard, so an unpinned upgrade could take both
+# down on an ordinary push. These are the versions the site was last
+# built and checked with.
+mkdocs==1.6.1
+mkdocs-material==9.7.6
+mkdocstrings[python]==1.0.8
+mkdocs-gen-files==0.6.1
+mkdocs-literate-nav==0.6.3
+mkdocs-section-index==0.3.12
+mkdocs-git-revision-date-localized-plugin==1.6.3
+mkdocs-git-authors-plugin==0.10.0
+pymdown-extensions==10.21.2
