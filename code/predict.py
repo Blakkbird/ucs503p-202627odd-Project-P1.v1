@@ -98,10 +98,10 @@ def attach_outcomes(history, samples):
     truth = {s.day.isoformat(): s.y for s in samples
              if s.y is not None and s.valid_target}
     filled = 0
-    for day, record in history.items():
+    for record in history.values():
         if record.get("actual") is not None:
             continue
-        actual = truth.get(day)
+        actual = truth.get(record["date"])
         if actual is None:
             continue
         record["actual"] = round(actual, 2)
@@ -124,8 +124,8 @@ def unscore_thin(history, samples):
     thin = {s.day.isoformat() for s in samples
             if s.y is not None and not s.valid_target}
     cleared = 0
-    for day, record in history.items():
-        if day in thin and record.get("actual") is not None:
+    for record in history.values():
+        if record["date"] in thin and record.get("actual") is not None:
             record["actual"] = None
             record["error"] = None
             record.pop("band_hit", None)
@@ -153,7 +153,21 @@ def ensure_model(blob, age, samples, path=None):
     return model, True
 
 
-def describe(sample, model, sd, today):
+def calibration_for(metrics, horizon, age):
+    """The range's edges for one horizon, if sized at this age.
+
+    evaluate.py sizes them each morning at the ages the forecasts
+    will use. If the feed moved between the two runs the ages
+    disagree, and the forecast falls back to the older, rougher
+    range rather than borrow one sized for a different reading.
+    """
+    block = ((metrics or {}).get("horizons") or {}).get(str(horizon))
+    if block and block.get("age") == age:
+        return block.get("calibration")
+    return None
+
+
+def describe(sample, model, sd, today, calibration=None):
     """One prediction record, with enough context to explain it."""
     point = model.predict_one(sample.x)
     record = {
@@ -165,9 +179,17 @@ def describe(sample, model, sd, today):
         "actual": None,
         "error": None,
     }
-    band = model.interval(sample.x, sd, INTERVAL_Z)
+    # The calibrated range when there is one: the middle 80% of
+    # the backtest's own out-of-sample errors. Otherwise the old
+    # in-sample band, which is narrower than it should be.
+    band = evaluate.likely_range(point, calibration, sample.burning)
+    method = "calibrated"
+    if band is None:
+        band = model.interval(sample.x, sd, INTERVAL_Z)
+        method = "residual_sd"
     if band:
         record["interval"] = [round(band[0], 2), round(band[1], 2)]
+        record["range_method"] = method
 
     # What the correction was applied to, and what it would have
     # been worth doing nothing. Kept per row so a bad day can be
@@ -186,6 +208,69 @@ def describe(sample, model, sd, today):
     return record
 
 
+def load_outlook():
+    """Outlook forecasts on record, keyed by day and horizon."""
+    if not config.PREDICTIONS_JSON.exists():
+        return {}
+    with open(config.PREDICTIONS_JSON) as f:
+        blob = json.load(f)
+    return {f"{r['date']}|{r['horizon']}": r for r in blob.get("outlook", [])}
+
+
+def read_json(path):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def outlook(rows, today, weather, metrics, book, inputs=None):
+    """Forecasts for two and three days ahead, frozen like tomorrow's.
+
+    Built from the same station reading as tomorrow's forecast, so
+    that reading is a day or two older relative to these targets,
+    and each horizon gets a model fitted at that age. CAMS and the
+    weather come from data/outlook.json, which the ingest writes
+    each morning; a file from another day is not used.
+    """
+    inputs = inputs or read_json(config.OUTLOOK_JSON) or {}
+    if inputs.get("issued") != today.isoformat():
+        return 0
+    made = 0
+    for h in config.OUTLOOK_HORIZONS:
+        target = today + timedelta(days=h)
+        key = f"{target.isoformat()}|{h}"
+        values = (inputs.get("days") or {}).get(target.isoformat())
+        if key in book or not values:
+            continue
+        rows_h = dict(rows)
+        rows_h[target.isoformat()] = (
+            {c: "" for c in config.COLUMNS}
+            | {k: ("" if v is None else v) for k, v in values.items()}
+            | {"date": target.isoformat(),
+               "cams_issue_date": today.isoformat()})
+        age = features.freshest_age(rows_h, target, horizon=h)
+        if age is None:
+            continue
+        samples = features.build(rows_h, use_weather=weather, age=age,
+                                 horizon=h)
+        sample = next((s for s in samples if s.day == target), None)
+        ready = features.usable(samples)
+        if sample is None or not sample.complete or \
+                len(ready) <= evaluate.MIN_TRAIN:
+            continue
+        model = evaluate.fit(ready)
+        record = describe(sample, model, model.residual_sd, today,
+                          calibration_for(metrics, h, age))
+        record["horizon"] = h
+        book[key] = record
+        made += 1
+        print(f"{record['date']}: {record['pm25']} ug/m3 "
+              f"({record['band']}), {h} days ahead")
+    return made
+
+
 def main():
     weather = "--no-weather" not in sys.argv
     today = datetime.now(IST).date()
@@ -196,6 +281,7 @@ def main():
         return 1
     with open(config.MODEL_JSON) as f:
         blob = json.load(f)
+    metrics = read_json(config.METRICS_JSON)
 
     # The freshest reading on file decides which model forecasts.
     # Outcomes are attached from the same build: a day's observed
@@ -253,11 +339,22 @@ def main():
         print(f"{tomorrow}: already forecast on "
               f"{history[tomorrow.isoformat()]['issued']}, left alone")
     else:
-        record = describe(target, model, spread(model), today)
+        record = describe(target, model, spread(model), today,
+                          calibration_for(metrics, 1, age))
         history[record["date"]] = record
         print(f"{record['date']}: {record['pm25']} ug/m3 "
               f"({record['band']}), issued {record['issued']}, from a "
               f"reading {age} days old")
+
+    # The outlook comes second and is not allowed to fail the run:
+    # tomorrow's forecast is the one the service promises.
+    book = load_outlook()
+    unscore_thin(book, samples)
+    attach_outcomes(book, samples)
+    try:
+        outlook(rows, today, weather, metrics, book)
+    except (ValueError, KeyError, TypeError, OSError) as e:
+        print(f"outlook not issued: {e}")
 
     out = {
         "generated_at": datetime.now(IST).isoformat(timespec="seconds"),
@@ -268,6 +365,7 @@ def main():
             "obs_age": age,
         },
         "predictions": [history[d] for d in sorted(history)],
+        "outlook": [book[k] for k in sorted(book)],
         # What this run was trying to do and whether it managed.
         # The page reads this rather than guessing from the record,
         # so a failed morning says it failed instead of showing the

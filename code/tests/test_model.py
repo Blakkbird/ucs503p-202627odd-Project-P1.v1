@@ -7,6 +7,7 @@ against cases where the right answer is known by hand.
 
 import math
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -190,3 +191,45 @@ def test_backtest_file_keeps_one_forecast_per_scored_day(tmp_path):
     assert len(days) == len(runs) == len(set(days))
     assert days == sorted(days)
     assert all(r["model"] >= 0 for r in blob["runs"])
+
+
+def test_quantile_interpolates_between_neighbours():
+    assert evaluate.quantile([0, 10], 0.5) == 5
+    assert evaluate.quantile([3, 1, 2], 0.0) == 1
+    assert evaluate.quantile([3, 1, 2], 1.0) == 3
+    assert evaluate.quantile([], 0.5) is None
+
+
+def test_likely_range_holds_the_point_and_leans_up():
+    """Equal log offsets either side come out lopsided in
+    micrograms, wider above: the shape of a quantity that spikes."""
+    cal = {"calm": {"low": -0.3, "high": 0.3, "errors": 100}}
+    low, high = evaluate.likely_range(40.0, cal, burning=False)
+    assert 0 <= low < 40.0 < high
+    assert (high - 40.0) > (40.0 - low)
+    assert evaluate.likely_range(40.0, cal, burning=True) is None
+
+
+def test_coverage_only_sizes_a_range_from_earlier_days():
+    """The first MIN_ERRORS days have nothing earlier to size from,
+    so they are not counted at all rather than counted as hits."""
+    from datetime import timedelta
+
+    start = date(2026, 1, 1)
+    runs = [{"day": start + timedelta(days=i), "truth": 20.0,
+             "model": 20.0 * (1.1 if i % 2 else 0.9)} for i in range(60)]
+    got = evaluate.coverage(runs)
+    assert got["overall"]["days"] == 60 - evaluate.MIN_ERRORS
+    assert 0 <= got["overall"]["held"] <= got["overall"]["days"]
+
+
+def test_calibration_falls_back_to_the_whole_year_when_short():
+    from datetime import timedelta
+
+    start = date(2026, 1, 1)
+    runs = [{"day": start + timedelta(days=i), "truth": 20.0 + i % 5,
+             "model": 21.0} for i in range(40)]
+    runs.append({"day": date(2026, 10, 2), "truth": 90.0, "model": 60.0})
+    cal = evaluate.calibrate(runs)
+    assert cal["burning"]["errors"] == len(runs)  # borrowed the year
+    assert cal["calm"]["errors"] == 40

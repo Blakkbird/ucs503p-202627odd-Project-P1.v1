@@ -155,3 +155,61 @@ def test_a_model_fitted_at_another_age_is_refitted(tmp_path):
     assert refitted
     assert json.loads(path.read_text())["obs_age"] == 2
     assert model.names == samples[0].names
+
+
+def test_calibration_is_only_used_at_the_age_it_was_sized_for():
+    metrics = {"horizons": {"1": {"age": 2, "calibration": {"calm": {}}}}}
+    assert predict.calibration_for(metrics, 1, 2) == {"calm": {}}
+    assert predict.calibration_for(metrics, 1, 3) is None
+    assert predict.calibration_for(metrics, 2, 3) is None
+    assert predict.calibration_for(None, 1, 2) is None
+
+
+def outlook_inputs(today):
+    days = {}
+    for h in (2, 3):
+        day = (today + timedelta(days=h)).isoformat()
+        days[day] = {"cams_pm25": 50.0, "temp_mean": 25.0, "rh_mean": 60.0,
+                     "wind_speed_mean": 8.0, "wind_dir_mean": 310.0}
+    return {"issued": today.isoformat(), "days": days}
+
+
+def test_the_outlook_is_issued_once_and_frozen():
+    import features
+    from test_features import synthetic
+
+    rows = synthetic(90)
+    today = date(2026, 3, 31)
+    book = {}
+    made = predict.outlook(rows, today, True, None, book,
+                           outlook_inputs(today))
+    assert made == 2
+    assert {r["horizon"] for r in book.values()} == {2, 3}
+    first = {k: r["pm25"] for k, r in book.items()}
+    # the reading is a day older for each extra day ahead
+    ages = sorted(r["inputs"]["obs_age_days"] for r in book.values())
+    assert ages == [3.0, 4.0]
+
+    rows["2026-03-31"]["cams_pm25"] = "500"
+    again = predict.outlook(rows, today, True, None, book,
+                            outlook_inputs(today))
+    assert again == 0
+    assert {k: r["pm25"] for k, r in book.items()} == first
+    assert features  # imported for the synthetic table's helpers
+
+
+def test_an_outlook_file_from_another_day_is_not_used():
+    from test_features import synthetic
+
+    today = date(2026, 3, 31)
+    stale = outlook_inputs(today - timedelta(days=1))
+    assert predict.outlook(synthetic(90), today, True, None, {}, stale) == 0
+
+
+def test_outlook_outcomes_are_matched_by_date_not_key():
+    history = {"2026-09-04|2": dict(record("2026-09-04", 20.0),
+                                    horizon=2)}
+    filled = predict.attach_outcomes(
+        history, [FakeSample(date(2026, 9, 4), 25.0)])
+    assert filled == 1
+    assert history["2026-09-04|2"]["error"] == -5.0
