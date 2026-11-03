@@ -23,4 +23,6 @@ Name: Gurkirpa Singh
    had](./w9-ticket-resolution.md)
 +  [W10 : Eleven models, one
    exam](./w10-ticket-resolution.md)
++  [W11 : A forecast nobody has to go looking
+   for](./w11-ticket-resolution.md)
 +  […]
