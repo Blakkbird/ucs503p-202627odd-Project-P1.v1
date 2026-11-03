@@ -34,6 +34,7 @@
     <nav class="top-nav" aria-label="Project pages">
       <a href="../method/">Method</a>
       <a href="../results/">Full results</a>
+      <a href="../forecast/">Plain forecast</a>
       <a href="https://github.com/Blakkbird/ucs503p-202627odd-Project-P1.v1">Source code</a>
     </nav>
   </div>
@@ -49,6 +50,10 @@
         <p class="hero-band" id="hero-band"></p>
         <p class="hero-range" id="hero-range"></p>
         <p class="hero-advice" id="hero-advice"></p>
+        <div class="outlook" id="outlook" hidden>
+          <div class="outlook-days" id="outlook-days" role="list" aria-label="The two days after tomorrow"></div>
+          <p class="small" id="outlook-note"></p>
+        </div>
       </div>
       <div class="hero-side">
         <div class="scale" id="scale" aria-hidden="true"></div>
@@ -86,6 +91,11 @@
       <p class="small" id="why-note"></p>
       <button type="button" class="button" id="why-reset" hidden>Back to tomorrow's inputs</button>
     </div>
+    <div class="analogs" id="analogs" hidden>
+      <h3 id="analogs-title">Days like tomorrow</h3>
+      <p class="small" id="analogs-lede"></p>
+      <ol class="analog-list" id="analog-list" aria-labelledby="analogs-title"></ol>
+    </div>
   </section>
 
   <section class="block wrap" aria-labelledby="history-title">
@@ -98,6 +108,31 @@
     <div class="chart-frame">
       <div class="chart" id="chart"></div>
       <div class="tip" id="tip" hidden></div>
+    </div>
+  </section>
+
+  <section class="block wrap" id="lab" aria-labelledby="lab-title" hidden>
+    <h2 id="lab-title">Every model, on the same days</h2>
+    <p class="lede" id="lab-lede"></p>
+    <div class="lab-chart" id="lab-chart"></div>
+    <div class="table-scroll">
+      <table class="lab-table" id="lab-table"></table>
+    </div>
+    <p class="small" id="lab-rule"></p>
+  </section>
+
+  <section class="block wrap two" id="age-block" aria-label="Reading age and likely range" hidden>
+    <div>
+      <h2 id="age-title">Fresher readings, smaller misses</h2>
+      <p class="lede" id="age-lede"></p>
+      <div class="age-chart" id="age-chart"></div>
+      <p class="small" id="age-note"></p>
+    </div>
+    <div>
+      <h2 id="range-title">How often the range holds</h2>
+      <p class="lede" id="range-lede"></p>
+      <div class="coverage" id="coverage"></div>
+      <p class="small" id="range-note"></p>
     </div>
   </section>
 

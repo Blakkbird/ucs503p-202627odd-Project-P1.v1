@@ -36,6 +36,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import candidates
 import config
 import evaluate
 import features
@@ -228,6 +229,20 @@ def forecast_page(predictions, samples, today=None):
         earlier = [r for r in records if r["date"] < tomorrow.isoformat()]
         top = missing(tomorrow, reason, earlier[-1] if earlier else None)
 
+    later = outlook_cards(predictions, today)
+    if later:
+        lines = []
+        for r in later:
+            day = date.fromisoformat(r["date"]).strftime("%A %d %B")
+            span = ""
+            if r.get("interval"):
+                span = (f", likely {r['interval'][0]:.0f} to "
+                        f"{r['interval'][1]:.0f}")
+            lines.append(f"- **{day}**: {r['pm25']:.0f} &micro;g/m&sup3;, "
+                         f"{r['band']}{span}")
+        top += ("\n**After that.** Further from the station's newest "
+                "reading, so less certain:\n\n" + "\n".join(lines) + "\n")
+
     cutoff = today - timedelta(days=CHART_DAYS)
     observed = [(s.day, s.y) for s in samples
                 if s.y is not None and s.day >= cutoff]
@@ -403,10 +418,104 @@ def caveats(metrics):
         "scored better, but the reasons and the scores were looked at "
         "together. This year's burning season, scored live as it "
         "happens, is the test nothing here was tuned against.")
+    if (metrics.get("horizons") or {}).get("2"):
+        notes.append(
+            "- **The outlook's backtest is a little kind.** The table "
+            "keeps one CAMS and weather forecast per day, the day-ahead "
+            "one, so days two and three are backtested with inputs "
+            "better than they will have live. Their reading and fire "
+            "count are moved back properly, which is the larger effect.")
     return "\n".join(notes) + "\n"
 
 
-def results_page(metrics, model):
+def pct(value):
+    return "-" if value is None else f"{value * 100:+.1f}%"
+
+
+def age_table(board):
+    """The shipped model at every reading age, from the model lab."""
+    rows = (board or {}).get("by_age") or []
+    if not rows:
+        return ""
+    lines = [("| Reading age | Days | Pawan MAE | Persistence MAE | Skill "
+              "| Calm | Burning | Weight on the reading |"),
+             "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
+    for r in rows:
+        weight = r.get("obs_weight")
+        lines.append(
+            f"| {r['age']} days | {r['days']} | {r['mae']:.2f} "
+            f"| {r['persistence_mae']:.2f} | {pct(r['skill'])} "
+            f"| {pct(r['calm_skill'])} | {pct(r['burning_skill'])} "
+            f"| {'-' if weight is None else f'{weight:+.3f}'} |")
+    return "\n".join(lines) + "\n"
+
+
+def lab_table(board):
+    """The leaderboard, best backtest error first."""
+    models = (board or {}).get("models") or []
+    if not models:
+        return ""
+    live = (board or {}).get("live") or {}
+    lines = [("| Model | Kind | MAE | Skill | Calm | Burning | Live MAE "
+              "| Verdict |"),
+             "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |"]
+
+    def mae(m):
+        return (m.get("overall") or {}).get("mae") or float("inf")
+    for m in sorted(models, key=mae):
+        sk = m.get("skill") or {}
+        mark = "**" if m.get("shipped") else ""
+        got = live.get(m["key"])
+        live_text = f"{got['mae']:.2f} ({got['n']})" if got else "-"
+        lines.append(
+            f"| {mark}{m['label']}{mark} | {m['kind']} "
+            f"| {mark}{mae(m):.2f}{mark} | {pct(sk.get('overall'))} "
+            f"| {pct(sk.get('calm'))} | {pct(sk.get('burning'))} "
+            f"| {live_text} | {m.get('verdict', '')} |")
+    return "\n".join(lines) + "\n"
+
+
+def outlook_table(metrics):
+    """Each horizon's backtest, at the ages used today."""
+    blocks = (metrics or {}).get("horizons") or {}
+    if not blocks:
+        return ""
+    lines = [("| Days ahead | Reading age | Days | Pawan MAE "
+              "| Persistence MAE | Skill | Range held |"),
+             "| ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
+    for key in sorted(blocks, key=int):
+        b = blocks[key]
+        cov = (b.get("coverage") or {}).get("overall") or {}
+        held = (f"{cov['held']} of {cov['days']}" if cov.get("days")
+                else "-")
+        lines.append(
+            f"| {b['horizon']} | {b['age']} days | {b['days']} "
+            f"| {b['model']['mae']:.2f} | {b['persistence']['mae']:.2f} "
+            f"| {pct(b.get('skill'))} | {held} |")
+    return "\n".join(lines) + "\n"
+
+
+def range_text(metrics):
+    """How the likely range is sized, and how often it has held."""
+    block = ((metrics or {}).get("horizons") or {}).get("1") or {}
+    cov = block.get("coverage") or {}
+    overall, burn = cov.get("overall") or {}, cov.get("burning") or {}
+    if not overall.get("days"):
+        return ""
+    text = (f"The likely range is the middle 80% of the backtest's own "
+            f"errors, taken out of sample and per season, so four days "
+            f"in five should land inside it. Sized only from the days "
+            f"before it, the range held the measured value on "
+            f"**{overall['held']} of {overall['days']}** backtest days "
+            f"({overall['rate'] * 100:.0f}%)")
+    if burn.get("days"):
+        text += (f", and on {burn['held']} of {burn['days']} in burning "
+                 f"season ({burn['rate'] * 100:.0f}%), where the first "
+                 f"days of a season have the fewest errors to size from")
+    return text + ".\n"
+
+
+def results_page(metrics, model, board=None):
     """docs/results.md -- the numbers, including the awkward ones."""
     if not metrics:
         return "# Results\n\n_No backtest on record. Run `make eval`._\n"
@@ -442,6 +551,59 @@ def results_page(metrics, model):
         word = "better" if gain > 0 else "worse"
         return f"- Against {name}: **{abs(gain) * 100:.1f}% {word}** on MAE.\n"
 
+    sections = ""
+    if age_table(board):
+        sections += f"""
+## How old the reading is
+
+The forecast uses the freshest station reading on file, with a
+model fitted at exactly that reading's age. The lab scores the
+shipped model at every age against persistence given the same
+reading. An older reading is a weaker forecast on its own, so the
+model's skill over it grows, while the weight the model puts on it
+shrinks.
+
+{age_table(board)}"""
+    if lab_table(board):
+        rule = board.get("rule") or {}
+        sections += f"""
+## Model comparison
+
+Every candidate is scored on the same {board.get('days')} days with
+the same information: the reading the shipped forecast had, and
+training rows only from days already published. Models that could
+ship are refitted daily, as the daily job would run them; the
+scikit-learn benchmarks weekly. Live MAE comes from the shadow
+forecasts every model issues each morning, with the number of
+scored days in brackets.
+
+{lab_table(board)}
+A challenger replaces the shipped model only when it is at least
+{rule.get('burning_gain', 0) * 100:.0f} points of skill better in
+burning season, no more than {rule.get('calm_cost', 0) * 100:.0f}
+points worse in calm season, within
+{rule.get('robust_cost', 0) * 100:.0f}% of the shipped model's error
+at every reading age from two to five days, and no worse over
+{rule.get('live_days', 0)} live days. The first two thresholds were
+written down in week 7, before any candidate was scored against
+them. The age test was added when the smoke terms passed at two
+days and broke down at four.
+"""
+    if outlook_table(metrics):
+        sections += f"""
+## Three-day outlook
+
+Days two and three come from the same reading as tomorrow, so it is
+a day or two older relative to them, and each horizon has its own
+model fitted at that age.
+
+{outlook_table(metrics)}"""
+    if range_text(metrics):
+        sections += f"""
+## Likely range
+
+{range_text(metrics)}"""
+
     age = metrics.get("obs_age")
     reading = (f"Every row uses the station reading from {age} days "
                f"before the day being forecast, which is the freshest "
@@ -473,12 +635,11 @@ beat; burning season is when a forecast is worth having.
 The two baselines are both persistence, and the difference
 between them is the whole argument.
 
-**Operational persistence** is the best a person could do at
-08:00 using what the CPCB feed has actually published by then,
-which is a reading about four days old. That is the same
-information Pawan has, so it is a fair comparison, and it is what
-the forecast is worth to somebody deciding whether to run
-outside tomorrow.
+**Operational persistence** repeats the freshest reading the CPCB
+feed had published when the forecast went out, two days old at the
+reference age. That is the same information Pawan has, so it is a
+fair comparison, and it is what the forecast is worth to somebody
+deciding whether to run outside tomorrow.
 
 **Textbook persistence** uses yesterday's reading. Nobody has
 yesterday's reading when the forecast goes out. It is reported
@@ -495,13 +656,14 @@ Weights are on standardised inputs, so their sizes can be
 compared with each other but not read as physics.
 
 {weights_table(model)}
+{sections}
+## Limitations
 
-## What is wrong with this
-
-Worth saying plainly.
+What the figures above do not show.
 
 {caveats(metrics)}
-<small>Generated from `data/metrics.json` and `data/model.json`.</small>
+<small>Generated from `data/metrics.json`, `data/model.json` and
+`data/leaderboard.json`.</small>
 """
 
 
@@ -736,6 +898,91 @@ def fire_map(fires, target):
             "bbox": [w, s_, e, n]}
 
 
+# How many past days the "days like tomorrow" list shows.
+ANALOG_DAYS = 5
+
+
+def analog_days(samples, target, k=ANALOG_DAYS):
+    """The published days whose inputs looked most like tomorrow's.
+
+    Uses the same distance as the analog model on the leaderboard,
+    on the same standardised inputs. What the station measured on
+    those days is a plain check on the forecast: if the five closest
+    days all measured 120, a forecast of 40 needs a reason.
+    """
+    if target is None or not target.complete:
+        return None
+    train = [s for s in features.usable(samples) if s.day < target.day]
+    if len(train) < k:
+        return None
+    out = []
+    for dist, s in candidates.nearest(train, target, k):
+        raw = s.raw
+        out.append({"date": s.day.isoformat(), "observed": r1(s.y),
+                    "band": evaluate.band(s.y), "cams": r1(raw.get("cams")),
+                    "reading": r1(raw.get("obs_recent")),
+                    "fires": raw.get("fires"),
+                    "wind_speed": r1(raw.get("wind_speed")),
+                    "wind_dir": r1(raw.get("wind_dir")),
+                    "distance": round(dist, 3)})
+    return out
+
+
+def outlook_cards(predictions, today):
+    """The outlook forecasts issued today, nearest day first."""
+    recs = [r for r in (predictions or {}).get("outlook", [])
+            if r.get("issued") == today.isoformat()]
+    return [{"date": r["date"], "horizon": r["horizon"], "pm25": r["pm25"],
+             "band": r["band"], "interval": r.get("interval")}
+            for r in sorted(recs, key=lambda r: r["horizon"])]
+
+
+def lab_summary(board, shadow, tomorrow):
+    """The leaderboard, as the dashboard draws it."""
+    if not board or not board.get("models"):
+        return None
+    live = board.get("live") or {}
+    book = {e["date"]: e for e in (shadow or {}).get("forecasts", [])}
+    says = (book.get(tomorrow.isoformat()) or {}).get("models") or {}
+    models = []
+    for m in board["models"]:
+        o, sk = m.get("overall") or {}, m.get("skill") or {}
+        got = live.get(m["key"]) or {}
+        models.append({
+            "key": m["key"], "label": m["label"], "kind": m["kind"],
+            "about": m.get("about"), "shipped": bool(m.get("shipped")),
+            "shippable": bool(m.get("shippable")),
+            "mae": o.get("mae"), "band_hit": o.get("band_hit_rate"),
+            "skill": sk.get("overall"), "calm_skill": sk.get("calm"),
+            "burning_skill": sk.get("burning"),
+            "live_mae": got.get("mae"), "live_n": got.get("n"),
+            "tomorrow": says.get(m["key"]), "verdict": m.get("verdict"),
+        })
+    return {"days": board.get("days"), "window": board.get("window"),
+            "reference_age": board.get("reference_age"),
+            "backtest_on": board.get("backtest_on"),
+            "rule": board.get("rule"), "models": models,
+            "by_age": board.get("by_age") or []}
+
+
+def range_summary(metrics, records):
+    """How the likely range has done, in the backtest and live.
+
+    Live counts only ranges sized the calibrated way. The older ones
+    were narrower than they should have been, and mixing the two
+    would hide whether the fix worked.
+    """
+    block = ((metrics or {}).get("horizons") or {}).get("1") or {}
+    cov = block.get("coverage") or {}
+    scored = [r for r in records if r.get("actual") is not None
+              and r.get("interval") and r.get("range_method") == "calibrated"]
+    held = sum(1 for r in scored
+               if r["interval"][0] <= r["actual"] <= r["interval"][1])
+    return {"backtest": cov.get("overall"),
+            "backtest_burning": cov.get("burning"),
+            "live": {"held": held, "days": len(scored)}}
+
+
 def pipeline_health(rows, records, samples, model, today):
     """The numbers that show the pipeline is running, not just built."""
     observed = [k for k, r in rows.items() if r.get("obs_pm25")]
@@ -772,7 +1019,8 @@ def pipeline_health(rows, records, samples, model, today):
 
 
 def dashboard_data(predictions, samples, rows, metrics, model,
-                   backtest=None, fires=None, today=None):
+                   backtest=None, fires=None, today=None, board=None,
+                   shadow=None):
     """Everything docs/dashboard/ draws, as one JSON-ready dict.
 
     `today` is a parameter for the same reason as in forecast_page.
@@ -856,6 +1104,10 @@ def dashboard_data(predictions, samples, rows, metrics, model,
     out["backtest"] = backtest_summary(metrics)
     out["fires"] = fire_map(fires, target)
     out["health"] = pipeline_health(rows, records, samples, model, today)
+    out["outlook"] = outlook_cards(predictions, today)
+    out["analogs"] = analog_days(samples, target)
+    out["lab"] = lab_summary(board, shadow, tomorrow)
+    out["range"] = range_summary(metrics, records)
     return out
 
 
@@ -881,10 +1133,12 @@ def main():
     rows = features.load()
     samples = features.build(rows, age=(model or {}).get("obs_age"))
 
+    board = read(config.LEADERBOARD_JSON)
+
     DOCS.mkdir(exist_ok=True)
     written = []
     for name, body in (("forecast.md", forecast_page(predictions, samples)),
-                       ("results.md", results_page(metrics, model))):
+                       ("results.md", results_page(metrics, model, board))):
         (DOCS / name).write_text(body)
         written.append(name)
 
@@ -898,7 +1152,8 @@ def main():
     try:
         data = dashboard_data(predictions, samples, rows,
                               metrics, model, read(config.BACKTEST_JSON),
-                              read(config.FIRES_JSON))
+                              read(config.FIRES_JSON), board=board,
+                              shadow=read(config.SHADOW_JSON))
         write_dashboard(data)
         print(f"wrote {config.DASHBOARD_JSON.relative_to(config.ROOT)}")
     except Exception as e:  # noqa: BLE001 -- see above

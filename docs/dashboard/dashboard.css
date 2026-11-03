@@ -163,6 +163,24 @@ p { margin: 0 0 0.75rem; }
 .hero-advice { max-width: 46ch; color: var(--muted); }
 .hero-compare { color: var(--muted); max-width: 60ch; margin-top: 1rem; }
 
+/* The two days after tomorrow. Quieter than the hero number, with
+   the band colour as the only colour, as on the tiles below. */
+.outlook {
+  margin-top: 1.4rem; padding-top: 1rem; max-width: 34rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+}
+.outlook-days { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: 0.75rem 1.5rem; }
+.outlook-day { display: grid; gap: 0.1rem; padding-left: 0.75rem; border-left: 4px solid var(--band, var(--line)); }
+.outlook-when { color: var(--muted); font-size: 0.95rem; }
+.outlook-value {
+  display: flex; align-items: center; gap: 0.55rem;
+  font-size: 1.9rem; font-weight: 720; font-stretch: 118%; line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.outlook-value .chip { font-size: 0.82rem; padding: 0.12rem 0.6rem; }
+.outlook-range { font-size: 0.95rem; }
+.outlook .small { margin: 0.65rem 0 0; }
+
 /* AQI scale: six equal segments, as CPCB draws it. A value is
    placed proportionally inside its own band. */
 .scale { position: relative; --bar-top: 3rem; padding-top: var(--bar-top); padding-bottom: 0.5rem; }
@@ -281,6 +299,71 @@ input[type="range"] { width: 100%; accent-color: var(--pawan); }
 }
 .button:hover { background: var(--pawan); }
 
+/* --- days like tomorrow ------------------------------------------ */
+
+.analogs { margin-top: 2.25rem; }
+.analogs h3 { font-size: 1.15rem; font-weight: 640; font-stretch: 112%; margin: 0 0 0.35rem; }
+.analog-list { list-style: none; margin: 0.85rem 0 0; padding: 0; border-top: 1px solid var(--line); }
+.analog {
+  display: grid; grid-template-columns: minmax(10rem, 12rem) minmax(8rem, 10rem) 1fr;
+  gap: 0.25rem 1.25rem; align-items: center;
+  padding-block: 0.55rem; border-bottom: 1px solid var(--line);
+}
+.analog-day { color: var(--muted); font-variant-numeric: tabular-nums; }
+.analog-value {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-weight: 700; font-stretch: 110%; font-variant-numeric: tabular-nums;
+}
+.analog-value .chip { font-size: 0.8rem; padding: 0.1rem 0.55rem; }
+.analog-inputs { color: var(--muted); font-size: 0.9rem; }
+
+/* --- every model, on the same days ---------------------------------- */
+
+.lab-chart { margin: 1.25rem 0 1.25rem; --ref: 50%; max-width: 900px; }
+.lab-row {
+  display: grid; grid-template-columns: minmax(10rem, 14rem) 1fr 3.25rem;
+  gap: 0.85rem; align-items: center; padding-block: 0.2rem;
+}
+.lab-name { font-size: 0.95rem; }
+.lab-row.shipped .lab-name { font-weight: 700; }
+.lab-track { position: relative; height: 14px; }
+/* persistence, carried down every row as one dashed line */
+.lab-track::after {
+  content: ""; position: absolute; top: -5px; bottom: -5px; left: var(--ref);
+  border-left: 1.5px dashed var(--ink); opacity: 0.5;
+}
+.lab-bar { position: absolute; left: 0; top: 0; height: 100%; border-radius: 0 3px 3px 0; background: var(--muted); opacity: 0.5; }
+.lab-row.shipped .lab-bar { background: var(--pawan); opacity: 1; }
+.kind-baseline .lab-bar { background: transparent; border: 1.5px solid var(--muted); opacity: 0.85; }
+/* bars that run off the axis end in a notch, and keep their number */
+.lab-bar.over { clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 50%, 100% 100%, 0 100%); }
+.lab-value { text-align: right; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
+
+.table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.lab-table { border-collapse: collapse; width: 100%; min-width: 820px; font-size: 0.9rem; }
+.lab-table th, .lab-table td { text-align: left; padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+.lab-table thead th { color: var(--muted); font-weight: 560; vertical-align: bottom; }
+.lab-table tbody th { font-weight: 580; white-space: nowrap; }
+.lab-table tbody tr:last-child > * { border-bottom: 0; }
+.lab-table tr.shipped > * { background: var(--pawan-soft); }
+.lab-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 0.45rem; vertical-align: 0.05em; }
+#lab-rule { margin-top: 0.85rem; }
+
+/* --- reading age and the likely range ----------------------------- */
+
+.age-chart { height: 230px; margin: 0.5rem 0 0.75rem; }
+.age-chart svg { display: block; width: 100%; height: 100%; }
+
+.coverage { display: grid; gap: 0.85rem; margin: 1.1rem 0; }
+.cov-row { display: grid; grid-template-columns: 10.5rem 1fr 3rem; gap: 0.8rem; align-items: center; }
+.cov-label { font-size: 0.95rem; }
+.cov-track { position: relative; height: 16px; border-radius: 3px; background: var(--line); }
+.cov-fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--pawan); }
+/* the 80% the range is sized for */
+.cov-track::after { content: ""; position: absolute; left: 80%; top: -5px; bottom: -5px; width: 2px; background: var(--ink); }
+.cov-value { text-align: right; font-variant-numeric: tabular-nums; }
+
 /* --- history ----------------------------------------------------- */
 
 .history-controls {
@@ -362,4 +445,9 @@ input[type="range"] { width: 100%; accent-color: var(--pawan); }
   .top-nav { margin-left: 0; width: 100%; }
   .driver { grid-template-columns: minmax(0, 1fr); }
   .why-result { text-align: left; }
+  .analog { grid-template-columns: minmax(0, 1fr) auto; }
+  .analog-inputs { grid-column: 1 / -1; }
+  .lab-row { grid-template-columns: minmax(7.5rem, 9.5rem) 1fr 2.75rem; gap: 0.6rem; }
+  .lab-name { font-size: 0.88rem; }
+  .cov-row { grid-template-columns: 8rem 1fr 2.75rem; }
 }
