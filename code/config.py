@@ -19,6 +19,10 @@ if _env.exists():
 # India Standard Time. Every date the project writes is an IST date.
 IST = timezone(timedelta(hours=5, minutes=30))
 
+# Where the site is published. The dashboard link in alerts and the
+# skill badge point here.
+SITE_URL = "https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1"
+
 # --- station 
 
 CITY = "Patiala"
@@ -119,7 +123,9 @@ FIRES_JSON = DATA / "fires.json"  # where the most recent fires were
 OUTLOOK_JSON = DATA / "outlook.json"  # CAMS and weather for days 2 and 3
 LEADERBOARD_JSON = DATA / "leaderboard.json"  # the model lab's table
 SHADOW_JSON = DATA / "shadow.json"  # every candidate's daily forecast
+NOTIFY_JSON = DATA / "notify.json"  # what the Telegram post last sent
 DASHBOARD_JSON = ROOT / "docs" / "dashboard" / "data.json"
+BADGE_JSON = ROOT / "docs" / "badge.json"  # read by shields.io
 
 # --- model
 
@@ -139,6 +145,9 @@ OUTLOOK_HORIZONS = (2, 3)
 
 OPENAQ_KEY = os.environ.get("OPENAQ_KEY", "")
 FIRMS_MAP_KEY = os.environ.get("FIRMS_MAP_KEY", "")
+# The Telegram post. The chat id is the channel's @name.
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 # --- schema 
 

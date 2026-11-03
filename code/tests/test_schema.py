@@ -25,7 +25,8 @@ def test_station_is_configured():
 def test_no_hardcoded_secrets():
     """No API key may be committed in source."""
     text = Path(config.__file__).read_text()
-    for name in ("OPENAQ_KEY", "DATA_GOV_KEY", "FIRMS_MAP_KEY"):
+    for name in ("OPENAQ_KEY", "DATA_GOV_KEY", "FIRMS_MAP_KEY",
+                 "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"):
         for line in text.splitlines():
             if line.strip().startswith(f"{name} ="):
                 assert "os.environ" in line, \

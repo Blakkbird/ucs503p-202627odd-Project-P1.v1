@@ -162,6 +162,8 @@ p { margin: 0 0 0.75rem; }
 .hero-range { font-size: 1.15rem; margin: 0 0 0.6rem; }
 .hero-advice { max-width: 46ch; color: var(--muted); }
 .hero-compare { color: var(--muted); max-width: 60ch; margin-top: 1rem; }
+.hero-alerts { color: var(--muted); max-width: 60ch; }
+.hero-alerts a { color: var(--ink); }
 
 /* The two days after tomorrow. Quieter than the hero number, with
    the band colour as the only colour, as on the tiles below. */
