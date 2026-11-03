@@ -117,10 +117,9 @@ only, and a fitted model is then just the numbers in
 `data/model.json` — reproducible without installing anything.
 
 The features are few and mostly logged, so a linear model is not
-obviously the wrong shape. If the residuals turn out to be
-strongly non-linear during the burning season, that is a finding
-worth having rather than something to pre-empt with a bigger model
-now.
+obviously the wrong shape. The model lab, below, now tests that
+directly: on this much data a random forest, gradient boosting and
+a small neural network all score worse than the ridge fit.
 
 ## The week 5 review
 
@@ -195,14 +194,90 @@ burning-season fit. The bar was fixed first: clearly better in
 burning season, no more than a point or two worse in calm. None
 cleared it, so the model is unchanged.
 
+## The model lab
+
+`code/lab.py` puts the shipped model next to every alternative
+worth trying, on the same days and with the same information.
+
+- **Candidates.** Three baselines (persistence, climatology, raw
+  CAMS), then CAMS rescaled by its recent ratio to the station, the
+  shipped ridge, ridge with the smoke terms from week 7, analog days
+  (the average of the most similar past days), a random forest,
+  gradient boosting, a small neural network, and an ensemble of the
+  last five. The first seven need nothing outside the standard
+  library and could ship. The scikit-learn models are benchmarks,
+  installed for the lab alone (`requirements-lab.txt`).
+- **Same rules for all.** Every candidate is walked forward over the
+  same days, from the same reading, and trains only on days whose
+  readings had been published (`evaluate.published`). Anything that
+  could ship is refitted daily, as the daily job would run it. The
+  benchmarks are refitted weekly, because a daily refit of a forest
+  takes minutes on its own.
+- **Every reading age.** The shipped model is also scored at ages
+  two to seven days, which is how the cost of a slow feed is
+  measured instead of guessed.
+- **Shadow forecasts.** Every morning each candidate issues its own
+  forecast for tomorrow, frozen in `data/shadow.json` and scored
+  when the observation lands. That builds a live record for each
+  one, which no backtest can stand in for.
+
+A challenger replaces the shipped model only if it passes all of
+the rule in `lab.PROMOTION`. It must be at least 3 points of skill
+better in burning season and no more than 2 points worse in calm
+season. Those two thresholds were written down in week 7. It must
+stay within 5% of the shipped model's error at every reading age
+from two to five days. And it must do no worse over 20 live days.
+Promotion is then a one-line change to `config.SHIPPED_EXTRA` in a
+pull request. Nothing in the lab changes what ships.
+
+The age test was added for a reason. Ridge with the smoke terms
+clears the first two thresholds at two-day-old readings, but with
+three- and four-day-old readings it breaks down early in the 2025
+season. With only a handful of burning days to learn from, the
+penalty chosen on a validation tail that contained none of them
+came out near zero, and one forecast for a day that measured 13
+came out at 2684. A rule that only looked at one age would have
+shipped it.
+
+## The likely range
+
+Each forecast comes with a range meant to hold the measured value
+four days in five. It used to be built from the spread of the fit's
+own errors, which is narrower than the real spread by
+construction. It held 15 of the first 27 live days.
+
+It is now the middle 80% of the backtest's out-of-sample errors,
+taken in log space and kept separate for each season
+(`evaluate.calibrate`). Under a log target the range comes out
+lopsided, wider above the forecast than below, which is the right
+shape for a quantity that spikes upward. Its honesty is checked the
+same way it is used (`evaluate.coverage`): each day's range is
+sized only from the days before it.
+
+## The outlook
+
+Days two and three are forecast from the same station reading as
+tomorrow, so the reading is a day or two older for them, and each
+horizon gets a model fitted at that age. Their CAMS and weather
+come from the same morning's request and are kept in
+`data/outlook.json` rather than `daily.csv`, which only ever holds a
+day's day-ahead forecast. In the backtest the table has only
+day-ahead CAMS and weather for every horizon, which flatters days
+two and three a little; their live records are the check.
+
 ## Where it stands
 
 [Results](results.md) is regenerated every morning and is the
-current evaluation, split by season and with a live-only line. In
-short: both targets against operational persistence are met,
-textbook persistence still wins, and the model does not see spikes
-coming. Its highest forecast across the whole backtest is about
-75 µg/m³, against a worst observed day of 141, and it flagged none
-of the days that reached the Poor band. The
-[prototype report](https://github.com/Blakkbird/ucs503p-202627odd-Project-P1.v1/blob/master/project-report-prototype-stage/main.pdf)
-sets out the numbers and the plan for that.
+current evaluation, split by season, by reading age and by model,
+with a live-only line.
+
+As of early November 2026, against persistence given the same
+two-day-old reading, the calm-season target is met and burning
+season is about a point short of its 20%. With readings four days
+old, the situation the proposal was written for, both are met
+comfortably. The shipped ridge and its smoke-term variant have the
+lowest errors of any single models on the leaderboard, ahead of
+the forest, boosting and the network. The model still does not see
+spikes coming. The analog list on the dashboard helps there: when
+tomorrow's inputs sit closest to past days that turned out Poor, a
+lower forecast deserves a second look.

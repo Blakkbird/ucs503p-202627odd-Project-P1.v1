@@ -103,3 +103,20 @@ the semester: three days in August, batches every few days in
 early October, about one day since late October. The forecast
 does not assume a lag. It uses the freshest valid reading on file
 and a model fitted at that reading's age. See [Method](method.md).
+
+## Files the pipeline writes
+
+`daily.csv` is the only file that holds observations. Everything
+else in `data/` is derived from it each morning, and committed so
+the site and the record of what was claimed survive the run.
+
+| File | What it holds | Written by |
+| --- | --- | --- |
+| `model.json` | The shipped model's weights and the reading age it was fitted at. | `evaluate.py` |
+| `metrics.json` | The headline backtest, by season and by provenance, plus one block per forecast horizon with the likely range's edges and how often it held. | `evaluate.py` |
+| `backtest.json` | One walk-forward forecast per scored day, for the history chart. | `evaluate.py` |
+| `predictions.json` | Every forecast ever issued, tomorrow's and the outlook's, frozen when made, with the observation attached once it lands. | `predict.py` |
+| `outlook.json` | CAMS and weather for days two and three, from the morning's request. Kept out of `daily.csv`, which only holds day-ahead forecasts. | the ingest |
+| `fires.json` | Where the last two days' fires were, for the map. | the ingest |
+| `shadow.json` | Every candidate model's forecast for each day, frozen like the real one. | `lab.py` |
+| `leaderboard.json` | The model lab's backtest, the shipped model at every reading age, and each candidate's standing against the promotion rule. | `lab.py` |
