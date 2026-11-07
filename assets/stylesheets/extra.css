@@ -1,0 +1,131 @@
+/* Indentation. */
+div.doc-contents:not(.first) {
+  padding-left: 25px;
+  border-left: .05rem solid var(--md-typeset-table-color);
+}
+
+/* Mark external links as such. */
+a.external::after,
+a.autorefs-external::after {
+  /* https://primer.style/octicons/arrow-up-right-24 */
+  mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18.25 15.5a.75.75 0 00.75-.75v-9a.75.75 0 00-.75-.75h-9a.75.75 0 000 1.5h7.19L6.22 16.72a.75.75 0 101.06 1.06L17.5 7.56v7.19c0 .414.336.75.75.75z"></path></svg>');
+  -webkit-mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18.25 15.5a.75.75 0 00.75-.75v-9a.75.75 0 00-.75-.75h-9a.75.75 0 000 1.5h7.19L6.22 16.72a.75.75 0 101.06 1.06L17.5 7.56v7.19c0 .414.336.75.75.75z"></path></svg>');
+  content: ' ';
+
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
+
+  height: 1em;
+  width: 1em;
+  background-color: currentColor;
+}
+
+a.external:hover::after,
+a.autorefs-external:hover::after {
+  background-color: var(--md-accent-fg-color);
+}
+
+:root {
+  --md-hue: 36deg;
+}
+
+.tiet-logo {
+  height: 2.9em !important;
+  filter: invert(30%) sepia(26%) saturate(6248%) hue-rotate(345deg) brightness(83%) contrast(84%);
+  margin-right:.5em;
+  float:left;
+}
+
+.htag {
+  padding-left: 0.33em;
+  color: #bf9003;
+  font-size: 0.7em;
+}
+
+/* --- Pawan forecast pages -------------------------------------
+   Everything here is driven off Material's own colour variables
+   rather than fixed hex values, so the pages follow the reader's
+   light or dark preference instead of fighting it. The AQI band
+   colours are the exception: those are the CPCB palette and are
+   meant to look the same everywhere.                          */
+
+.pawan-card {
+  border-left: 6px solid;
+  border-radius: 4px;
+  background: var(--md-code-bg-color);
+  padding: 1.1em 1.3em;
+  margin: 1.4em 0;
+}
+
+.pawan-card .pawan-when {
+  font-size: .78em;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  opacity: .7;
+}
+
+.pawan-card .pawan-value {
+  font-size: 3.3em;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.pawan-card .pawan-unit {
+  font-size: .3em;
+  font-weight: 400;
+  margin-left: .5em;
+  opacity: .7;
+}
+
+.pawan-card .pawan-band-name {
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.pawan-card .pawan-note {
+  font-size: .82em;
+  opacity: .7;
+  margin-top: .35em;
+}
+
+/* The chart is sized by its viewBox, so it reflows with the
+   column and stays legible on a phone without a media query. */
+.pawan-chart {
+  width: 100%;
+  height: auto;
+  margin: 1.2em 0 .4em;
+}
+
+.pawan-chart .pawan-grid {
+  stroke: var(--md-default-fg-color--lightest);
+  stroke-width: 1;
+}
+
+.pawan-chart .pawan-axis {
+  fill: var(--md-default-fg-color--light);
+  font-size: 11px;
+}
+
+.pawan-chart .pawan-observed {
+  fill: none;
+  stroke: var(--md-default-fg-color);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.pawan-chart .pawan-forecast {
+  fill: none;
+  stroke: var(--md-accent-fg-color, #bf9003);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+}
+
+.pawan-chart .pawan-band {
+  fill: var(--md-accent-fg-color, #bf9003);
+  opacity: .13;
+}
+
+.pawan-chart .pawan-dot {
+  fill: var(--md-accent-fg-color, #bf9003);
+}
