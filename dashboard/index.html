@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pawan: tomorrow's air in Patiala</title>
+<meta name="description" content="Next-day PM2.5 forecast for the CPCB station at Model Town, Patiala, corrected from the CAMS global forecast and refreshed every morning.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="../assets/favicon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Noto+Sans+Gurmukhi:wght@600&display=swap">
+
+<!-- Leaflet for the fire map, pinned, with the hashes published for
+     this exact release so a changed file is refused, not run. -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+
+<link rel="stylesheet" href="dashboard.css">
+<script src="dashboard.js" defer></script>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-row">
+    <a class="mark" href="../" aria-label="Pawan project page">
+      <span class="mark-latin">Pawan</span>
+      <span class="mark-gurmukhi" lang="pa">ਪਵਨ</span>
+    </a>
+    <span class="top-place">Air quality forecast for Patiala</span>
+    <nav class="top-nav" aria-label="Project pages">
+      <a href="../method/">Method</a>
+      <a href="../results/">Full results</a>
+      <a href="https://github.com/Blakkbird/ucs503p-202627odd-Project-P1.v1">Source code</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero" id="hero" aria-labelledby="hero-when">
+    <div class="wrap hero-grid">
+      <div class="hero-main">
+        <p class="hero-when" id="hero-when">Loading tomorrow's forecast</p>
+        <p class="hero-value" id="hero-value" aria-live="polite"></p>
+        <p class="hero-band" id="hero-band"></p>
+        <p class="hero-range" id="hero-range"></p>
+        <p class="hero-advice" id="hero-advice"></p>
+      </div>
+      <div class="hero-side">
+        <div class="scale" id="scale" aria-hidden="true"></div>
+        <p class="hero-compare" id="hero-compare"></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="notice wrap" id="notice" hidden></div>
+
+  <section class="block wrap" aria-labelledby="fires-title">
+    <h2 id="fires-title">Where the smoke would come from</h2>
+    <p class="lede" id="fires-lede"></p>
+    <div class="fires-grid">
+      <div class="map-frame">
+        <div id="map" class="map" role="img" aria-label="Map of fires detected around Patiala yesterday"></div>
+      </div>
+      <div class="fires-side">
+        <ul class="key" id="fires-key"></ul>
+        <p class="small" id="fires-note"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block wrap" aria-labelledby="why-title">
+    <div class="why-head">
+      <div>
+        <h2 id="why-title">What goes into tomorrow's number</h2>
+        <p class="lede" id="why-lede"></p>
+      </div>
+      <div class="why-result" id="why-result" aria-live="polite"></div>
+    </div>
+    <div class="drivers" id="drivers"></div>
+    <div class="why-foot">
+      <p class="small" id="why-note"></p>
+      <button type="button" class="button" id="why-reset" hidden>Back to tomorrow's inputs</button>
+    </div>
+  </section>
+
+  <section class="block wrap" aria-labelledby="history-title">
+    <h2 id="history-title">How the forecast has tracked the air</h2>
+    <p class="lede">The station's daily average, what CAMS forecast for each day, and what Pawan made of it. Days before September come from the backtest, where each forecast was made using only the days before it.</p>
+    <div class="history-controls">
+      <div class="segmented" id="range-buttons" role="group" aria-label="Time range"></div>
+      <div class="series" id="series-buttons" role="group" aria-label="Lines on the chart"></div>
+    </div>
+    <div class="chart-frame">
+      <div class="chart" id="chart"></div>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+  </section>
+
+  <section class="block wrap two" aria-label="Track record and running status">
+    <div>
+      <h2 id="record-title">How it has done so far</h2>
+      <p class="lede" id="record-lede"></p>
+      <div class="tiles" id="tiles" role="list"></div>
+      <p class="small tiles-key">Top half: the band Pawan forecast. Bottom half: the band the station measured. Matching halves are a hit. Grey means the reading has not been published yet.</p>
+      <p id="record-backtest"></p>
+    </div>
+    <div>
+      <h2>Behind the scenes</h2>
+      <dl class="health" id="health"></dl>
+      <p class="badges">
+        <img src="https://github.com/Blakkbird/ucs503p-202627odd-Project-P1.v1/actions/workflows/ingest.yml/badge.svg" alt="Daily ingest workflow status" loading="lazy">
+        <img src="https://github.com/Blakkbird/ucs503p-202627odd-Project-P1.v1/actions/workflows/ci.yml/badge.svg" alt="Test workflow status" loading="lazy">
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>Station readings from CPCB through OpenAQ. Forecasts from CAMS and weather from Open-Meteo. Fire detections from NASA FIRMS (VIIRS). Map data from OpenStreetMap contributors, tiles by CARTO.</p>
+    <p>Built for UCS503P Software Engineering at Thapar Institute. Pawan is a student forecast for one station and is not an official air quality advisory.</p>
+    <p id="foot-stamp"></p>
+  </div>
+</footer>
+
+<noscript>
+  <p class="wrap">This dashboard needs JavaScript. The same forecast is on the <a href="../forecast/">plain forecast page</a>.</p>
+</noscript>
+
+</body>
+</html>
