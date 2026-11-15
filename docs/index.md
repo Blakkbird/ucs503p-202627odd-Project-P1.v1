@@ -69,6 +69,8 @@ code/
   candidates.py    every model on the leaderboard, one interface
   lab.py           the model lab and its shadow forecasts
   notify.py        the daily Telegram post
+  api.py           the HTTP API, see API
+  due.py           whether a backup run has work to do
   pages.py         renders the pages and the dashboard's data
   tests/
 scripts/           one-off tools: history, backfill, the week 7

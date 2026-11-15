@@ -124,6 +124,22 @@ single model overall and the only one ahead of persistence in the
 smoky first half of November 2026, but its gain across both burning
 seasons is short of the bar, so it is being scored live first.
 
+## API
+
+A small FastAPI service serves the same data to programs, and runs
+the model on inputs you supply:
+
+```shell
+pip install -r requirements-api.txt
+python code/api.py                   # docs at http://127.0.0.1:8000/docs
+```
+
+`/forecast`, `/forecasts`, `/models` and `/health` read the data
+files; `/whatif` runs the shipped model and flags any input outside
+the range it was fitted on. Given 16 November's real inputs it
+returns the forecast the daily job issued, to the hundredth. The
+website does not depend on it. Details in [API](docs/api.md).
+
 ## Daily alerts
 
 The daily job posts the forecast to a Telegram channel, with a
@@ -147,6 +163,8 @@ code/
   candidates.py      every model on the leaderboard, one interface
   lab.py             the model lab: leaderboard, ages, shadow runs
   notify.py          the daily Telegram post
+  api.py             the HTTP API (FastAPI)
+  due.py             whether a backup run has work to do
   pages.py           forecast.md, results.md and the dashboard's data
   tests/             run on every PR and every data commit
 scripts/
@@ -185,6 +203,7 @@ depends on, the less can change underneath it.
 - `requirements.txt`: `pytest` and `ruff`.
 - `requirements-lab.txt`: scikit-learn, for the lab's benchmarks,
   which run in a step of their own that cannot stop the daily commit.
+- `requirements-api.txt`: FastAPI and uvicorn, for the API only.
 - `requirements-docs.txt`: the site's toolchain, pinned below
   MkDocs 2.0.
 

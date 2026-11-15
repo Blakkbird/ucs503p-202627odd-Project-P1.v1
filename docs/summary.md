@@ -11,6 +11,7 @@ one line here as well as in its own folder's index. -->
 * [Results](results.md)
 * [Method](method.md)
 * [Data](data.md)
+* [API](api.md)
 * [Choosing the project](criteria-for-project-selection.md)
 * Journals
     * [Gurkirpa Singh](journals/1024170378-gurkirpa/index.md)
