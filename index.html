@@ -19,17 +19,17 @@
       
       
       <link rel="icon" href="assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
   <title>UCS503: Software Engineering; Raghav
     B. Venkataramaiyer @TIET</title>
 
     
-      <link rel="stylesheet" href="assets/stylesheets/main.57a0d79d.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.fb2fffe2.min.css">
+        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -57,8 +57,6 @@
       <link rel="stylesheet" href="assets/_mkdocstrings.css">
     
       <link rel="stylesheet" href="assets/stylesheets/extra.css">
-    
-      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
     
     <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -893,6 +891,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="journals/1024170378-gurkirpa/w11-ticket-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Week 11: Nobody has to go looking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1223,7 +1249,7 @@
 <p><img alt="Tiet Logo" class="tiet-logo" src="assets/tiet-logo.svg" /></p>
 <p><strong>UCS503: Software Engineering (Project)</strong><br />
 <strong>TIET Patiala</strong></p>
-<h1 id="pawan-next-day-air-quality-forecasting-for-patiala">Pawan: Next-Day Air Quality Forecasting for Patiala</h1>
+<h1 id="pawan-next-day-air-quality-forecasting-for-patiala">Pawan: Next-Day Air Quality Forecasting for Patiala<a class="headerlink" href="#pawan-next-day-air-quality-forecasting-for-patiala" title="Permanent link">&para;</a></h1>
 <p><a class="md-button md-button--primary" href="dashboard/">Open the live dashboard</a>
 <a class="md-button" href="forecast/">Tomorrow's forecast, plain</a></p>
 <p><strong>Author(s)</strong>:</p>
@@ -1231,7 +1257,7 @@
 <code>(KB)</code> Ketubh Bansal <code>(1024170399)</code><br />
 <code>(AK)</code> Aayush Kandhol <code>(1024170379)</code></p>
 <p><strong>Instructor</strong>: Dr. Paramveer Kaur</p>
-<h2 id="what-this-is">What this is</h2>
+<h2 id="what-this-is">What this is<a class="headerlink" href="#what-this-is" title="Permanent link">&para;</a></h2>
 <p>A global atmospheric model called CAMS publishes a PM2.5 forecast
 for every point on Earth, Patiala included. At the CPCB station in
 Model Town it is badly wrong, and wrong by a different amount in
@@ -1244,7 +1270,7 @@ particular station reads.</p>
 tomorrow, along with forecast weather and upwind fire detections,
 and applies a correction fitted on this station's own history. The
 output is one number: tomorrow's daily mean PM2.5 at Model Town.</p>
-<h2 id="what-counts-as-working">What counts as working</h2>
+<h2 id="what-counts-as-working">What counts as working<a class="headerlink" href="#what-counts-as-working" title="Permanent link">&para;</a></h2>
 <p>Raw CAMS is not the bar to beat, because almost anything beats it.
 The honest bar is <strong>persistence</strong>: assuming tomorrow looks like the
 most recent reading the station has published. The CPCB feed runs
@@ -1264,34 +1290,41 @@ out.</p>
 for how it is measured and <a href="data/">Data</a> for what is in the
 table. The <a href="https://github.com/Blakkbird/ucs503p-202627odd-Project-P1.v1/blob/master/project-report-prototype-stage/main.pdf">prototype report</a>
 covers all of it in one place.</p>
-<h2 id="layout">Layout</h2>
+<h2 id="layout">Layout<a class="headerlink" href="#layout" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>code/
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  config.py        every setting, in one place
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  ingest/          the daily job: observations, forecast, fires
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  features.py      daily.csv -&gt; model-ready rows
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  ingest/          the daily job: observations, forecasts, fires
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  features.py      daily.csv -&gt; model rows, at a stated reading age
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  model.py         ridge regression, standard library only
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  evaluate.py      baselines and the walk-forward backtest
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  predict.py       issues tomorrow's forecast, once, and freezes it
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  pages.py         renders forecast.md and results.md from the data
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  tests/
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>scripts/           one-off tools: history, backfill, model comparison,
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                   report figures
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>data/daily.csv     the whole dataset, one row per day
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>docs/              this site
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>journals/          weekly entries, one folder per member
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  evaluate.py      baselines, the walk-forward backtest, the range
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  predict.py       tomorrow and the outlook, issued once and frozen
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  candidates.py    every model on the leaderboard, one interface
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  lab.py           the model lab and its shadow forecasts
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  notify.py        the daily Telegram post
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>  pages.py         renders the pages and the dashboard's data
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>  tests/
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>scripts/           one-off tools: history, backfill, the week 7
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>                   comparison, report figures
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>data/daily.csv     the whole dataset, one row per day
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>docs/              this site
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>journals/          weekly entries, one folder per member
 </span></code></pre></div>
-<h2 id="running-it">Running it</h2>
+<h2 id="running-it">Running it<a class="headerlink" href="#running-it" title="Permanent link">&para;</a></h2>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>python<span class="w"> </span>code/ingest/run_daily.py<span class="w">      </span><span class="c1"># needs OPENAQ_KEY, FIRMS_MAP_KEY</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>python<span class="w"> </span>code/evaluate.py<span class="w">              </span><span class="c1"># backtest, writes data/metrics.json</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>code/tests/<span class="w"> </span>-q
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>python<span class="w"> </span>code/predict.py<span class="w">               </span><span class="c1"># tomorrow and the outlook</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>python<span class="w"> </span>code/lab.py<span class="w">                   </span><span class="c1"># the model lab</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>code/tests/<span class="w"> </span>-q
 </span></code></pre></div>
-<p>The ingest and the model use nothing outside the standard library.
+<p>The forecast uses nothing outside the standard library.
 <code>requirements.txt</code> carries pytest and ruff and nothing else. That
 is deliberate: the daily job has to keep running unattended until
 the end of the semester, and the least it can do is not depend on
-something that might change underneath it.</p>
-<p>Ingest runs every morning through GitHub Actions and commits the
+something that might change underneath it. The model lab's
+benchmarks need scikit-learn (<code>requirements-lab.txt</code>), and run in a
+step of their own that cannot stop the daily commit.</p>
+<p>The job runs every day through GitHub Actions and commits the
 result, so <code>data/daily.csv</code> is the real dataset and its history is
 the commit log.</p>
 
@@ -1314,7 +1347,7 @@ the commit log.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 15, 2026 05:36:41 UTC">November 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 3, 2026 08:48:36 UTC">November 3, 2026</span>
   </span>
 
     
@@ -1325,12 +1358,14 @@ the commit log.</p>
   <span class="md-source-file__fact">
     <span class="md-icon" title="Contributors">
       
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5.5A3.5 3.5 0 0 1 15.5 9a3.5 3.5 0 0 1-3.5 3.5A3.5 3.5 0 0 1 8.5 9 3.5 3.5 0 0 1 12 5.5M5 8c.56 0 1.08.15 1.53.42-.15 1.43.27 2.85 1.13 3.96C7.16 13.34 6.16 14 5 14a3 3 0 0 1-3-3 3 3 0 0 1 3-3m14 0a3 3 0 0 1 3 3 3 3 0 0 1-3 3c-1.16 0-2.16-.66-2.66-1.62a5.54 5.54 0 0 0 1.13-3.96c.45-.27.97-.42 1.53-.42M5.5 18.25c0-2.07 2.91-3.75 6.5-3.75s6.5 1.68 6.5 3.75V20h-13zM0 20v-1.5c0-1.39 1.89-2.56 4.45-2.9-.59.68-.95 1.62-.95 2.65V20zm24 0h-3.5v-1.75c0-1.03-.36-1.97-.95-2.65 2.56.34 4.45 1.51 4.45 2.9z"/></svg>
       
     </span>
     <nav>
       
-        <a href="mailto:ssgurkirpa@outlook.com">Blakkbird</a>
+        <a href="mailto:ssgurkirpa@outlook.com">Blakkbird</a>, 
+        <a href="mailto:gsarao_be24@thapar.edu">Gurkirpa Singh</a>, 
+        <a href="mailto:bvraghav@gmail.com">Raghav B. Venkataramaiyer</a>
     </nav>
   </span>
 
@@ -1428,14 +1463,10 @@ the commit log.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.a5f9d56c.min.js"></script>
-      
-        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
-      
-        <script src="javascript/arithmatex.js"></script>
+      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

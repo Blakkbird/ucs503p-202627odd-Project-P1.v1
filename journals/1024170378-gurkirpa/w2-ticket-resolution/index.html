@@ -21,17 +21,17 @@
       
       
       <link rel="icon" href="../../../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
   <title>UCS503: Software Engineering; Raghav
     B. Venkataramaiyer @TIET</title>
 
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -59,8 +59,6 @@
       <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
     
       <link rel="stylesheet" href="../../../assets/stylesheets/extra.css">
-    
-      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
     
     <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -818,6 +816,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../w11-ticket-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Week 11: Nobody has to go looking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1145,9 +1171,9 @@
   
 
 
-<h1 id="week-2-a-filtered-query-that-returned-everything">Week 2 : A Filtered Query That Returned Everything</h1>
-<h1 id="silently-dropped-query-parameters-and-a-retired-sensor">Silently Dropped Query Parameters, and a Retired Sensor</h1>
-<h2 id="error">Error:</h2>
+<h1 id="week-2-a-filtered-query-that-returned-everything">Week 2 : A Filtered Query That Returned Everything<a class="headerlink" href="#week-2-a-filtered-query-that-returned-everything" title="Permanent link">&para;</a></h1>
+<h1 id="silently-dropped-query-parameters-and-a-retired-sensor">Silently Dropped Query Parameters, and a Retired Sensor<a class="headerlink" href="#silently-dropped-query-parameters-and-a-retired-sensor" title="Permanent link">&para;</a></h1>
+<h2 id="error">Error:<a class="headerlink" href="#error" title="Permanent link">&para;</a></h2>
 <p>Week two was group formation and the practice pitch. Alongside
 that we verified the data sources before committing to the idea.</p>
 <p>The Patiala station exposes two PM2.5 sensors. To choose between
@@ -1159,7 +1185,7 @@ The counts came back impossible:</p>
 <p>A 97 day window cannot contain 1000 daily rows. Worse, my
 selection logic ranked by row count and recommended <code>15243</code>, a
 sensor that had not reported in almost four years.</p>
-<h2 id="relevant-context">Relevant Context</h2>
+<h2 id="relevant-context">Relevant Context<a class="headerlink" href="#relevant-context" title="Permanent link">&para;</a></h2>
 <p>The query was:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">url</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"https://api.openaq.org/v3/sensors/</span><span class="si">{</span><span class="n">sensor_id</span><span class="si">}</span><span class="s2">/days?"</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>       <span class="o">+</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">({</span>
@@ -1169,7 +1195,7 @@ sensor that had not reported in almost four years.</p>
 </span></code></pre></div>
 <p>1000 is exactly the <code>limit</code>. 531 is roughly the full history of
 the second sensor. Both are the entire series, truncated.</p>
-<h2 id="key-observation">Key Observation</h2>
+<h2 id="key-observation">Key Observation<a class="headerlink" href="#key-observation" title="Permanent link">&para;</a></h2>
 <p>Two separate faults, and the second was mine.</p>
 <ul>
 <li>The v3 aggregate endpoints take <strong><code>date_from</code></strong> and
@@ -1186,7 +1212,7 @@ window is a single day and the limit is small. There the failure
 would have been worse and silent: the API would have returned the
 oldest rows in the series, and the job would have recorded 2018
 readings as yesterday's observation.</p>
-<h2 id="solution">Solution</h2>
+<h2 id="solution">Solution<a class="headerlink" href="#solution" title="Permanent link">&para;</a></h2>
 <p>Correct the parameter names, and stop trusting the server to have
 honoured them:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"date_from"</span><span class="p">:</span> <span class="n">start</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
@@ -1235,7 +1261,7 @@ worth more than a number that merely looks odd.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 15, 2026 05:36:41 UTC">November 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 15, 2026 17:42:09 UTC">August 15, 2026</span>
   </span>
 
     
@@ -1364,14 +1390,10 @@ worth more than a number that merely looks odd.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
-      
-        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
-      
-        <script src="../../../javascript/arithmatex.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

@@ -21,17 +21,17 @@
       
       
       <link rel="icon" href="../../../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
   <title>UCS503: Software Engineering; Raghav
     B. Venkataramaiyer @TIET</title>
 
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -59,8 +59,6 @@
       <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
     
       <link rel="stylesheet" href="../../../assets/stylesheets/extra.css">
-    
-      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
     
     <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -818,6 +816,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../w11-ticket-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Week 11: Nobody has to go looking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1145,11 +1171,11 @@
   
 
 
-<h1 id="week-1-local-documentation-build-fails-on-a-fresh-clone">Week 1 : Local Documentation Build Fails on a Fresh Clone</h1>
-<h1 id="hard-coded-toolchain-paths-in-the-template-makefile">Hard-coded Toolchain Paths in the Template Makefile</h1>
+<h1 id="week-1-local-documentation-build-fails-on-a-fresh-clone">Week 1 : Local Documentation Build Fails on a Fresh Clone<a class="headerlink" href="#week-1-local-documentation-build-fails-on-a-fresh-clone" title="Permanent link">&para;</a></h1>
+<h1 id="hard-coded-toolchain-paths-in-the-template-makefile">Hard-coded Toolchain Paths in the Template Makefile<a class="headerlink" href="#hard-coded-toolchain-paths-in-the-template-makefile" title="Permanent link">&para;</a></h1>
 <p>First week was introduction, so the only work
 was setting up. After forking the template and cloning it</p>
-<h2 id="relevant-context">Relevant Context</h2>
+<h2 id="relevant-context">Relevant Context<a class="headerlink" href="#relevant-context" title="Permanent link">&para;</a></h2>
 <p>The template <code>Makefile</code> fixes its shell and Python environment at
 the top:</p>
 <div class="language-makefile highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">SHELL</span><span class="w">           </span><span class="o">:=</span><span class="w"> </span>/usr/bin/zsh
@@ -1159,7 +1185,7 @@ the top:</p>
 <p>That assumes <code>zsh</code> at a specific path, Anaconda at <code>~/miniconda3</code>,
 and a conda environment named <code>emacs</code> holding <code>mkdocs</code>. None of
 the three exists on a clean machine.</p>
-<h2 id="key-observation">Key Observation</h2>
+<h2 id="key-observation">Key Observation<a class="headerlink" href="#key-observation" title="Permanent link">&para;</a></h2>
 <p>Two build configurations live in this repository and only one is
 a contract.</p>
 <ul>
@@ -1170,7 +1196,7 @@ a contract.</p>
    convenience.</li>
 </ul>
 <p>The real dependency list is therefore in the workflow file.</p>
-<h2 id="solution">Solution</h2>
+<h2 id="solution">Solution<a class="headerlink" href="#solution" title="Permanent link">&para;</a></h2>
 <p>Reproduce the CI environment locally and skip the <code>Makefile</code> for
 this target:</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
@@ -1209,7 +1235,7 @@ that can conflict later.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 15, 2026 05:36:41 UTC">November 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 15, 2026 17:42:09 UTC">August 15, 2026</span>
   </span>
 
     
@@ -1338,14 +1364,10 @@ that can conflict later.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
-      
-        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
-      
-        <script src="../../../javascript/arithmatex.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

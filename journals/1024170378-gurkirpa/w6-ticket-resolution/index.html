@@ -21,17 +21,17 @@
       
       
       <link rel="icon" href="../../../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
   <title>UCS503: Software Engineering; Raghav
     B. Venkataramaiyer @TIET</title>
 
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -59,8 +59,6 @@
       <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
     
       <link rel="stylesheet" href="../../../assets/stylesheets/extra.css">
-    
-      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
     
     <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -818,6 +816,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../w11-ticket-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Week 11: Nobody has to go looking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1145,9 +1171,9 @@
   
 
 
-<h1 id="week-6-a-forecast-that-was-not-there">Week 6 : A Forecast That Was Not There</h1>
-<h1 id="reading-one-fixed-day-from-a-feed-that-publishes-in-batches">Reading One Fixed Day From A Feed That Publishes In Batches</h1>
-<h2 id="error">Error:</h2>
+<h1 id="week-6-a-forecast-that-was-not-there">Week 6 : A Forecast That Was Not There<a class="headerlink" href="#week-6-a-forecast-that-was-not-there" title="Permanent link">&para;</a></h1>
+<h1 id="reading-one-fixed-day-from-a-feed-that-publishes-in-batches">Reading One Fixed Day From A Feed That Publishes In Batches<a class="headerlink" href="#reading-one-fixed-day-from-a-feed-that-publishes-in-batches" title="Permanent link">&para;</a></h1>
+<h2 id="error">Error:<a class="headerlink" href="#error" title="Permanent link">&para;</a></h2>
 <p>Back after the mid-semester tests, the daily job looked healthy.
 It had committed every morning since 15 September without a
 single gap, and the workflow was green more often than not. The
@@ -1160,7 +1186,7 @@ forecast record told a different story:</p>
 the project page said "Tomorrow in Patiala: Monday 05 October" and
 showed Monday's number. It was Tuesday. The page was presenting a
 stale forecast as the next one.</p>
-<h2 id="relevant-context">Relevant Context</h2>
+<h2 id="relevant-context">Relevant Context<a class="headerlink" href="#relevant-context" title="Permanent link">&para;</a></h2>
 <p>The forecast for day D needs the freshest observation published
 by the morning of D-1. Week 3 measured the CPCB lag at three days,
 so <code>features.py</code> read the observation from D-4:</p>
@@ -1174,7 +1200,7 @@ not silent. They were just frequent enough to look like noise.</p>
 <p>The ingest log showed when observations actually arrived:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ingested 22 Sep, 25 Sep, 30 Sep, 3 Oct, 4 Oct, 6 Oct
 </span></code></pre></div>
-<h2 id="key-observation">Key Observation</h2>
+<h2 id="key-observation">Key Observation<a class="headerlink" href="#key-observation" title="Permanent link">&para;</a></h2>
 <p>The lag is not three days. It is three days <em>on average</em>. The
 feed publishes in batches every two to five days, and now and
 then a day lands with too few hours to count under the 16-hour
@@ -1199,7 +1225,7 @@ records checked that the chart drew. The chart only shows the
 last 45 days, so from about 22 October the test would fail, and
 the daily workflow runs the tests before it commits. The data
 would have stopped being saved with nothing obviously wrong.</p>
-<h2 id="solution">Solution</h2>
+<h2 id="solution">Solution<a class="headerlink" href="#solution" title="Permanent link">&para;</a></h2>
 <p>Walk back, but only backwards, and only so far:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">recent</span> <span class="o">=</span> <span class="n">_observed_upto</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">OBS_LOOKBACK_DAYS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">obs_recent</span> <span class="o">=</span> <span class="n">recent</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">recent</span> <span class="k">else</span> <span class="kc">None</span>
@@ -1257,7 +1283,7 @@ Counting them is what showed they were a pattern.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 15, 2026 05:36:41 UTC">November 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 9, 2026 20:45:24 UTC">October 9, 2026</span>
   </span>
 
     
@@ -1386,14 +1412,10 @@ Counting them is what showed they were a pattern.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
-      
-        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
-      
-        <script src="../../../javascript/arithmatex.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

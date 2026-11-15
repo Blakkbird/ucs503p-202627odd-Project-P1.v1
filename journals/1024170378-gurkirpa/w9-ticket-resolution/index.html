@@ -21,17 +21,17 @@
       
       
       <link rel="icon" href="../../../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
   <title>UCS503: Software Engineering; Raghav
     B. Venkataramaiyer @TIET</title>
 
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -59,8 +59,6 @@
       <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
     
       <link rel="stylesheet" href="../../../assets/stylesheets/extra.css">
-    
-      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
     
     <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -818,6 +816,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../w11-ticket-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Week 11: Nobody has to go looking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1145,9 +1171,9 @@
   
 
 
-<h1 id="week-9-a-forecast-that-would-not-use-what-it-had">Week 9 : A Forecast That Would Not Use What It Had</h1>
-<h1 id="a-lag-measured-in-august-applied-in-november">A Lag Measured In August, Applied In November</h1>
-<h2 id="error">Error:</h2>
+<h1 id="week-9-a-forecast-that-would-not-use-what-it-had">Week 9 : A Forecast That Would Not Use What It Had<a class="headerlink" href="#week-9-a-forecast-that-would-not-use-what-it-had" title="Permanent link">&para;</a></h1>
+<h1 id="a-lag-measured-in-august-applied-in-november">A Lag Measured In August, Applied In November<a class="headerlink" href="#a-lag-measured-in-august-applied-in-november" title="Permanent link">&para;</a></h1>
+<h2 id="error">Error:<a class="headerlink" href="#error" title="Permanent link">&para;</a></h2>
 <p>On 30 October the daily job issued no forecast for 31 October.
 The log said:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>no forecast for 2026-10-31: incomplete features, missing ['obs_recent_log']
@@ -1161,7 +1187,7 @@ for 3 November was 37, Satisfactory, built from 30 October's 11.4.
 Meanwhile 31 October (79.3) and 1 November (106.0) were already in
 the table. The burning season had arrived, the job had the
 readings that showed it, and the forecast ignored them.</p>
-<h2 id="relevant-context">Relevant Context</h2>
+<h2 id="relevant-context">Relevant Context<a class="headerlink" href="#relevant-context" title="Permanent link">&para;</a></h2>
 <p>Since week 5 the model has only read observations that were
 published by the time the forecast goes out. That rule is what
 makes the backtest honest. It was written as one constant:</p>
@@ -1181,7 +1207,7 @@ when each reading first landed:</p>
 </span></code></pre></div>
 <p>Since late October each day has been published by the next
 afternoon.</p>
-<h2 id="key-observation">Key Observation</h2>
+<h2 id="key-observation">Key Observation<a class="headerlink" href="#key-observation" title="Permanent link">&para;</a></h2>
 <p>The constant was doing two jobs at once. It described the feed,
 which had changed. It also kept the information set honest, which
 must not change. The fix had to drop the first job and keep the
@@ -1192,7 +1218,7 @@ readings a five-day-old one whenever the feed slipped back into
 batches, and the model would have trusted it like a fresh one.
 How much a reading is worth depends on how old it is, so the age
 has to be part of which model is used, not just which reading.</p>
-<h2 id="solution">Solution</h2>
+<h2 id="solution">Solution<a class="headerlink" href="#solution" title="Permanent link">&para;</a></h2>
 <ul>
 <li>A reading's age is now counted from the target day, so a
    reading from D-2 is two days old. Two is the minimum, because
@@ -1234,8 +1260,8 @@ without anything failing loudly. The job missed one forecast and
 made the rest from readings older than they needed to be. It now
 reads the answer from the data on file instead of from a number
 measured in August, and it tells the model how old that answer is.</p>
-<h1 id="a-backtest-that-learnt-from-days-nobody-had-yet">A Backtest That Learnt From Days Nobody Had Yet</h1>
-<h2 id="error_1">Error:</h2>
+<h1 id="a-backtest-that-learnt-from-days-nobody-had-yet">A Backtest That Learnt From Days Nobody Had Yet<a class="headerlink" href="#a-backtest-that-learnt-from-days-nobody-had-yet" title="Permanent link">&para;</a></h1>
+<h2 id="error_1">Error:<a class="headerlink" href="#error_1" title="Permanent link">&para;</a></h2>
 <p>Writing the new age rule into the backtest showed that the
 backtest had never kept the rule itself. Each step of the walk
 forward trained on every usable row before the target day:</p>
@@ -1244,19 +1270,19 @@ forward trained on every usable row before the target day:</p>
 </span></code></pre></div>
 <p>For a target D read at age 2, that training set included D-1,
 whose reading is not published until after the forecast goes out.</p>
-<h2 id="relevant-context_1">Relevant Context</h2>
+<h2 id="relevant-context_1">Relevant Context<a class="headerlink" href="#relevant-context_1" title="Permanent link">&para;</a></h2>
 <p>The live forecast never had this problem. <code>daily.csv</code> simply does
 not contain a reading before it is published, so the live fit can
 only learn from what existed. The leak was in the backtest alone,
 which made the backtest a little kinder than the service it
 describes.</p>
-<h2 id="key-observation_1">Key Observation</h2>
+<h2 id="key-observation_1">Key Observation<a class="headerlink" href="#key-observation_1" title="Permanent link">&para;</a></h2>
 <p>One or two extra rows out of five hundred sounds harmless. It was
 not. With the training set cut to the days actually published, the
 backtest MAE at age 2 went from 8.56 to 8.76. The newest rows carry
 the current level of the air, which is what a forecast most needs,
 and the cross-validated penalty is chosen on that same recent tail.</p>
-<h2 id="solution_1">Solution</h2>
+<h2 id="solution_1">Solution<a class="headerlink" href="#solution_1" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>evaluate.published()</code> returns the rows a forecast for D could
    have learnt from: days up to the one its reading came from.
@@ -1308,7 +1334,7 @@ data enforced them for free.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 15, 2026 05:36:41 UTC">November 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 2, 2026 20:49:43 UTC">November 2, 2026</span>
   </span>
 
     
@@ -1437,14 +1463,10 @@ data enforced them for free.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
-      
-        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
-      
-        <script src="../../../javascript/arithmatex.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

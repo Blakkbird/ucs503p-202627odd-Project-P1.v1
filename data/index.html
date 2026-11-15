@@ -21,17 +21,17 @@
       
       
       <link rel="icon" href="../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
   <title>UCS503: Software Engineering; Raghav
     B. Venkataramaiyer @TIET</title>
 
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -59,8 +59,6 @@
       <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
       <link rel="stylesheet" href="../assets/stylesheets/extra.css">
-    
-      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
     
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -906,6 +904,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../journals/1024170378-gurkirpa/w11-ticket-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Week 11: Nobody has to go looking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1233,12 +1259,12 @@
   
 
 
-<h1 id="data">Data</h1>
+<h1 id="data">Data<a class="headerlink" href="#data" title="Permanent link">&para;</a></h1>
 <p>Everything lives in one file, <code>data/daily.csv</code>, one row per
 calendar day in IST. It is committed to git, so its history is the
 commit log and any correction is visible as a diff. At this size
 that is worth more than a database.</p>
-<h2 id="columns">Columns</h2>
+<h2 id="columns">Columns<a class="headerlink" href="#columns" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -1293,7 +1319,7 @@ that is worth more than a database.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="sources">Sources</h2>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
 <p><strong>Observations</strong> come from OpenAQ v3, location 5544, sensor
 <code>12235142</code>. The station exposes a second PM2.5 sensor, <code>15243</code>,
 which has not reported since October 2022 but still serves its old
@@ -1316,7 +1342,7 @@ two days' fires are kept separately in <code>data/fires.json</code>,
 overwritten every morning, for the dashboard map. Each fire is cut
 down to latitude, longitude, fire radiative power and the VIIRS
 confidence flag.</p>
-<h2 id="two-kinds-of-row-and-why-it-matters">Two kinds of row, and why it matters</h2>
+<h2 id="two-kinds-of-row-and-why-it-matters">Two kinds of row, and why it matters<a class="headerlink" href="#two-kinds-of-row-and-why-it-matters" title="Permanent link">&para;</a></h2>
 <p>Rows arrive by two routes and they are not equivalent.</p>
 <p><strong>Live rows</strong> are written each morning by
 <code>code/ingest/run_daily.py</code>. They carry a <code>cams_issue_date</code>, which
@@ -1348,7 +1374,7 @@ live-only subset once enough of it exists.</p>
 <p><code>scripts/backfill_history.py</code> prints which archive answered, and
 that is recorded in the journal, because it changes how the
 meteorology should be read.</p>
-<h2 id="holes">Holes</h2>
+<h2 id="holes">Holes<a class="headerlink" href="#holes" title="Permanent link">&para;</a></h2>
 <p>Gaps are left as blank cells rather than interpolated. A missing
 day is information — usually the station was down — and filling it
 in with a plausible number would hide that from the model and from
@@ -1361,7 +1387,7 @@ the semester: three days in August, batches every few days in
 early October, about one day since late October. The forecast
 does not assume a lag. It uses the freshest valid reading on file
 and a model fitted at that reading's age. See <a href="../method/">Method</a>.</p>
-<h2 id="files-the-pipeline-writes">Files the pipeline writes</h2>
+<h2 id="files-the-pipeline-writes">Files the pipeline writes<a class="headerlink" href="#files-the-pipeline-writes" title="Permanent link">&para;</a></h2>
 <p><code>daily.csv</code> is the only file that holds observations. Everything
 else in <code>data/</code> is derived from it each morning, and committed so
 the site and the record of what was claimed survive the run.</p>
@@ -1436,7 +1462,7 @@ the site and the record of what was claimed survive the run.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 15, 2026 05:36:41 UTC">November 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 3, 2026 08:23:51 UTC">November 3, 2026</span>
   </span>
 
     
@@ -1447,12 +1473,13 @@ the site and the record of what was claimed survive the run.</p>
   <span class="md-source-file__fact">
     <span class="md-icon" title="Contributors">
       
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5.5A3.5 3.5 0 0 1 15.5 9a3.5 3.5 0 0 1-3.5 3.5A3.5 3.5 0 0 1 8.5 9 3.5 3.5 0 0 1 12 5.5M5 8c.56 0 1.08.15 1.53.42-.15 1.43.27 2.85 1.13 3.96C7.16 13.34 6.16 14 5 14a3 3 0 0 1-3-3 3 3 0 0 1 3-3m14 0a3 3 0 0 1 3 3 3 3 0 0 1-3 3c-1.16 0-2.16-.66-2.66-1.62a5.54 5.54 0 0 0 1.13-3.96c.45-.27.97-.42 1.53-.42M5.5 18.25c0-2.07 2.91-3.75 6.5-3.75s6.5 1.68 6.5 3.75V20h-13zM0 20v-1.5c0-1.39 1.89-2.56 4.45-2.9-.59.68-.95 1.62-.95 2.65V20zm24 0h-3.5v-1.75c0-1.03-.36-1.97-.95-2.65 2.56.34 4.45 1.51 4.45 2.9z"/></svg>
       
     </span>
     <nav>
       
-        <a href="mailto:ssgurkirpa@outlook.com">Blakkbird</a>
+        <a href="mailto:ssgurkirpa@outlook.com">Blakkbird</a>, 
+        <a href="mailto:gsarao_be24@thapar.edu">Gurkirpa Singh</a>
     </nav>
   </span>
 
@@ -1566,14 +1593,10 @@ the site and the record of what was claimed survive the run.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.footer", "header.autohide", "content.tabs.link", "navigation.tracking", "navigation.top", "toc.integrate", "content.tooltips"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
-      
-        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
-      
-        <script src="../javascript/arithmatex.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
