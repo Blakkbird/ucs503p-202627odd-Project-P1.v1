@@ -37,6 +37,13 @@ BACKFILL_DAYS = 30
 RETRIES = 3
 TIMEOUT = 45
 
+# The longest the job will wait between tries when a source says it
+# is busy. Open-Meteo is free and limits requests per IP address, and
+# GitHub's runners share their addresses with everyone else's jobs,
+# so now and then the quota is gone before this job has asked for
+# anything. A minute or so later it usually is not.
+BUSY_WAIT_CAP = 60
+
 # CI runners sometimes have no usable IPv6 route, and urllib tries
 # the AAAA record first, failing with "Network is unreachable"
 # instead of falling back. Restrict resolution to IPv4.
@@ -82,18 +89,48 @@ def fetch(url, headers=None):
             with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
                 return r.read().decode("utf-8", errors="replace")
         except urllib.error.HTTPError as e:
-            # 4xx will not fix itself; only retry server-side faults
-            if e.code < 500:
+            # Most 4xx will not fix themselves: a bad key stays bad.
+            # 429, too many requests, is the exception. It means the
+            # source is busy, not that the request is wrong, and it
+            # clears on its own like a server-side fault does.
+            if e.code < 500 and e.code != 429:
                 raise SourceError(
                     f"HTTP {e.code} for {redact(url)[:60]}") from e
             last = e
         except (TimeoutError, urllib.error.URLError, OSError) as e:
             last = e
         if attempt < RETRIES:
-            wait = 2 ** attempt
+            wait = backoff(attempt, last)
             print(f"  retry {attempt}/{RETRIES - 1} in {wait}s ({last})")
             time.sleep(wait)
     raise SourceError(f"unreachable after {RETRIES} tries: {last}")
+
+
+def backoff(attempt, error):
+    """Seconds to wait before the next try.
+
+    A server fault (5xx) is usually gone in a second or two. A busy
+    source (429) and a connection that will not complete, such as a
+    TLS handshake timing out, take longer to clear, so they get 15
+    and then 30 seconds. Four runs in November lost their forecast
+    to handshake timeouts after waits of 2 and 4 seconds. A busy
+    source that says how long to wait in a Retry-After header gets
+    that instead. Never more than BUSY_WAIT_CAP.
+    """
+    code = getattr(error, "code", None)
+    if code is not None and code != 429:
+        return 2 ** attempt
+    if code is None:
+        return min(15 * 2 ** (attempt - 1), BUSY_WAIT_CAP)
+    asked = None
+    headers = getattr(error, "headers", None)
+    if headers is not None:
+        try:
+            asked = int(headers.get("Retry-After", ""))
+        except (TypeError, ValueError):
+            asked = None  # absent, or given as a date
+    wait = asked if asked is not None else 15 * 2 ** (attempt - 1)
+    return max(1, min(wait, BUSY_WAIT_CAP))
 
 
 def parse_days(payload, start, end):

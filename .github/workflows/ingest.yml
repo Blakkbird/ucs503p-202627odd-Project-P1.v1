@@ -2,7 +2,15 @@ name: Daily ingest
 
 on:
   schedule:
-    - cron: "30 2 * * *"     # 02:30 UTC = 08:00 IST
+    - cron: "30 2 * * *"     # 02:30 UTC = 08:00 IST, the morning run
+    # Backups, in case the morning run fails or GitHub drops it. Each
+    # stands down in seconds unless today's run has left no forecast;
+    # see code/due.py. GitHub starts scheduled runs hours late, so
+    # there are four. The first line must match due.MORNING.
+    - cron: "30 4 * * *"     # 10:00 IST
+    - cron: "30 7 * * *"     # 13:00 IST
+    - cron: "30 10 * * *"    # 16:00 IST
+    - cron: "30 13 * * *"    # 19:00 IST
   workflow_dispatch:
 
 permissions:
@@ -15,7 +23,23 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # A few seconds to decide whether there is anything to do. Only a
+  # backup run on a day whose forecast is already out says no.
+  check:
+    runs-on: ubuntu-24.04
+    outputs:
+      needed: ${{ steps.due.outputs.needed }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: due
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: python3 code/due.py
+
   ingest:
+    needs: check
+    if: needs.check.outputs.needed == 'true'
     runs-on: ubuntu-24.04
     steps:
       # master is protected and requires a pull request, and the
