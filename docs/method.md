@@ -12,11 +12,14 @@ proposal assumed.
 ## What is actually available at issue time
 
 The daily job is scheduled for 08:00 IST. GitHub starts scheduled
-jobs late when it is busy, and in practice the run lands between
-late morning and mid-afternoon, so each forecast now records the
-time it was actually issued. The CAMS forecast and the weather
-forecast for tomorrow are available then. The station's own
-readings are a different matter.
+jobs late when it is busy, and in practice the run lands in the
+afternoon, so each forecast records the time it was actually
+issued. Four backup runs through the day (`code/due.py`) do the
+work again only if that run went out without a forecast, or if by
+evening it has not run at all. They never run ahead of it, so a
+backup that fires on time cannot forecast from a staler reading.
+Whenever the job runs, the CAMS and weather forecasts for tomorrow
+are already out. The station's own readings are a different matter.
 
 The CPCB feed runs behind, and by how much has changed over the
 semester. On 17 August the newest published day was 14 August,
@@ -201,10 +204,11 @@ worth trying, on the same days and with the same information.
 
 - **Candidates.** Three baselines (persistence, climatology, raw
   CAMS), then CAMS rescaled by its recent ratio to the station, the
-  shipped ridge, ridge with the smoke terms from week 7, analog days
-  (the average of the most similar past days), a random forest,
-  gradient boosting, a small neural network, and an ensemble of the
-  last five. The first seven need nothing outside the standard
+  shipped ridge, ridge with the smoke terms from week 7, ridge
+  corrected by half its mean error over the last seven published
+  days, analog days (the average of the most similar past days), a
+  random forest, gradient boosting, a small neural network, and an
+  ensemble. The first eight need nothing outside the standard
   library and could ship. The scikit-learn models are benchmarks,
   installed for the lab alone (`requirements-lab.txt`).
 - **Same rules for all.** Every candidate is walked forward over the

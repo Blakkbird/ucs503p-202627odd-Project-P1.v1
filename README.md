@@ -73,8 +73,10 @@ plainest warning sign.
 
 Every day a GitHub Actions job runs the whole pipeline. It is
 scheduled for 08:00 IST, but GitHub starts scheduled jobs late, so
-it usually runs between late morning and mid-afternoon, and each
-forecast records when it was issued. The job:
+it usually runs in the afternoon, and each forecast records when it
+was issued. Four backup runs through the day step in only if that
+run went out without a forecast, or if by evening it has not run at
+all. The job:
 
 1. fetches the last 30 days of station readings (OpenAQ), the next
    three days of CAMS and weather forecasts (Open-Meteo), and fire
@@ -101,12 +103,13 @@ and where it comes from is in [Data](docs/data.md).
 
 ## The model lab
 
-`code/lab.py` scores the shipped model against ten others on the
+`code/lab.py` scores the shipped model against eleven others on the
 same days and with the same information:
 
 - **Baselines:** persistence, climatology and raw CAMS.
 - **Simple corrections:** CAMS rescaled by its recent ratio to the
-  station, ridge with burning-season smoke terms, and analog days.
+  station, ridge with burning-season smoke terms, ridge corrected
+  by its own errors over the past week, and analog days.
 - **Benchmarks:** a random forest, gradient boosting and a small
   neural network, plus an ensemble.
 
@@ -115,8 +118,11 @@ seven days. A challenger replaces the shipped model only by passing
 a rule written in the code, which checks burning season, calm
 season, older readings and its own live record. So far ridge holds:
 on about five hundred days it beats the forest, the boosting and the
-network, and the smoke terms, which look better at two-day-old
-readings, break down at older ones.
+network. The smoke terms look better at two-day-old readings but
+break down at older ones. The recent-error correction is the best
+single model overall and the only one ahead of persistence in the
+smoky first half of November 2026, but its gain across both burning
+seasons is short of the bar, so it is being scored live first.
 
 ## Daily alerts
 
@@ -195,7 +201,7 @@ latexmk -pdf main.tex
 | Workflow | When | What |
 | --- | --- | --- |
 | CI | every PR and push to `master` | `ruff` and `pytest`, with the lab's requirements |
-| Daily ingest | scheduled 08:00 IST; usually runs late morning to mid-afternoon | the seven steps above, then commit |
+| Daily ingest | scheduled 08:00 IST, usually runs in the afternoon; four backups through the day work only if no forecast went out | the seven steps above, then commit |
 | mkdocs | every push to `master` | build and deploy the project page |
 | Extend history | by hand, dry run by default | one-off history extension |
 
