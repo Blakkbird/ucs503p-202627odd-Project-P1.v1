@@ -215,3 +215,36 @@ def test_a_board_older_than_a_week_is_rerun():
     assert lab.stale(None, today)
     assert lab.stale({"backtest_on": "2026-11-03"}, today)
     assert not lab.stale({"backtest_on": "2026-11-05"}, today)
+
+
+def test_the_recent_error_model_leans_towards_a_steady_miss():
+    """If the station has read higher than the model for a week, the
+    correction moves the forecast up, by less than the whole miss."""
+    rows = synthetic(90)
+    last = sorted(rows)[-12:]
+    for key in last:
+        value = float(rows[key]["obs_pm25"])
+        rows[key]["obs_pm25"] = str(value * 1.6 + 20)
+    ready = features.usable(features.build(rows))
+    plain = candidates.RidgeModel().fit(ready[:-1])
+    fitted = candidates.RecentError().fit(ready[:-1])
+    target = ready[-1]
+    assert fitted.shift > 0
+    assert fitted.predict(target) > plain.predict(target)
+
+
+def test_the_recent_error_model_is_on_the_board_and_could_ship():
+    c = next(c for c in candidates.lineup() if c.key == "ridge_recent")
+    assert c.shippable and not c.sklearn and c.refit_every == 1
+
+
+def test_a_new_candidate_gets_a_fresh_backtest():
+    """A challenger added mid-week should not wait for the weekly
+    run to appear on the board."""
+    lineup = [c for c in candidates.lineup() if not c.sklearn]
+    today = date(2026, 11, 16)
+    board = {"backtest_on": "2026-11-15",
+             "models": [{"key": c.key} for c in lineup]}
+    assert not lab.stale(board, today, lineup)
+    board["models"] = board["models"][:-1]
+    assert lab.stale(board, today, lineup)
