@@ -32,7 +32,7 @@ ways to fail than a CDN.
 import json
 import math
 import sys
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -41,7 +41,7 @@ import evaluate
 import features
 from model import Ridge
 
-IST = timezone(timedelta(hours=5, minutes=30))
+IST = config.IST
 DOCS = config.ROOT / "docs"
 
 # CPCB National AQI colours, so the page agrees with every other
@@ -442,14 +442,20 @@ def results_page(metrics, model):
         word = "better" if gain > 0 else "worse"
         return f"- Against {name}: **{abs(gain) * 100:.1f}% {word}** on MAE.\n"
 
+    age = metrics.get("obs_age")
+    reading = (f"Every row uses the station reading from {age} days "
+               f"before the day being forecast, which is the freshest "
+               f"the feed now publishes in time. "
+               if age else "")
+
     return f"""# Results
 
 Walk-forward backtest over {window['first']} to {window['last']},
 {overall['model']['n']} days. The model is refitted from scratch
 before each day and only ever sees days strictly before the one
-it is predicting. There is no shuffled train/test split anywhere
-in this project; the rows are a time series and shuffling them
-would let the model read its own future.
+it is predicting. {reading}There is no shuffled train/test split
+anywhere in this project; the rows are a time series and shuffling
+them would let the model read its own future.
 
 {table}
 
@@ -751,7 +757,9 @@ def pipeline_health(rows, records, samples, model, today):
         "newest_obs": newest,
         "obs_age_days": ((today - date.fromisoformat(newest)).days
                          if newest else None),
-        "usual_age_days": config.OBS_LATENCY_DAYS + 1,
+        # Counted from today, so a feed one day behind reads 1.
+        "usual_age_days": config.OBS_REFERENCE_AGE - 1,
+        "forecast_age": (model or {}).get("obs_age"),
         "stale_after_days": config.OBS_STALENESS_LIMIT_DAYS,
         "first_forecast": records[0]["date"] if records else None,
         "issued": len(records),
@@ -803,7 +811,12 @@ def dashboard_data(predictions, samples, rows, metrics, model,
         out["inputs"] = {"names": target.names, "x": target.x,
                          "raw": target.raw, "burning": target.burning,
                          "complete": target.complete}
-    if model and target is not None and model.get("names") == target.names:
+    # The model has to be the one fitted at the age of tomorrow's
+    # reading, or the breakdown would explain a different forecast.
+    fitted_at = (model or {}).get("obs_age")
+    same_age = (target is not None
+                and fitted_at in (None, target.obs_age))
+    if model and same_age and model.get("names") == target.names:
         fitted = Ridge.from_dict(model)
         out["model"] = {k: model[k] for k in ("names", "coef", "means",
                                               "devs", "intercept",
@@ -813,8 +826,22 @@ def dashboard_data(predictions, samples, rows, metrics, model,
         out["model"]["typical"] = (math.expm1(fitted.intercept)
                                    if fitted.log_target else fitted.intercept)
         if target.complete:
-            out["model"]["now"] = fitted.predict_one(target.x)
-            out["why"] = explain(fitted, target.x)
+            now = fitted.predict_one(target.x)
+            # The breakdown has to add up to the number at the top of
+            # the page. It will not when tomorrow's forecast was frozen
+            # by an earlier fit: on the morning a new version is
+            # merged, or when a fresher reading lands between the
+            # forecast and a rerun. No breakdown beats one that
+            # explains a different number.
+            if record and abs(now - record["pm25"]) > 0.05:
+                out["why_skipped"] = (
+                    "Tomorrow's forecast was frozen by an earlier fit of "
+                    "the model, so a breakdown from this morning's fit "
+                    "would explain a different number. It comes back "
+                    "with the next forecast.")
+            else:
+                out["model"]["now"] = now
+                out["why"] = explain(fitted, target.x)
 
     out["history"] = history_series(rows, records, backtest, tomorrow)
     out["record"] = live_record([r for r in records
@@ -849,7 +876,10 @@ def main():
     metrics = read(config.METRICS_JSON)
     model = read(config.MODEL_JSON)
     predictions = read(config.PREDICTIONS_JSON)
-    samples = features.build()
+    # Built at the age the shipped model was fitted at, so tomorrow's
+    # row on the dashboard is the row the forecast was made from.
+    rows = features.load()
+    samples = features.build(rows, age=(model or {}).get("obs_age"))
 
     DOCS.mkdir(exist_ok=True)
     written = []
@@ -866,7 +896,7 @@ def main():
     # the page. Instead the page gets told what went wrong and
     # says so, and the log carries the traceback.
     try:
-        data = dashboard_data(predictions, samples, features.load(),
+        data = dashboard_data(predictions, samples, rows,
                               metrics, model, read(config.BACKTEST_JSON),
                               read(config.FIRES_JSON))
         write_dashboard(data)

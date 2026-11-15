@@ -1,6 +1,7 @@
 """Project-wide settings. Nothing here should be duplicated elsewhere."""
 
 import os
+from datetime import timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -14,6 +15,9 @@ if _env.exists():
             _k, _v = _line.split("=", 1)
             if not os.environ.get(_k.strip()):
                 os.environ[_k.strip()] = _v.strip()
+
+# India Standard Time. Every date the project writes is an IST date.
+IST = timezone(timedelta(hours=5, minutes=30))
 
 # --- station 
 
@@ -40,30 +44,45 @@ HORIZON_DAYS = 1
 
 # --- timing 
 
-# The forecast for day D is issued on the morning of D-1. At that
-# moment the CPCB feed has not caught up: measured on 2026-08-17,
-# the freshest published observation was 2026-08-14. So anything
-# the model reads about the past must stop three days short of the
-# issue date. Persistence gets scored both ways, see evaluate.py.
-OBS_LATENCY_DAYS = 3
+# The forecast for day D is issued on D-1, and it can only use
+# station readings that have been published by then. How old the
+# newest one is depends on the feed, and the feed has not been
+# steady: in August it ran three days behind, in early October it
+# came in batches, and since late October it has published each
+# day by the next afternoon.
+#
+# This used to be one fixed lag of three days. That stopped being
+# true, and the fixed rule then threw away readings the job already
+# had: the forecast for 3 November was built from 30 October's
+# 11.4 while 31 October (79) and 1 November (106) sat in daily.csv.
+# So the lag is no longer assumed. A reading's age is counted from
+# the target day (a reading from D-2 is two days old), the job
+# looks for the freshest valid one on file, and the forecast is
+# made by a model fitted on readings of exactly that age. Each age
+# gets its own model and its own backtest, so a model is never fed
+# a reading fresher or staler than the ones it learnt from.
 
-# The feed does not publish one day at a time. It lands in batches
-# every two to five days, and now and then a day arrives with too
-# few hours to count. Reading only the single day at the cutoff
-# meant either of those left the forecast with no recent
-# observation at all: 10 of the 31 target days between 7 September
-# and 7 October went out with nothing. So the reader walks back up
-# to this many extra days to the freshest valid reading. Backwards
-# only, so the information set is never widened.
-OBS_LOOKBACK_DAYS = 3
+# The issue day itself is never a complete day when the job runs,
+# so the freshest reading a day-ahead forecast can have is from D-2.
+OBS_MIN_AGE = 2
+
+# Older than this and there is no forecast: the reading says too
+# little about tomorrow to be worth leaning on. Seven is where the
+# old rule stopped too (three days of lag plus three of lookback).
+OBS_MAX_AGE = 7
+
+# The freshness the headline backtest is run at. Two days is what
+# the feed has delivered since late October; the model lab scores
+# every other age as well, so a slower feed is measured, not hidden.
+OBS_REFERENCE_AGE = 2
 
 # How stale the freshest observation may get before the daily job
 # treats it as a broken feed rather than a slow one. A day or two
 # with no reading is ordinary; a week means nobody is writing
 # ground truth any more and the training set has stopped growing.
-# Kept above OBS_LATENCY_DAYS + OBS_LOOKBACK_DAYS, so normal
-# publication delay never trips it, and so that by the time it
-# does trip the forecast has already run out of readings to use.
+# Kept above OBS_MAX_AGE - 1 (the same limit counted from the issue
+# day), so that by the time it trips the forecast has already run
+# out of readings to use.
 OBS_STALENESS_LIMIT_DAYS = 7
 
 # FIRMS reports detections for days that have already happened,

@@ -98,7 +98,8 @@ and reports the per-column count, so a small training set can be
 traced to the column responsible instead of being blamed on the
 model.
 
-The CPCB feed also runs late. Measured on 17 August 2026, the
-freshest published observation was 14 August: a three day lag.
-That is not a gap that fills itself in time to be useful, and it
-shapes the whole design. See [Method](method.md).
+The CPCB feed also runs late, by an amount that has moved over
+the semester: three days in August, batches every few days in
+early October, about one day since late October. The forecast
+does not assume a lag. It uses the freshest valid reading on file
+and a model fitted at that reading's age. See [Method](method.md).

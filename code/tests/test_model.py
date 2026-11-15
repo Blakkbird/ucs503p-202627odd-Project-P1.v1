@@ -97,13 +97,23 @@ def test_aqi_bands_land_on_the_cpcb_edges():
 def test_backtest_never_trains_on_the_future():
     """Every fit must end before the day it is asked to predict."""
     samples = features.build(synthetic(90))
-    ready = features.usable(samples)
     runs = evaluate.backtest(samples)
 
     assert runs, "expected the synthetic set to be long enough"
-    for i, run in enumerate(runs):
-        used = ready[:evaluate.MIN_TRAIN + i]
-        assert all(s.day < run["day"] for s in used)
+    for run in runs:
+        assert run["trained_to"] < run["day"]
+
+
+def test_backtest_only_learns_from_published_days():
+    """A step may not train on the days between its reading and its
+    target: their readings did not exist when it was issued."""
+    from datetime import timedelta
+
+    for age in (2, 4):
+        runs = evaluate.backtest(features.build(synthetic(90), age=age))
+        assert runs
+        for run in runs:
+            assert run["trained_to"] <= run["day"] - timedelta(days=age)
 
 
 def test_backtest_declines_when_there_is_too_little_data():

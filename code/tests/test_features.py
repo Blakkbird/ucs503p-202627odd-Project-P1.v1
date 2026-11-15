@@ -55,17 +55,33 @@ def test_no_observation_from_the_target_day_or_later():
             f"{sample.day} used an observation from {taken}")
 
 
-def test_respects_the_publication_lag():
-    """Features stop short of the issue date by the configured lag."""
+def test_every_row_reads_exactly_its_age():
+    """A build at age a reads the day a days back, for every row."""
     start = date(2026, 1, 1)
-    for sample in features.build(synthetic()):
-        recent = sample.persistence_op
-        if recent is None:
-            continue
-        taken = start + timedelta(days=int(recent))
-        newest_allowed = (sample.day - timedelta(days=1)
-                          - timedelta(days=config.OBS_LATENCY_DAYS))
-        assert taken <= newest_allowed
+    for age in range(config.OBS_MIN_AGE, config.OBS_MAX_AGE + 1):
+        for sample in features.build(synthetic(), age=age):
+            recent = sample.persistence_op
+            if recent is None:
+                continue
+            taken = start + timedelta(days=int(recent))
+            assert taken == sample.day - timedelta(days=age)
+            assert sample.obs_age == age
+
+
+def test_the_default_age_is_the_reference_age():
+    sample = features.build(synthetic())[-1]
+    assert sample.obs_age == config.OBS_REFERENCE_AGE
+
+
+def test_an_age_inside_the_issue_day_is_refused():
+    """A one-day-old reading for tomorrow is the issue day itself,
+    which is not over when the job runs."""
+    import pytest
+
+    with pytest.raises(ValueError):
+        features.build(synthetic(), age=1)
+    with pytest.raises(ValueError):
+        features.build(synthetic(), age=2, horizon=2)
 
 
 def test_persistence_is_kept_separate_from_the_features():
@@ -138,10 +154,11 @@ def test_thin_days_are_not_fed_forward_as_features():
     thin = date(2026, 1, 10)
     rows[thin.isoformat()]["obs_hours"] = "4"
 
-    later = thin + timedelta(days=config.OBS_LATENCY_DAYS + 1)
+    later = thin + timedelta(days=config.OBS_REFERENCE_AGE)
     sample = next(s for s in features.build(rows) if s.day == later)
     assert sample.persistence_op != float(9), (
         "a four-hour mean was used as the freshest reading")
+    assert sample.persistence_op is None
 
 
 def test_fire_count_is_lagged_behind_the_issue_date():
@@ -159,62 +176,88 @@ def test_fire_count_is_lagged_behind_the_issue_date():
     assert fire < 3.0, "the forecast saw fires that had not been reported yet"
 
 
-def _sample_for(rows, day):
-    return next(s for s in features.build(rows) if s.day == day)
+def _sample_for(rows, day, **kw):
+    return next(s for s in features.build(rows, **kw) if s.day == day)
 
 
-def test_walks_back_when_the_cutoff_day_is_missing():
-    """The feed publishes in batches, so the cutoff day is often
-    not there yet. The row should take the day before, not give up."""
+def test_freshest_age_is_two_on_a_feed_one_day_behind():
+    rows = synthetic(30)
+    assert features.freshest_age(rows, date(2026, 1, 20)) == 2
+
+
+def test_freshest_age_skips_a_day_that_has_not_published():
+    """The feed publishes in batches, so the newest day is often
+    not there yet. The forecast takes the next one back, and the
+    model fitted at that age, rather than giving up."""
     rows = synthetic(30)
     target = date(2026, 1, 20)
-    cutoff = target - timedelta(days=1 + config.OBS_LATENCY_DAYS)
-    rows[cutoff.isoformat()]["obs_pm25"] = ""
+    rows[(target - timedelta(days=2)).isoformat()]["obs_pm25"] = ""
 
-    sample = _sample_for(rows, target)
-    before = cutoff - timedelta(days=1)
-    assert sample.persistence_op == float((before - date(2026, 1, 1)).days)
-    assert sample.obs_age == float(config.OBS_LATENCY_DAYS + 2)
+    age = features.freshest_age(rows, target)
+    assert age == 3
+    sample = _sample_for(rows, target, age=age)
+    assert sample.persistence_op == float(
+        (target - timedelta(days=3) - date(2026, 1, 1)).days)
     assert sample.complete
 
 
-def test_walks_back_past_a_thin_cutoff_day():
+def test_freshest_age_skips_a_thin_day():
     rows = synthetic(30)
     target = date(2026, 1, 20)
-    cutoff = target - timedelta(days=1 + config.OBS_LATENCY_DAYS)
-    rows[cutoff.isoformat()]["obs_hours"] = str(config.MIN_OBS_HOURS - 2)
-
-    sample = _sample_for(rows, target)
-    assert sample.persistence_op != float((cutoff - date(2026, 1, 1)).days)
-    assert sample.complete
+    rows[(target - timedelta(days=2)).isoformat()]["obs_hours"] = str(
+        config.MIN_OBS_HOURS - 2)
+    assert features.freshest_age(rows, target) == 3
 
 
-def test_gives_up_past_the_lookback():
-    """A feed that has been quiet longer than the lookback leaves
-    the row without an observation rather than reaching further."""
+def test_freshest_age_never_uses_the_issue_day():
+    """Even a reading for the issue day that looks complete is not:
+    the day is still going when the job runs."""
+    rows = synthetic(30)
+    target = date(2026, 1, 20)
+    rows[(target - timedelta(days=2)).isoformat()]["obs_pm25"] = ""
+    rows[(target - timedelta(days=3)).isoformat()]["obs_pm25"] = ""
+    assert (target - timedelta(days=1)).isoformat() in rows
+    assert features.freshest_age(rows, target) == 4
+
+
+def test_no_age_at_all_past_the_limit():
+    """A feed quiet for longer than OBS_MAX_AGE leaves no forecast,
+    rather than one built on a reading from last week."""
     rows = synthetic(30)
     target = date(2026, 1, 25)
-    cutoff = target - timedelta(days=1 + config.OBS_LATENCY_DAYS)
-    for k in range(config.OBS_LOOKBACK_DAYS + 1):
-        rows[(cutoff - timedelta(days=k)).isoformat()]["obs_pm25"] = ""
+    for age in range(2, config.OBS_MAX_AGE + 1):
+        rows[(target - timedelta(days=age)).isoformat()]["obs_pm25"] = ""
+    assert features.freshest_age(rows, target) is None
 
-    sample = _sample_for(rows, target)
+
+def test_a_missing_reading_voids_the_row_instead_of_walking_back():
+    """At a fixed age there is no reaching further: a row whose
+    reading is missing is unusable for that age's model."""
+    rows = synthetic(30)
+    target = date(2026, 1, 20)
+    rows[(target - timedelta(days=2)).isoformat()]["obs_pm25"] = ""
+    sample = _sample_for(rows, target, age=2)
     assert sample.persistence_op is None
     assert not sample.complete
 
 
-def test_walking_back_never_reaches_forward():
-    """Blanking the cutoff must not let a newer day slip in."""
+def test_the_outlook_moves_the_fire_count_back_with_the_issue_day():
+    """Two days ahead, the issue day is D-2, so the newest complete
+    fire count is from D-3, not D-2."""
     rows = synthetic(30)
-    start = date(2026, 1, 1)
-    for i in range(5, 30, 3):
-        rows[(start + timedelta(days=i)).isoformat()]["obs_pm25"] = ""
-    for sample in features.build(rows):
-        if sample.persistence_op is None:
-            continue
-        taken = start + timedelta(days=int(sample.persistence_op))
-        assert taken <= (sample.day - timedelta(days=1)
-                         - timedelta(days=config.OBS_LATENCY_DAYS))
+    target = date(2026, 1, 20)
+    one = _sample_for(rows, target, age=3, horizon=1)
+    two = _sample_for(rows, target, age=3, horizon=2)
+    assert one.raw["fire_day"] == (target - timedelta(days=2)).isoformat()
+    assert two.raw["fire_day"] == (target - timedelta(days=3)).isoformat()
+    assert two.horizon == 2
+
+
+def test_the_outlook_needs_an_older_reading():
+    rows = synthetic(30)
+    target = date(2026, 1, 20)
+    assert features.freshest_age(rows, target, horizon=2) == 3
+    assert features.freshest_age(rows, target, horizon=3) == 4
 
 
 def test_interactions_are_off_by_default():

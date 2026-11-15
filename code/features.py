@@ -5,10 +5,10 @@ target day D is only honest if every number in it existed on the
 morning of D-1, when the job that produces the forecast actually
 runs. Three things make that awkward:
 
-  * the CPCB feed lags, so the freshest observation on D-1 is
-    roughly D-4 rather than D-2 (config.OBS_LATENCY_DAYS), and it
-    publishes in batches, so that day is not always there yet
-    (config.OBS_LOOKBACK_DAYS);
+  * the CPCB feed lags, by an amount that has changed over the
+    semester, so a row is always built for one stated reading age
+    (config.OBS_MIN_AGE, OBS_MAX_AGE) and the forecast picks the
+    age it can actually have;
   * rows written by scripts/bootstrap.py have no cams_issue_date,
     so we cannot prove which model run they came from;
   * some days are published with only a handful of hours behind
@@ -37,7 +37,9 @@ import config
 #   obs_recent   duplicated obs_recent_log, which split one signal
 #                across two coefficients that then fought
 #   obs_age      constant at 4.0 once the feed was healthy, so it
-#                carried no information and only cost a parameter
+#                carried no information and only cost a parameter.
+#                (Age is handled differently now: every model is
+#                fitted at one age, see build)
 #   obs_mean7    a weekly mean adds nothing once yesterday's
 #                reading and today's meteorology are both present
 #   doy_sin/cos  with four months of data these cannot tell
@@ -84,7 +86,8 @@ class Sample:
     persistence: float | None  # obs[D-1]: the textbook baseline
     persistence_op: float | None  # freshest obs actually available on D-1
     obs_hours: float | None = None  # hours behind y, when known
-    obs_age: float | None = None    # days between issue and that reading
+    obs_age: float | None = None    # days between that reading and `day`
+    horizon: int = 1                # days between issue and `day`
     names: list[str] = field(default_factory=list)
     raw: dict = field(default_factory=dict)  # readings x was built from
 
@@ -133,21 +136,6 @@ def load(path=None):
         return {r["date"]: r for r in csv.DictReader(f) if r.get("date")}
 
 
-def _observed_upto(obs, cutoff, window):
-    """Observations on the `window` days ending at `cutoff`.
-
-    Returns them oldest-first. Gaps are simply absent rather than
-    interpolated -- a missing day is information, not something to
-    paper over.
-    """
-    out = []
-    for k in range(window - 1, -1, -1):
-        got = obs.get(cutoff - timedelta(days=k))
-        if got is not None:
-            out.append(got)
-    return out
-
-
 def transform(raw, burning, names):
     """Model inputs from the plain readings they are built from.
 
@@ -194,27 +182,16 @@ def transform(raw, burning, names):
     return [values[n] for n in names]
 
 
-def build(rows=None, use_weather=True, extra=()):
-    """Build one Sample per target day, oldest first.
+def _readings(rows):
+    """The station's readings, three ways.
 
-    `use_weather` is on by default now that the meteorology
-    backfill has been run. Turning it off reproduces the earlier
-    CAMS-plus-persistence model, which is the ablation quoted in
-    the report; it is not something the daily job should do.
-
-    `extra` names INTERACTIONS to append. Each is the product of
-    two columns already in the row, so it adds nothing the row did
-    not already know at issue time.
+    `measured` is everything the station published, and is what a
+    target day's label and the site's history chart come from.
+    `obs` drops the thin days, and is what gets fed forward as a
+    feature or a baseline: a day assembled from nine hours is
+    untrustworthy as an input for the same reason it is
+    untrustworthy as a label. `hours` is the count behind each one.
     """
-    rows = load() if rows is None else rows
-    names = CORE + (WEATHER if use_weather else []) + list(extra)
-
-    # Two views of the observations. `measured` is everything the
-    # station published, and is what a target day's label and the
-    # site's history chart come from. `obs` drops the thin days,
-    # and is what gets fed forward as a feature or a baseline: a
-    # day assembled from nine hours is untrustworthy as an input
-    # for the same reason it is untrustworthy as a label.
     measured, obs, hours = {}, {}, {}
     for key, row in rows.items():
         value = num(row.get("obs_pm25"))
@@ -226,6 +203,65 @@ def build(rows=None, use_weather=True, extra=()):
         hours[day] = count
         if count is None or count >= config.MIN_OBS_HOURS:
             obs[day] = value
+    return measured, obs, hours
+
+
+def default_age(horizon=1):
+    """The reference age, pushed back by however far ahead we look."""
+    return config.OBS_REFERENCE_AGE + horizon - 1
+
+
+def freshest_age(rows, target, horizon=1):
+    """Age of the freshest valid reading on file for `target`.
+
+    Counted from the target day, so with the feed a day behind a
+    forecast for tomorrow gets 2. Never less than horizon + 1: the
+    issue day is not over when the job runs, so even a reading for
+    it that looks complete is not one. None when nothing usable is
+    on file within OBS_MAX_AGE, which is the case where no
+    forecast should go out at all.
+    """
+    rows = load() if rows is None else rows
+    _, obs, _ = _readings(rows)
+    for age in range(horizon + 1, config.OBS_MAX_AGE + horizon):
+        if obs.get(target - timedelta(days=age)) is not None:
+            return age
+    return None
+
+
+def build(rows=None, use_weather=True, extra=(), age=None, horizon=1):
+    """Build one Sample per target day, oldest first.
+
+    `age` fixes how old the station reading in every row is,
+    counted from the target day. Every row in one build uses the
+    same age, which is the point: a model fitted on two-day-old
+    readings has learnt how much a two-day-old reading is worth,
+    and should not be handed a five-day-old one at forecast time.
+    The forecast finds the age it can have (freshest_age) and asks
+    for samples at that age; the backtest does the same for each
+    age it scores. Left as None it is the reference age.
+
+    `horizon` is how many days ahead of the issue day the target
+    is. One for tomorrow; the outlook uses two and three. It moves
+    the issue day back, which moves the fire count back with it,
+    and the youngest allowed reading.
+
+    `use_weather` is on by default now that the meteorology
+    backfill has been run. Turning it off reproduces the earlier
+    CAMS-plus-persistence model, which is the ablation quoted in
+    the report; it is not something the daily job should do.
+
+    `extra` names INTERACTIONS to append. Each is the product of
+    two columns already in the row, so it adds nothing the row did
+    not already know at issue time.
+    """
+    rows = load() if rows is None else rows
+    age = default_age(horizon) if age is None else age
+    if age < horizon + 1:
+        raise ValueError(f"a reading {age} days old is not published "
+                         f"{horizon} day(s) ahead of the target")
+    names = CORE + (WEATHER if use_weather else []) + list(extra)
+    measured, obs, hours = _readings(rows)
 
     # Fire detections are recorded against the day they happened,
     # which means a target day's own count does not exist yet when
@@ -245,32 +281,21 @@ def build(rows=None, use_weather=True, extra=()):
         if cams is None or cams <= 0:
             continue  # no forecast to correct, so there is no row
 
-        # Everything below is read as of the morning of D-1.
-        issue = day - timedelta(days=1)
-        cutoff = issue - timedelta(days=config.OBS_LATENCY_DAYS)
+        # Everything below is read as of the issue day.
+        issue = day - timedelta(days=horizon)
 
-        # The freshest valid reading at or before the cutoff. This
-        # used to look at the cutoff day alone, and when that day
-        # had not been published yet (or came in thin) the row had
-        # no observation at all and no forecast went out. Training
-        # rows use the same rule, so the model is fitted on the
-        # same kind of input it is fed.
-        recent = _observed_upto(obs, cutoff, config.OBS_LOOKBACK_DAYS + 1)
-        obs_recent = recent[-1] if recent else None
-
-        # How stale that reading is, and which day it is from. Not
-        # a feature, but the daily job still publishes it, so a bad
-        # forecast can be read back against a half-dead feed later.
-        age, obs_day = None, None
-        if obs_recent is not None:
-            for k in range(config.OBS_LOOKBACK_DAYS + 1):
-                if obs.get(cutoff - timedelta(days=k)) is not None:
-                    age = float(k + config.OBS_LATENCY_DAYS + 1)
-                    obs_day = cutoff - timedelta(days=k)
-                    break
+        # Exactly `age` days back, or nothing. There used to be a
+        # walk-back here for when the cutoff day had not published
+        # yet. That job now belongs to the forecast, which looks
+        # for the freshest age it can get and asks for a model fitted
+        # at that age; a row that walked back would hand this model a
+        # reading older than the ones it was fitted on.
+        obs_day = day - timedelta(days=age)
+        obs_recent = obs.get(obs_day)
 
         raw = {"cams": cams, "obs_recent": obs_recent,
-               "obs_day": obs_day.isoformat() if obs_day else None}
+               "obs_day": obs_day.isoformat() if obs_recent is not None
+               else None}
 
         if use_weather:
             # Walk back from the last day whose count was complete
@@ -302,7 +327,8 @@ def build(rows=None, use_weather=True, extra=()):
             persistence=obs.get(day - timedelta(days=1)),
             persistence_op=obs_recent,
             obs_hours=hours.get(day),
-            obs_age=age,
+            obs_age=float(age) if obs_recent is not None else None,
+            horizon=horizon,
             names=names,
             raw=raw,
         ))

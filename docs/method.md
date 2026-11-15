@@ -11,21 +11,42 @@ proposal assumed.
 
 ## What is actually available at issue time
 
-The daily job runs around 09:00 IST. The CAMS forecast for
-tomorrow is available then, and so is the weather forecast. The
-observations are not.
+The daily job is scheduled for 08:00 IST. GitHub starts scheduled
+jobs late when it is busy, and in practice the run lands between
+late morning and mid-afternoon, so each forecast now records the
+time it was actually issued. The CAMS forecast and the weather
+forecast for tomorrow are available then. The station's own
+readings are a different matter.
 
-Measured on 17 August 2026, the newest observation the CPCB feed
-had published was for 14 August. So on the morning of D-1, the
-freshest reading is roughly D-4, not D-1. `config.OBS_LATENCY_DAYS`
-holds that lag, and `features.py` refuses to read anything newer.
+The CPCB feed runs behind, and by how much has changed over the
+semester. On 17 August the newest published day was 14 August,
+three days behind. In early October readings arrived in batches
+every few days. Since late October each day has been published by
+the next afternoon.
 
-The feed also publishes in batches rather than once a day, so the
-day at that cutoff is sometimes not there yet, or arrives with too
-few hours to count. When that happens the reader walks back, up to
-`config.OBS_LOOKBACK_DAYS` more days, to the freshest valid
-reading. It only ever walks backwards, so the forecast never sees
-anything it would not have had at 09:00.
+For most of the project the lag was a fixed three days, measured
+in August. When the feed sped up, that rule kept throwing away
+readings the job already had. On 2 November the forecast for the
+3rd was built from 30 October's 11.4 µg/m³ while 31 October (79)
+and 1 November (106) were already in `daily.csv`. On 30 October
+no forecast went out at all: the one day the rule allowed was
+thin, and the days behind it had never been published.
+
+So the age of the reading is no longer assumed. It is counted
+from the target day, so a reading from D-2 is two days old. That
+is the youngest a day-ahead forecast can have, because the issue
+day is not over when the job runs. Each morning the job finds the
+freshest valid reading on file (`features.freshest_age`) and
+forecasts with a model fitted on readings of exactly that age
+(`features.build(age=...)`). A model fitted on two-day-old
+readings has learnt how much a two-day-old reading is worth, and
+it is never handed a five-day-old one. Past `config.OBS_MAX_AGE`,
+seven days, there is no forecast.
+
+The headline backtest is run at `config.OBS_REFERENCE_AGE`, two
+days, which is what the feed delivers now. The model lab scores
+the other ages as well, so a slower feed shows up as a measured
+cost.
 
 This matters more than it sounds, because it changes what
 "persistence" means.
@@ -43,9 +64,9 @@ both:
 
 - **persistence** — obs on D-1. The textbook bar, and the one the
   proposal targets. Uses information the model cannot have.
-- **persistence_operational** — the freshest observation actually
-  published by issue time, usually D-4. The same information set
-  the model gets.
+- **persistence_operational** — the reading of the same age the
+  model gets, two days old at the reference age. The same
+  information set the model has.
 
 The first is the honest target. The second is the honest
 comparison. Reporting only one of them would be a way of choosing
@@ -123,8 +144,9 @@ current model is what came out of fixing them.
   One kept.
 - **`obs_age` had been constant** at 4.0 since the feed was
   repaired, so it contributed nothing but still cost a parameter.
-  It is still computed and still published with each forecast as a
-  diagnostic; it is simply not fitted on.
+  It is still published with each forecast. Since November it
+  picks which model forecasts instead of being fitted on, as
+  described above.
 - **Thin days were being trained on.** CPCB does not consider a
   24-hour mean valid below 16 hourly readings, and neither should
   the model. Days under that line are recorded and displayed but

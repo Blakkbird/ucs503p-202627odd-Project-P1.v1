@@ -80,6 +80,10 @@
     return COMPASS[Math.round((((deg % 360) + 360) % 360) / 45) % 8];
   }
 
+  function days(n) {
+    return `${n} ${n === 1 ? "day" : "days"}`;
+  }
+
   function signed(frac) {
     const pct = Math.round(frac * 100);
     if (pct === 0) return "0%";
@@ -153,8 +157,24 @@
     if (raw.cams != null) {
       parts.push(`CAMS, the global forecast Pawan corrects, says ${Math.round(raw.cams)} for the same day.`);
     }
-    if (raw.obs_recent != null && raw.obs_day) {
-      parts.push(`The newest full day the station has published is ${dayName(raw.obs_day)}, at ${raw.obs_recent.toFixed(1)}.`);
+    if (!f) {
+      if (raw.obs_recent != null && raw.obs_day) {
+        parts.push(`The station's newest full day is ${dayName(raw.obs_day)}, at ${raw.obs_recent.toFixed(1)}.`);
+      }
+    } else {
+      // The reading the forecast on record was made from. Records say
+      // so since November. For an older one, today's inputs are only
+      // the same reading when they are the same age, which they are
+      // except on the morning a new model takes over.
+      const made = f.inputs || {};
+      let day = made.obs_day, reading = made.persistence_operational;
+      if (!day && made.obs_age_days != null && made.obs_age_days === (D.health || {}).forecast_age) {
+        day = raw.obs_day;
+        reading = raw.obs_recent;
+      }
+      if (reading != null && day) {
+        parts.push(`It starts from the station's reading for ${dayName(day)}, at ${reading.toFixed(1)}.`);
+      }
     }
     $("hero-compare").textContent = parts.join(" ");
 
@@ -218,7 +238,7 @@
     const notes = [];
     const h = D.health || {};
     if (h.obs_age_days != null && h.obs_age_days > h.stale_after_days) {
-      notes.push(`The station has not published a reading for ${h.obs_age_days} days. Forecasts carry on from older readings, and the daily job is flagging it.`);
+      notes.push(`The station has not published a reading for ${days(h.obs_age_days)}. The daily job is flagging it, and forecasts stop once the newest reading is a week old.`);
     }
     const age = (Date.now() - Date.parse(D.generated_at)) / 3600000;
     if (age > 36) {
@@ -460,7 +480,8 @@
     const box = $("drivers");
     box.replaceChildren();
     if (!D.why || !D.model) {
-      $("why-lede").textContent = "Tomorrow's inputs are incomplete, so there is no forecast to break down.";
+      $("why-lede").textContent = D.why_skipped ||
+        "Tomorrow's inputs are incomplete, so there is no forecast to break down.";
       return;
     }
 
@@ -911,14 +932,15 @@
     if (h.newest_obs) {
       const late = h.obs_age_days > h.stale_after_days ? red : h.obs_age_days > h.usual_age_days + 1 ? amber : green;
       item("Newest station reading",
-        `${dayName(h.newest_obs)}, ${h.obs_age_days} days ago. The feed usually runs about ${h.usual_age_days} days behind.`, late);
+        `${dayName(h.newest_obs)}, ${days(h.obs_age_days)} ago. Lately the feed runs about ${days(h.usual_age_days)} behind.`, late);
     }
     if (h.issued) {
       const streak = h.streak > 0 ? `Every morning for the last ${h.streak} days` : "Not issued this morning";
       item("Forecasts issued", `${streak}; ${h.issued} in all since ${dayName(h.first_forecast)}.`, h.streak > 0 ? green : red);
     }
     item("Training data", `${h.usable_rows} usable days out of ${h.rows} on record, starting ${dayName(h.first_row, { year: true })}.`);
-    item("Model", `Ridge regression on ${h.inputs} inputs, refitted from scratch and re-tested against every past day each morning.`);
+    const fitted = h.forecast_age ? `, fitted for a station reading ${days(h.forecast_age)} older than the day it forecasts` : "";
+    item("Model", `Ridge regression on ${h.inputs} inputs${fitted}. Refitted from scratch and re-tested against every past day each morning.`);
     item("Checks", "The full test suite runs before each morning's data is committed.");
 
     $("foot-stamp").textContent = `Data generated ${stamp(D.generated_at)}.`;

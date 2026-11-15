@@ -42,7 +42,8 @@ def test_staleness_counts_from_the_freshest_observation():
 
 def test_a_current_feed_is_not_stale():
     today = date(2026, 8, 30)
-    rows = table(today - timedelta(days=config.OBS_LATENCY_DAYS), today)
+    rows = table(today - timedelta(days=config.OBS_REFERENCE_AGE - 1),
+                 today)
     assert (run_daily.obs_staleness(rows, today)
             <= config.OBS_STALENESS_LIMIT_DAYS)
 
@@ -50,14 +51,16 @@ def test_a_current_feed_is_not_stale():
 def test_normal_publication_delay_does_not_trip_the_limit():
     """The lag the feed has on a good day must stay under the
     limit, or the job would cry wolf every morning."""
-    assert config.OBS_LATENCY_DAYS < config.OBS_STALENESS_LIMIT_DAYS
+    assert config.OBS_REFERENCE_AGE - 1 < config.OBS_STALENESS_LIMIT_DAYS
 
 
 def test_the_forecast_runs_dry_before_the_alarm_goes_off():
     """If the lookback reached past the staleness limit, the job
     could keep forecasting from a feed it has already declared
     dead. The other way round, the alarm is the louder signal."""
-    reach = config.OBS_LATENCY_DAYS + config.OBS_LOOKBACK_DAYS
+    # OBS_MAX_AGE counts from the target day; staleness counts
+    # from today, the issue day, which is one day earlier.
+    reach = config.OBS_MAX_AGE - 1
     assert reach < config.OBS_STALENESS_LIMIT_DAYS
 
 

@@ -36,15 +36,15 @@ output is one number: tomorrow's daily mean PM2.5 at Model Town.
 
 Raw CAMS is not the bar to beat, because almost anything beats it.
 The honest bar is **persistence**: assuming tomorrow looks like the
-most recent reading the station has published. Because the CPCB
-feed publishes about three days late, that reading is roughly four
-days old when the forecast goes out, and that is the version
-Pawan is measured against. The proposal set a 10% reduction in
-error against it outside the burning season and 20% during it.
+most recent reading the station has published. The CPCB feed runs
+behind, so that reading is a few days old when the forecast goes
+out, and Pawan is always measured against persistence given the
+same reading it had. The proposal set a 10% reduction in error
+against it outside the burning season and 20% during it.
 
-Both are met, the second on the full 2025 burning season, and
-[Results](results.md) has the current figures, regenerated every
-morning. The textbook version of persistence, which uses
+Both are met, the second across the 2025 and 2026 burning seasons,
+and [Results](results.md) has the current figures, regenerated
+every morning. The textbook version of persistence, which uses
 yesterday's reading, still beats Pawan. Nobody has yesterday's
 reading at forecast time, so it marks the cost of the publication
 lag rather than a competitor, but it is reported rather than left
