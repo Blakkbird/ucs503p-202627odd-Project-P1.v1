@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pawan"
-version = "0.3.0"
+version = "0.4.0"
 description = "Locally calibrated next-day PM2.5 forecasting for Patiala"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -28,6 +28,7 @@ dependencies = []
 
 [project.optional-dependencies]
 lab = ["scikit-learn==1.8.0", "numpy==2.4.4", "scipy==1.17.1"]
+api = ["fastapi==0.163.1", "uvicorn==0.54.0", "httpx==0.28.1"]
 
 [project.urls]
 Homepage = "https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1"
