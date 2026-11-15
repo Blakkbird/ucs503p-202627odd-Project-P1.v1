@@ -1020,7 +1020,7 @@ def pipeline_health(rows, records, samples, model, today):
 
 def dashboard_data(predictions, samples, rows, metrics, model,
                    backtest=None, fires=None, today=None, board=None,
-                   shadow=None):
+                   shadow=None, alerts=None):
     """Everything docs/dashboard/ draws, as one JSON-ready dict.
 
     `today` is a parameter for the same reason as in forecast_page.
@@ -1108,7 +1108,25 @@ def dashboard_data(predictions, samples, rows, metrics, model,
     out["analogs"] = analog_days(samples, target)
     out["lab"] = lab_summary(board, shadow, tomorrow)
     out["range"] = range_summary(metrics, records)
+    out["alerts"] = {"telegram": (alerts or {}).get("channel")}
     return out
+
+
+def badge(metrics):
+    """shields.io's endpoint format, for the skill badge in the README.
+
+    The headline skill against persistence given the same reading.
+    The badge is drawn from this file by shields.io each time the
+    README is viewed, so it moves with the backtest.
+    """
+    skill = ((metrics or {}).get("skill") or {}).get("operational")
+    if skill is None:
+        return {"schemaVersion": 1, "label": "vs persistence",
+                "message": "not scored yet", "color": "lightgrey"}
+    word = "better" if skill >= 0 else "worse"
+    return {"schemaVersion": 1, "label": "error vs persistence",
+            "message": f"{abs(skill) * 100:.1f}% {word}",
+            "color": "1b62a6" if skill >= 0 else "c8412e"}
 
 
 def write_dashboard(data, path=None):
@@ -1144,6 +1162,8 @@ def main():
 
     print(f"wrote {', '.join(f'docs/{n}' for n in written)}")
 
+    config.BADGE_JSON.write_text(json.dumps(badge(metrics)))
+
     # The dashboard comes last and is not allowed to fail the run.
     # This step sits in front of the daily commit, so an exception
     # here would throw away the morning's observations along with
@@ -1153,7 +1173,8 @@ def main():
         data = dashboard_data(predictions, samples, rows,
                               metrics, model, read(config.BACKTEST_JSON),
                               read(config.FIRES_JSON), board=board,
-                              shadow=read(config.SHADOW_JSON))
+                              shadow=read(config.SHADOW_JSON),
+                              alerts=read(config.NOTIFY_JSON))
         write_dashboard(data)
         print(f"wrote {config.DASHBOARD_JSON.relative_to(config.ROOT)}")
     except Exception as e:  # noqa: BLE001 -- see above

@@ -264,3 +264,27 @@ def test_nothing_to_save_writes_nothing(tmp_path):
     assert not run_daily.save_outlook(date(2026, 11, 3), {}, path)
     assert not path.exists()
     assert run_daily.outlook_issued(path) is None
+
+
+def test_a_refused_request_never_prints_the_firms_key(monkeypatch):
+    """The ingest's errors quote the failing URL, and FIRMS keeps its
+    key in the URL. Cut at sixty characters, the area endpoint used
+    to leave ten of the key's thirty-two in a public log."""
+    import io
+    import urllib.error
+
+    key = "0123456789abcdef0123456789abcdef"
+    monkeypatch.setattr(config, "FIRMS_MAP_KEY", key)
+
+    def refuse(req, timeout=None):
+        raise urllib.error.HTTPError(req.full_url, 403, "Forbidden", {},
+                                     io.BytesIO(b""))
+    monkeypatch.setattr(run_daily.urllib.request, "urlopen", refuse)
+    url = ("https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
+           f"{key}/VIIRS_SNPP_NRT/73.8,27.5,77.7,32.6/1/2026-11-02")
+    try:
+        run_daily.fetch(url)
+    except run_daily.SourceError as e:
+        message = str(e)
+    assert "***" in message
+    assert not any(key[i:i + 6] in message for i in range(len(key) - 5))

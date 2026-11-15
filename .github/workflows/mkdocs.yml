@@ -11,13 +11,17 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The revision-date and authors plugins read git history;
+          # a shallow clone gives every page the same date.
+          fetch-depth: 0
       - name: Configure Git Credentials
         run: |
           git config user.name github-actions[bot]
           git config user.email 14331962+bvraghav@users.noreply.github.com
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.x
+          python-version: "3.12"
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV 
       - uses: actions/cache@v4
         with:
@@ -25,22 +29,11 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install             			\
-          click                      			\
-          numpy                      			\
-          pandas                     			\
-          scikit-learn               			\
-          mkdocs                     			\
-          mkdocs-material            			\
-          mkdocs-material-extensions 			\
-          mkdocstrings               			\
-          mkdocstrings-python        			\
-          mkdocs-gen-files           			\
-          mkdocs-literate-nav        			\
-          mkdocs-section-index       			\
-          mkdocs-click                                  \
-          mkdocs-git-revision-date-localized-plugin     \
-          mkdocs-git-committers-plugin-2                \
-          mkdocs-git-authors-plugin                     \
-          pymdown-extensions
+      # The pinned list in requirements-docs.txt, the same one a
+      # local build uses. This used to be a longer list typed out
+      # here, including numpy, pandas and scikit-learn, which the
+      # site never imports.
+      - run: pip install -r requirements-docs.txt
       - run: PYTHONPATH=src:$PYTHONPATH mkdocs gh-deploy --force
+        env:
+          DISABLE_MKDOCS_2_WARNING: "true"

@@ -62,18 +62,21 @@ extra:
 
 extra_css:
   - assets/stylesheets/extra.css
-  - https://unpkg.com/katex@0/dist/katex.min.css
 
-extra_javascript:
-- https://unpkg.com/katex@0/dist/katex.min.js
-- javascript/arithmatex.js
+# No page uses maths, so the template's KaTeX (loaded unpinned from a
+# CDN) and its arithmatex.js (which never existed, a 404 on every
+# page) are gone. To bring maths back, follow the Material docs for
+# arithmatex and pin the KaTeX version.
 
 markdown_extensions:
   - abbr
   - md_in_html
   - attr_list
+  # One entry. There used to be two, and the second replaced the
+  # first, which silently switched off the heading permalinks.
   - toc:
       permalink: true
+      toc_depth: 4
   - footnotes
   - pymdownx.arithmatex:
       generic: true
@@ -103,6 +106,4 @@ markdown_extensions:
   - pymdownx.mark
   - pymdownx.tilde
   # - mkdocs-click
-  - toc:
-      toc_depth: 4
   - sane_lists

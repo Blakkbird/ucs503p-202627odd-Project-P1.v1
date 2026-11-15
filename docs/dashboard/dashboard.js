@@ -183,6 +183,14 @@
     }
     $("hero-compare").textContent = parts.join(" ");
 
+    const channel = (D.alerts || {}).telegram;
+    if (channel) {
+      const p = $("hero-alerts");
+      p.replaceChildren("The same forecast is posted to ",
+        el("a", { href: channel, rel: "noopener" }, "a Telegram channel"), " every day.");
+      p.hidden = false;
+    }
+
     hero.classList.add("ready");
     document.title = f
       ? `${Math.round(f.pm25)} \u00b5g/m\u00b3 tomorrow in Patiala | Pawan`

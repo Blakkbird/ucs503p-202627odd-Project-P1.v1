@@ -55,6 +55,24 @@ class SourceError(Exception):
     """A data source could not be reached or returned nonsense."""
 
 
+def redact(text):
+    """`text` with every configured key replaced by ***.
+
+    An error quotes the URL that failed, which is what makes a bad
+    morning traceable in the log. FIRMS puts its key in that URL, and
+    the Actions logs of a public repository are public. GitHub masks
+    a secret only where the whole value appears, and the message cut
+    the URL at sixty characters, which for the FIRMS area endpoint
+    left ten of the key's thirty-two characters showing. So the keys
+    come out before the URL is cut.
+    """
+    for secret in (config.OPENAQ_KEY, config.FIRMS_MAP_KEY,
+                   config.TELEGRAM_BOT_TOKEN):
+        if secret:
+            text = text.replace(secret, "***")
+    return text
+
+
 def fetch(url, headers=None):
     """GET with retries. Raises SourceError once attempts run out."""
     last = None
@@ -66,7 +84,8 @@ def fetch(url, headers=None):
         except urllib.error.HTTPError as e:
             # 4xx will not fix itself; only retry server-side faults
             if e.code < 500:
-                raise SourceError(f"HTTP {e.code} for {url[:60]}") from e
+                raise SourceError(
+                    f"HTTP {e.code} for {redact(url)[:60]}") from e
             last = e
         except (TimeoutError, urllib.error.URLError, OSError) as e:
             last = e

@@ -67,6 +67,18 @@ jobs:
           pip install -r requirements-lab.txt
           python code/lab.py
 
+      # The day's forecast to the Telegram channel, once. Needs the
+      # TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID secrets; without them
+      # it prints the post and moves on. A failure here is reported
+      # and does not stop the commit.
+      - name: Post to Telegram
+        if: always()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python code/notify.py
+
       - name: Rebuild the public pages
         # Runs whether or not the step above went green. If the
         # forecast failed, the site should say so rather than keep
@@ -83,7 +95,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/ docs/forecast.md docs/results.md docs/dashboard/data.json
+          git add data/ docs/forecast.md docs/results.md docs/dashboard/data.json docs/badge.json
           if git diff --staged --quiet; then
             echo "Nothing to commit; data already current."
             exit 0

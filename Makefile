@@ -63,7 +63,7 @@ $(ICONS_FOLDER)/simple $(ICONS_FOLDER) :
 ### The daily job runs these in the same order. Handy for
 ### reproducing a day's output locally when something looks off.
 
-.PHONY: ingest eval forecast lab lab-full site daily check history compare report
+.PHONY: ingest eval forecast lab lab-full notify site daily check history compare report
 
 ingest:
 	python code/ingest/run_daily.py
@@ -82,11 +82,16 @@ lab:
 lab-full:
 	python code/lab.py --backtest
 
+# The day's post to Telegram. Prints it instead when the two
+# TELEGRAM_ secrets are not set.
+notify:
+	python code/notify.py
+
 site:
 	python code/pages.py
 
 # Everything, in the order the workflow does it.
-daily: ingest eval forecast lab site
+daily: ingest eval forecast lab notify site
 
 check:
 	ruff check code/ scripts/

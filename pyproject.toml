@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pawan"
-version = "0.2.0"
+version = "0.3.0"
 description = "Locally calibrated next-day PM2.5 forecasting for Patiala"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -20,10 +20,14 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
 ]
-# Ingest and modelling are standard library only, on purpose: the
-# daily job runs unattended and nothing in its path should be able
-# to break on a dependency upgrade. See requirements.txt.
+# The forecast is standard library only, on purpose: the daily job
+# runs unattended and nothing in its path should be able to break on
+# a dependency upgrade. See requirements.txt. The model lab's
+# benchmarks are an optional extra.
 dependencies = []
+
+[project.optional-dependencies]
+lab = ["scikit-learn==1.8.0", "numpy==2.4.4", "scipy==1.17.1"]
 
 [project.urls]
 Homepage = "https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1"

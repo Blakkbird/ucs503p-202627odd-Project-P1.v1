@@ -61,15 +61,18 @@ covers all of it in one place.
 ```
 code/
   config.py        every setting, in one place
-  ingest/          the daily job: observations, forecast, fires
-  features.py      daily.csv -> model-ready rows
+  ingest/          the daily job: observations, forecasts, fires
+  features.py      daily.csv -> model rows, at a stated reading age
   model.py         ridge regression, standard library only
-  evaluate.py      baselines and the walk-forward backtest
-  predict.py       issues tomorrow's forecast, once, and freezes it
-  pages.py         renders forecast.md and results.md from the data
+  evaluate.py      baselines, the walk-forward backtest, the range
+  predict.py       tomorrow and the outlook, issued once and frozen
+  candidates.py    every model on the leaderboard, one interface
+  lab.py           the model lab and its shadow forecasts
+  notify.py        the daily Telegram post
+  pages.py         renders the pages and the dashboard's data
   tests/
-scripts/           one-off tools: history, backfill, model comparison,
-                   report figures
+scripts/           one-off tools: history, backfill, the week 7
+                   comparison, report figures
 data/daily.csv     the whole dataset, one row per day
 docs/              this site
 journals/          weekly entries, one folder per member
@@ -81,15 +84,19 @@ journals/          weekly entries, one folder per member
 pip install -r requirements.txt
 python code/ingest/run_daily.py      # needs OPENAQ_KEY, FIRMS_MAP_KEY
 python code/evaluate.py              # backtest, writes data/metrics.json
+python code/predict.py               # tomorrow and the outlook
+python code/lab.py                   # the model lab
 python -m pytest code/tests/ -q
 ```
 
-The ingest and the model use nothing outside the standard library.
+The forecast uses nothing outside the standard library.
 `requirements.txt` carries pytest and ruff and nothing else. That
 is deliberate: the daily job has to keep running unattended until
 the end of the semester, and the least it can do is not depend on
-something that might change underneath it.
+something that might change underneath it. The model lab's
+benchmarks need scikit-learn (`requirements-lab.txt`), and run in a
+step of their own that cannot stop the daily commit.
 
-Ingest runs every morning through GitHub Actions and commits the
+The job runs every day through GitHub Actions and commits the
 result, so `data/daily.csv` is the real dataset and its history is
 the commit log.
