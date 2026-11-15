@@ -53,6 +53,20 @@ jobs:
           python code/evaluate.py
           python code/predict.py
 
+      # The model lab: every candidate's shadow forecast for
+      # tomorrow, daily, and the full leaderboard backtest once a
+      # week. It installs scikit-learn for the benchmarks, which the
+      # forecast itself never needs. Nothing it does can stop the
+      # morning's data being committed: a broken lab leaves last
+      # week's leaderboard on the page, and the log says why.
+      - name: Model lab
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 20
+        run: |
+          pip install -r requirements-lab.txt
+          python code/lab.py
+
       - name: Rebuild the public pages
         # Runs whether or not the step above went green. If the
         # forecast failed, the site should say so rather than keep

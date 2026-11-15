@@ -1,5 +1,10 @@
 """Backtest a few candidate models side by side.
 
+Kept as it was run in week 7. code/lab.py supersedes it: the same
+idea with every model family, every reading age, a stricter
+training window, and a promotion rule that also checks older
+readings.
+
 Nothing here changes the model the daily job ships. It answers one
 question before anything is adopted: does a change earn its place
 on burning-season days, without costing more on calm ones than it

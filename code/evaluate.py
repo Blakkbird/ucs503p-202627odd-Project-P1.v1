@@ -39,6 +39,19 @@ ALPHA_GRID = [0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0]
 # See the class docstring in model.py for why.
 LOG_TARGET = True
 
+# The likely range is the middle 80% of the backtest's own errors:
+# four days in five should land inside it. Errors are taken in log
+# space, from forecasts made out of sample, and separately for each
+# season, because a November error is several times a July one.
+# The range used to come from the fit's in-sample spread, which is
+# narrower than the truth by construction: it held 15 of the first
+# 27 live days against the four in five it was meant to.
+RANGE_QUANTILES = (0.10, 0.90)
+
+# Fewer errors than this in a season and its range borrows the
+# whole year's errors instead.
+MIN_ERRORS = 30
+
 # CPCB National AQI breakpoints for 24-hour PM2.5, in ug/m3. The
 # service is useful to a person only if it lands in the right
 # band, so that gets measured alongside the raw error.
@@ -186,6 +199,121 @@ def baselines(samples, days):
         "climatology": [(s.y, running.get(s.day)) for s in rows],
         "raw_cams": [(s.y, math.expm1(s.x[s.names.index("cams_log")]))
                      for s in rows],
+    }
+
+
+def quantile(values, q):
+    """The q-th quantile, interpolating between neighbours."""
+    xs = sorted(values)
+    if not xs:
+        return None
+    pos = (len(xs) - 1) * q
+    lo = int(pos)
+    hi = min(lo + 1, len(xs) - 1)
+    return xs[lo] + (xs[hi] - xs[lo]) * (pos - lo)
+
+
+def season_of(day):
+    return "burning" if day.month in config.BURNING_MONTHS else "calm"
+
+
+def log_error(run):
+    """How far off a run was, in the log space the model works in."""
+    return math.log1p(run["truth"]) - math.log1p(run["model"])
+
+
+def calibrate(runs):
+    """The likely range's edges, per season, from out-of-sample errors.
+
+    Returned as log-space offsets: the range for a forecast f is
+    expm1(log1p(f) + low) to expm1(log1p(f) + high). Under a log
+    target that range comes out lopsided, wider above than below,
+    which is the right shape for a quantity that spikes upwards.
+    """
+    errors = {"calm": [], "burning": []}
+    for r in runs:
+        errors[season_of(r["day"])].append(log_error(r))
+    everything = errors["calm"] + errors["burning"]
+    out = {}
+    for season, own in errors.items():
+        pool = own if len(own) >= MIN_ERRORS else everything
+        if len(pool) < MIN_ERRORS:
+            continue
+        out[season] = {"low": round(quantile(pool, RANGE_QUANTILES[0]), 4),
+                       "high": round(quantile(pool, RANGE_QUANTILES[1]), 4),
+                       "errors": len(pool)}
+    return out
+
+
+def coverage(runs):
+    """How often the range held the truth, sized only from the past.
+
+    Walks forward the way the range is used: each day's range comes
+    from the errors of the days before it, never its own. Reported
+    per season and overall, against the 80% it is sized for.
+    """
+    seen = {"calm": [], "burning": []}
+    held = {"calm": [0, 0], "burning": [0, 0]}
+    for r in sorted(runs, key=lambda r: r["day"]):
+        season = season_of(r["day"])
+        pool = seen[season]
+        if len(pool) < MIN_ERRORS:
+            pool = seen["calm"] + seen["burning"]
+        err = log_error(r)
+        if len(pool) >= MIN_ERRORS:
+            low = quantile(pool, RANGE_QUANTILES[0])
+            high = quantile(pool, RANGE_QUANTILES[1])
+            held[season][0] += low <= err <= high
+            held[season][1] += 1
+        seen[season].append(err)
+    out = {k: {"held": h, "days": n, "rate": round(h / n, 3) if n else None}
+           for k, (h, n) in held.items()}
+    h = sum(v[0] for v in held.values())
+    n = sum(v[1] for v in held.values())
+    out["overall"] = {"held": h, "days": n,
+                      "rate": round(h / n, 3) if n else None}
+    return out
+
+
+def likely_range(point, calibration, burning):
+    """Turn a forecast into its likely range, or None if not sized."""
+    block = (calibration or {}).get("burning" if burning else "calm")
+    if not block or point is None:
+        return None
+    centre = math.log1p(point)
+    return [max(math.expm1(centre + block["low"]), 0.0),
+            math.expm1(centre + block["high"])]
+
+
+def horizon_report(rows, use_weather, horizon, age, runs=None):
+    """One horizon's backtest, scored and calibrated.
+
+    For the outlook. CAMS and the weather in the table are day-ahead
+    values, so for days two and three this is a little kind to the
+    model; their live record is the check. The reading and the fire
+    count are moved back properly, which is the part that matters.
+    """
+    samples = features.build(rows, use_weather=use_weather, age=age,
+                             horizon=horizon)
+    if runs is None:
+        runs = backtest(samples)
+    if not runs:
+        return None
+    by_day = {s.day: s for s in samples}
+    model = score([(r["truth"], r["model"]) for r in runs])
+    ref = score([(r["truth"], by_day[r["day"]].persistence_op)
+                 for r in runs])
+    gain = (ref["mae"] - model["mae"]) / ref["mae"] if ref and \
+        ref["mae"] else None
+    return {
+        "horizon": horizon,
+        "age": age,
+        "days": len(runs),
+        "model": model,
+        "persistence": ref,
+        "skill": None if gain is None else round(gain, 4),
+        "calibration": calibrate(runs),
+        "coverage": coverage(runs),
     }
 
 
@@ -383,6 +511,25 @@ def main():
         return 1
     out, runs = built
     show(out, runs)
+
+    # One block per horizon, at the ages tomorrow's forecast and the
+    # outlook will actually use today. Each carries the range's
+    # edges and how often a range sized like that held the truth.
+    # The headline run is reused when the ages match, which they do
+    # whenever the feed is on time.
+    target = datetime.now(config.IST).date() + timedelta(days=1)
+    age = features.freshest_age(rows, target) or features.default_age()
+    out["horizons"] = {}
+    for h in (1, *config.OUTLOOK_HORIZONS):
+        at = age + h - 1
+        reuse = runs if (h == 1 and at == out["obs_age"]) else None
+        got = horizon_report(rows, weather, h, at, reuse)
+        if got:
+            out["horizons"][str(h)] = got
+            cov = got["coverage"]["overall"]
+            print(f"horizon {h} (age {at}): MAE {got['model']['mae']:.2f}, "
+                  f"skill {got['skill'] * 100:+.1f}%, range held "
+                  f"{cov['held']} of {cov['days']}")
 
     config.DATA.mkdir(exist_ok=True)
     with open(config.METRICS_JSON, "w") as f:

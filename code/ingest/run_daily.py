@@ -191,13 +191,45 @@ def wind_day_mean(times, speeds, bearings, day):
     return speed, bearing
 
 
-def forecast(target_day):
-    """CAMS pm2.5 and weather for target_day, as issued today."""
+def daily_inputs(aq, wx, days):
+    """{day: CAMS and weather daily means} from two hourly payloads.
+
+    Split from the request so it can be tested without a network.
+    A day the payload does not cover comes back with None values
+    rather than missing, and the caller decides what that means.
+    """
+    t_aq = aq["hourly"]["time"]
+    t_wx = wx["hourly"]["time"]
+    out = {}
+    for day in days:
+        speed, bearing = wind_day_mean(
+            t_wx, wx["hourly"]["wind_speed_10m"],
+            wx["hourly"]["wind_direction_10m"], day)
+        out[day] = {
+            "cams_pm25": day_mean(t_aq, aq["hourly"]["pm2_5"], day),
+            "temp_mean": day_mean(
+                t_wx, wx["hourly"]["temperature_2m"], day),
+            "rh_mean": day_mean(
+                t_wx, wx["hourly"]["relative_humidity_2m"], day),
+            "wind_speed_mean": speed,
+            "wind_dir_mean": bearing,
+        }
+    return out
+
+
+def forecast(target_days, today):
+    """CAMS pm2.5 and weather for each target day, as issued today.
+
+    One request each to Open-Meteo for every day asked for, which is
+    tomorrow and the outlook days after it. forecast_days counts
+    today as the first day.
+    """
+    ahead = max((d - today).days for d in target_days) + 1
     aq = json.loads(fetch(
         "https://air-quality-api.open-meteo.com/v1/air-quality?"
         + urllib.parse.urlencode({
             "latitude": config.LAT, "longitude": config.LON,
-            "hourly": "pm2_5", "forecast_days": 3,
+            "hourly": "pm2_5", "forecast_days": ahead,
             "timezone": "Asia/Kolkata", "domains": "cams_global"})))
 
     wx = json.loads(fetch(
@@ -206,23 +238,45 @@ def forecast(target_day):
             "latitude": config.LAT, "longitude": config.LON,
             "hourly": ("temperature_2m,relative_humidity_2m,"
                        "wind_speed_10m,wind_direction_10m"),
-            "forecast_days": 3, "timezone": "Asia/Kolkata"})))
+            "forecast_days": ahead, "timezone": "Asia/Kolkata"})))
 
-    t_aq = aq["hourly"]["time"]
-    t_wx = wx["hourly"]["time"]
-    speed, bearing = wind_day_mean(
-        t_wx, wx["hourly"]["wind_speed_10m"],
-        wx["hourly"]["wind_direction_10m"], target_day)
+    return daily_inputs(aq, wx, target_days)
 
-    return {
-        "cams_pm25": day_mean(t_aq, aq["hourly"]["pm2_5"], target_day),
-        "temp_mean": day_mean(
-            t_wx, wx["hourly"]["temperature_2m"], target_day),
-        "rh_mean": day_mean(
-            t_wx, wx["hourly"]["relative_humidity_2m"], target_day),
-        "wind_speed_mean": speed,
-        "wind_dir_mean": bearing,
-    }
+
+def save_outlook(today, inputs, path=None):
+    """data/outlook.json: CAMS and weather for the outlook days.
+
+    Not written into daily.csv. A row there holds the forecast that
+    was issued the day before it, and the job fills a future row
+    only once; putting a three-day-ahead CAMS value in now would
+    stop tomorrow's run from writing the day-ahead one. Days whose
+    CAMS value did not come back are left out.
+    """
+    path = path or config.OUTLOOK_JSON
+    days = {}
+    for day, values in sorted(inputs.items()):
+        if values.get("cams_pm25") is None:
+            continue
+        days[day.isoformat()] = {k: (None if v is None else round(v, 2))
+                                 for k, v in values.items()}
+    if not days:
+        return False
+    blob = {"issued": today.isoformat(),
+            "generated_at": datetime.now(IST).isoformat(timespec="seconds"),
+            "days": days}
+    Path(path).parent.mkdir(exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(blob, f, indent=1)
+    return True
+
+
+def outlook_issued(path=None):
+    """The day data/outlook.json was written for, or None."""
+    try:
+        with open(path or config.OUTLOOK_JSON) as f:
+            return json.load(f).get("issued")
+    except (OSError, json.JSONDecodeError):
+        return None
 
 
 def source_rank(name):
@@ -444,12 +498,19 @@ def main():
     except SourceError as e:
         failures.append(f"fire map: {e}")
 
-    # tomorrow: the forecast issued today, with its issue date
+    # Tomorrow: the forecast issued today, with its issue date, into
+    # daily.csv. The outlook days after it go to their own file. One
+    # request covers both, and it is skipped when both are done.
     row = rows.get(tomorrow.isoformat(), blank(tomorrow))
-    if not row.get("cams_pm25"):
+    outlook_days = [today + timedelta(days=h)
+                    for h in config.OUTLOOK_HORIZONS]
+    need_row = not row.get("cams_pm25")
+    need_outlook = outlook_issued() != today.isoformat()
+    if need_row or need_outlook:
         try:
-            f = forecast(tomorrow)
-            if f["cams_pm25"] is not None:
+            got = forecast([tomorrow, *outlook_days], today)
+            f = got[tomorrow]
+            if need_row and f["cams_pm25"] is not None:
                 row.update({k: (round(v, 2) if v is not None else "")
                             for k, v in f.items()})
                 row["cams_issue_date"] = today.isoformat()
@@ -458,6 +519,10 @@ def main():
                 changed += 1
                 print(f"fcst  {tomorrow}: {f['cams_pm25']:.1f} ug/m3 "
                       f"(issued {today})")
+            if need_outlook and save_outlook(
+                    today, {d: got[d] for d in outlook_days}):
+                print(f"wrote {config.OUTLOOK_JSON.name} for "
+                      + ", ".join(d.isoformat() for d in outlook_days))
         except SourceError as e:
             failures.append(f"forecast {tomorrow}: {e}")
 

@@ -84,6 +84,11 @@
     return `${n} ${n === 1 ? "day" : "days"}`;
   }
 
+  function listOf(items) {
+    if (items.length < 2) return items.join("");
+    return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+  }
+
   function signed(frac) {
     const pct = Math.round(frac * 100);
     if (pct === 0) return "0%";
@@ -211,10 +216,13 @@
     if (raw.cams != null) pins.push({ cls: "pin-cams", label: "CAMS", value: raw.cams });
     if (raw.obs_recent != null) pins.push({ cls: "pin-obs", label: "Last reading", value: raw.obs_recent });
     pins.forEach((p) => { p.pos = scalePos(p.value); });
+    // Two pins share a level only if their labels cannot touch. A
+    // label is about 90px wide, which is a bigger share of a phone.
+    const near = Math.max(0.15, 90 / (box.clientWidth || 600));
     const placed = [];
     for (const p of pins.slice().sort((a, b) => a.pos - b.pos)) {
       p.level = 0;
-      while (placed.some((q) => q.level === p.level && Math.abs(q.pos - p.pos) < 0.15)) p.level++;
+      while (placed.some((q) => q.level === p.level && Math.abs(q.pos - p.pos) < near)) p.level++;
       placed.push(p);
     }
     const levels = Math.max(1, ...pins.map((p) => p.level + 1));
@@ -229,6 +237,33 @@
       pin.append(label);
       box.append(pin);
     }
+  }
+
+  // ---------------------------------------------------------------
+  // the two days after tomorrow
+
+  function renderOutlook() {
+    const list = D.outlook || [];
+    const box = $("outlook");
+    if (!list.length || !D.forecast) { box.hidden = true; return; }
+    const days = $("outlook-days");
+    days.replaceChildren();
+    for (const r of list) {
+      const band = bandOf(r.pm25);
+      const item = el("div", { class: "outlook-day", role: "listitem", style: `--band:${band.colour}` });
+      item.append(el("span", { class: "outlook-when" }, dayName(r.date, { weekday: true })));
+      const value = el("span", { class: "outlook-value" });
+      value.append(String(Math.round(r.pm25)), chip(band));
+      item.append(value);
+      if (r.interval) {
+        item.append(el("span", { class: "outlook-range" },
+          `Likely ${Math.round(r.interval[0])} to ${Math.round(r.interval[1])}`));
+      }
+      days.append(item);
+    }
+    $("outlook-note").textContent =
+      "Made from the same station reading as tomorrow's, which is a day or two older for these, so the ranges are wider.";
+    box.hidden = false;
   }
 
   // ---------------------------------------------------------------
@@ -607,6 +642,230 @@
   }
 
   // ---------------------------------------------------------------
+  // days like tomorrow
+
+  function renderAnalogs() {
+    const A = D.analogs || [];
+    const box = $("analogs");
+    if (!A.length) { box.hidden = true; return; }
+    const measured = A.map((a) => String(Math.round(a.observed)));
+    const count = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"][A.length] || A.length;
+    let lede = `The ${count} published days whose inputs sat closest to tomorrow's, closest first. ` +
+      `The station measured ${listOf(measured)} on them.`;
+    if (D.forecast) {
+      lede += ` Pawan says ${Math.round(D.forecast.pm25)} for tomorrow. Where the two disagree, the inputs that differ are the ones to look at.`;
+    }
+    $("analogs-lede").textContent = lede;
+
+    const list = $("analog-list");
+    list.replaceChildren();
+    for (const a of A) {
+      const li = el("li", { class: "analog" });
+      li.append(el("span", { class: "analog-day" }, dayName(a.date, { weekday: true, short: true, year: true })));
+      const value = el("span", { class: "analog-value" });
+      value.append(String(Math.round(a.observed)), chip(bandOf(a.observed)));
+      li.append(value);
+      const bits = [];
+      if (a.cams != null) bits.push(`CAMS ${Math.round(a.cams)}`);
+      if (a.reading != null) bits.push(`station reading ${Math.round(a.reading)}`);
+      if (a.fires != null) bits.push(`${Math.round(a.fires)} fires`);
+      if (a.wind_speed != null && a.wind_dir != null) {
+        bits.push(`wind ${Math.round(a.wind_speed)} km/h from the ${compass(a.wind_dir)}`);
+      }
+      li.append(el("span", { class: "analog-inputs" }, bits.join(", ")));
+      list.append(li);
+    }
+    box.hidden = false;
+  }
+
+  // ---------------------------------------------------------------
+  // every model, on the same days
+
+  function renderLab() {
+    const L = D.lab;
+    const box = $("lab");
+    if (!L || !L.models || !L.models.length) { box.hidden = true; return; }
+    const models = L.models.filter((m) => m.mae != null).slice().sort((a, b) => a.mae - b.mae);
+    const shipped = models.find((m) => m.shipped);
+    const pers = models.find((m) => m.key === "persistence");
+    if (!shipped) { box.hidden = true; return; }
+
+    const others = models.filter((m) => m.kind !== "baseline" && !m.shipped).length;
+    const baselines = models.filter((m) => m.kind === "baseline").length;
+    $("lab-lede").textContent =
+      `Pawan's model against ${others} others and ${baselines} baselines, each scored on the same ${L.days} days ` +
+      "and given only what the real forecast knew on the morning it was issued. Each bar is a model's typical miss " +
+      "in \u00b5g/m\u00b3, so shorter is better. The dashed line is persistence: repeat the newest reading.";
+
+    // The axis stops a little past persistence; raw CAMS misses by
+    // four times that and would squash every other bar flat.
+    const chart = $("lab-chart");
+    chart.replaceChildren();
+    const cap = Math.max((pers ? pers.mae : shipped.mae) * 1.6, shipped.mae * 1.8);
+    chart.style.setProperty("--ref", pers ? `${(pers.mae / cap) * 100}%` : "-10%");
+    for (const m of models) {
+      const row = el("div", { class: `lab-row kind-${m.kind}${m.shipped ? " shipped" : ""}` });
+      row.append(el("span", { class: "lab-name" }, m.label));
+      const track = el("span", { class: "lab-track" });
+      const over = m.mae > cap;
+      track.append(el("span", { class: `lab-bar${over ? " over" : ""}`,
+        style: `width:${Math.min(m.mae / cap, 1) * 100}%` }));
+      row.append(track);
+      row.append(el("span", { class: "lab-value" }, m.mae.toFixed(1)));
+      chart.append(row);
+    }
+
+    const table = $("lab-table");
+    table.replaceChildren();
+    const head = el("tr");
+    for (const h of ["Model", "What it is", "Typical miss", "Burning season, vs persistence", "Live so far", "Says for tomorrow", "Where it stands"]) {
+      head.append(el("th", { scope: "col" }, h));
+    }
+    const thead = el("thead");
+    thead.append(head);
+    const tbody = el("tbody");
+    for (const m of models) {
+      const tr = el("tr", m.shipped ? { class: "shipped" } : {});
+      tr.append(el("th", { scope: "row" }, m.label));
+      tr.append(el("td", {}, m.about || ""));
+      tr.append(el("td", { class: "num" }, m.mae.toFixed(2)));
+      tr.append(el("td", { class: "num" }, m.burning_skill == null ? "\u2013" : signed(m.burning_skill)));
+      tr.append(el("td", { class: "num" }, m.live_mae == null ? "\u2013" : `${m.live_mae.toFixed(1)} over ${days(m.live_n)}`));
+      const said = el("td", { class: "num" });
+      if (m.tomorrow != null) {
+        said.append(el("span", { class: "dot", style: `background:${bandOf(m.tomorrow).colour}` }), String(Math.round(m.tomorrow)));
+      } else {
+        said.textContent = "\u2013";
+      }
+      tr.append(said);
+      tr.append(el("td", {}, m.verdict || ""));
+      tbody.append(tr);
+    }
+    table.append(thead, tbody);
+
+    const r = L.rule || {};
+    $("lab-rule").textContent =
+      `Another model replaces the shipped one only if it beats it by ${Math.round((r.burning_gain || 0) * 100)} points or more in burning season, ` +
+      `gives up no more than ${Math.round((r.calm_cost || 0) * 100)} in calm season, stays within ${Math.round((r.robust_cost || 0) * 100)}% ` +
+      `of it when the reading is older, and does no worse over ${r.live_days || 0} days of live forecasts. ` +
+      "Every model issues a forecast each morning alongside the real one, and the live column fills as those are scored. " +
+      `Backtest run ${L.backtest_on ? dayName(L.backtest_on, { year: true }) : "recently"}.`;
+    box.hidden = false;
+  }
+
+  // ---------------------------------------------------------------
+  // reading age, and the likely range
+
+  function renderAge() {
+    const A = ((D.lab || {}).by_age || []).filter((a) => a.mae != null);
+    const box = $("age-chart");
+    box.replaceChildren();
+    if (A.length < 2) {
+      $("age-lede").textContent = "The model lab has not scored older readings yet.";
+      return false;
+    }
+    const W = box.clientWidth || 520, H = box.clientHeight || 230;
+    const m = { l: 34, r: 92, t: 16, b: 30 };
+    const first = A[0].age, last = A[A.length - 1].age;
+    // Lines, not bars, so the axis can start above zero; from zero
+    // the gap this chart is about would be a sliver at the top.
+    const values = A.flatMap((a) => [a.mae, a.persistence_mae]);
+    const top = Math.ceil(Math.max(...values) * 1.08);
+    const floor = Math.max(0, Math.floor(Math.min(...values) * 0.85));
+    const x = (age) => m.l + (age - first) / (last - first) * (W - m.l - m.r);
+    const y = (v) => H - m.b - ((v - floor) / (top - floor)) * (H - m.t - m.b);
+    const root = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img",
+      "aria-label": `Typical miss by age of the station reading, from ${first} to ${last} days, for Pawan and for persistence` });
+
+    const span = top - floor;
+    const step = span <= 6 ? 1 : span <= 12 ? 2 : 5;
+    for (let v = Math.ceil(floor / step) * step; v <= top; v += step) {
+      root.append(svg("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: "grid" }));
+      const t = svg("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end", class: "axis" });
+      t.textContent = v;
+      root.append(t);
+    }
+    for (const a of A) {
+      const t = svg("text", { x: x(a.age), y: H - 9, "text-anchor": "middle", class: "axis" });
+      t.textContent = `${a.age} days`;
+      root.append(t);
+    }
+
+    // Tomorrow's forecast uses one of these ages; mark which.
+    const now = (D.health || {}).forecast_age;
+    if (now != null && now >= first && now <= last) {
+      root.append(svg("line", { x1: x(now), x2: x(now), y1: m.t, y2: H - m.b, stroke: cssVar("--muted"),
+        "stroke-dasharray": "2 4", "stroke-width": 1 }));
+      const t = svg("text", { x: x(now) + 5, y: m.t + 10, class: "axis" });
+      t.textContent = "tomorrow's forecast";
+      root.append(t);
+    }
+
+    const series = [["persistence_mae", cssVar("--muted"), "5 4", "Persistence"], ["mae", cssVar("--pawan"), "", "Pawan"]];
+    for (const [key, colour, dash, label] of series) {
+      const d = A.map((a, i) => `${i ? "L" : "M"}${x(a.age).toFixed(1)},${y(a[key]).toFixed(1)}`).join("");
+      root.append(svg("path", { d, fill: "none", stroke: colour, "stroke-width": key === "mae" ? 2.4 : 1.8,
+        "stroke-dasharray": dash, "stroke-linejoin": "round" }));
+      for (const a of A) root.append(svg("circle", { cx: x(a.age), cy: y(a[key]), r: 3, fill: colour }));
+      const end = A[A.length - 1];
+      const t = svg("text", { x: x(end.age) + 8, y: y(end[key]) + 4, class: "axis", fill: colour });
+      t.textContent = label;
+      root.append(t);
+    }
+    box.append(root);
+
+    const a0 = A[0], a1 = A[A.length - 1];
+    $("age-lede").textContent =
+      "The station's newest reading is the strongest single clue to tomorrow, and how old it is decides how strong. " +
+      "Each age has its own model, scored against persistence given the same reading.";
+    let note = `With a reading ${days(a0.age)} old, Pawan's typical miss is ${a0.mae.toFixed(1)}; with one ${days(a1.age)} old, ${a1.mae.toFixed(1)}. ` +
+      `Persistence falls apart faster, from ${a0.persistence_mae.toFixed(1)} to ${a1.persistence_mae.toFixed(1)}, which is why the gap between them widens.`;
+    if (a0.obs_weight != null && a1.obs_weight != null) {
+      note += ` The weight the model puts on the reading drops from ${a0.obs_weight.toFixed(2)} to ${a1.obs_weight.toFixed(2)}.`;
+    }
+    $("age-note").textContent = note;
+    return true;
+  }
+
+  function renderRange() {
+    const R = D.range || {};
+    const box = $("coverage");
+    box.replaceChildren();
+    const bar = (label, got) => {
+      if (!got || !got.days) return;
+      const rate = got.held / got.days;
+      const row = el("div", { class: "cov-row" });
+      row.append(el("span", { class: "cov-label" }, label));
+      const track = el("span", { class: "cov-track", title: `${got.held} of ${got.days} days` });
+      track.append(el("span", { class: "cov-fill", style: `width:${rate * 100}%` }));
+      row.append(track);
+      row.append(el("span", { class: "cov-value" }, `${Math.round(rate * 100)}%`));
+      box.append(row);
+    };
+    bar("Every backtest day", R.backtest);
+    bar("Burning season", R.backtest_burning);
+    bar("Live, resized ranges", R.live);
+    if (!box.childElementCount) {
+      $("range-lede").textContent = "The likely range has not been scored yet.";
+      return false;
+    }
+    $("range-lede").textContent =
+      "The likely range is sized from the backtest's own misses, made out of sample and kept separate for each season, " +
+      "so that four days in five should land inside it. The tick marks 80%.";
+    const live = R.live || {};
+    $("range-note").textContent = live.days
+      ? `Live, a range sized this way has held ${live.held} of ${days(live.days)}. Before the resize it held about half, because it was sized from the fit's own errors.`
+      : "Ranges sized this way have not been scored live yet. Before the resize the range held about half of live days, because it was sized from the fit's own errors.";
+    return true;
+  }
+
+  function renderAgeBlock() {
+    const a = renderAge();
+    const b = renderRange();
+    $("age-block").hidden = !(a || b);
+  }
+
+  // ---------------------------------------------------------------
   // history chart
 
   const RANGES = [];
@@ -961,7 +1220,8 @@
       fail(`This morning's data file was not built (${D.error}).`);
       return;
     }
-    const parts = [renderHero, renderNotices, renderDrivers, renderRecord, renderHealth];
+    const parts = [renderHero, renderOutlook, renderNotices, renderDrivers, renderAnalogs,
+                   renderLab, renderAgeBlock, renderRecord, renderHealth];
     if (D.history) {
       parts.push(() => {
         buildRanges();
@@ -972,6 +1232,11 @@
             const w = $("chart").clientWidth;
             if (Math.abs(w - last) > 4) { last = w; drawChart(); }
           }).observe($("chart"));
+          let lastAge = 0;
+          new ResizeObserver(() => {
+            const w = $("age-chart").clientWidth;
+            if (Math.abs(w - lastAge) > 4) { lastAge = w; try { renderAge(); } catch (err) { console.error(err); } }
+          }).observe($("age-chart"));
         }
       });
     }

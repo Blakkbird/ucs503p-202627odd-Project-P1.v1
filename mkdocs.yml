@@ -1,6 +1,11 @@
 site_name: "Pawan: Next-Day Air Quality Forecasting for Patiala"
 site_url: https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1
 
+# docs/summary.md is the navigation (see literate-nav below). It is
+# read by the plugin but is not a page of its own.
+exclude_docs: |
+  summary.md
+
 plugins:
 - search
 # - gen-files:

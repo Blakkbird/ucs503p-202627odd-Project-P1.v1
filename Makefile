@@ -63,7 +63,7 @@ $(ICONS_FOLDER)/simple $(ICONS_FOLDER) :
 ### The daily job runs these in the same order. Handy for
 ### reproducing a day's output locally when something looks off.
 
-.PHONY: ingest eval forecast site daily check history compare report
+.PHONY: ingest eval forecast lab lab-full site daily check history compare report
 
 ingest:
 	python code/ingest/run_daily.py
@@ -74,11 +74,19 @@ eval:
 forecast:
 	python code/predict.py
 
+# Shadow forecasts for every candidate model, and the leaderboard
+# backtest if it is a week old. `make lab-full` reruns it now.
+lab:
+	python code/lab.py
+
+lab-full:
+	python code/lab.py --backtest
+
 site:
 	python code/pages.py
 
 # Everything, in the order the workflow does it.
-daily: ingest eval forecast site
+daily: ingest eval forecast lab site
 
 check:
 	ruff check code/ scripts/
@@ -92,8 +100,8 @@ history:
 	python scripts/extend_history.py
 	python scripts/backfill_history.py --force
 
-# Candidate burning-season models against the current one. Reads
-# daily.csv, writes nothing.
+# The week 7 comparison of burning-season variants, kept as it was
+# run then. The model lab (make lab) supersedes it.
 compare:
 	python scripts/compare_models.py
 

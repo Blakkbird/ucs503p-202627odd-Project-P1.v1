@@ -352,3 +352,82 @@ def test_no_breakdown_for_a_forecast_frozen_by_another_fit():
     data = dashboard_fixture(frozen=99.0)
     assert "why" not in data
     assert "earlier fit" in data["why_skipped"]
+
+def lab_board():
+    def block(mae):
+        return {"n": 40, "mae": mae, "rmse": mae, "bias": 0.0,
+                "band_hit_rate": 0.8}
+    models = []
+    for key, mae, kind in (("persistence", 10.0, "baseline"),
+                           ("ridge", 8.0, "linear"),
+                           ("analogs", 9.0, "analog")):
+        models.append({"key": key, "label": key.title(), "kind": kind,
+                       "about": "", "shipped": key == "ridge",
+                       "shippable": kind != "baseline",
+                       "overall": block(mae), "calm": block(mae),
+                       "burning": block(mae),
+                       "skill": {"overall": 0.1, "calm": 0.1,
+                                 "burning": 0.1},
+                       "verdict": "Shipped" if key == "ridge" else "x"})
+    return {"days": 40, "reference_age": 2, "backtest_on": "2026-11-03",
+            "rule": {"burning_gain": 0.03, "calm_cost": 0.02,
+                     "robust_cost": 0.05, "live_days": 20},
+            "models": models, "live": {"ridge": {"n": 3, "mae": 7.0}},
+            "by_age": [{"age": 2, "days": 40, "mae": 8.0,
+                        "persistence_mae": 10.0, "skill": 0.2,
+                        "calm_skill": 0.2, "burning_skill": None,
+                        "obs_weight": 0.17}]}
+
+
+def test_results_page_carries_the_lab_tables():
+    metrics = metrics_with({"calm": scores(4.0, 6.0)})
+    page = pages.results_page(metrics, None, lab_board())
+    assert "## Model comparison" in page
+    assert "## How old the reading is" in page
+    assert "| 2 days | 40 |" in page
+    assert "7.00 (3)" in page, "live MAE with its scored days"
+    assert "## Limitations" in page
+
+
+def test_results_page_without_a_lab_leaves_its_sections_out():
+    page = pages.results_page(metrics_with({"calm": scores(4.0, 6.0)}),
+                              None)
+    assert "## Model comparison" not in page
+
+
+def test_dashboard_carries_the_lab_outlook_and_analogs():
+    import json
+
+    today = date(2026, 10, 20)
+    rows = synthetic(n=60, start=date(2026, 9, 1))
+    samples = features.build(rows)
+    predictions = {"predictions": [], "outlook": [
+        {"date": "2026-10-22", "horizon": 2, "issued": "2026-10-20",
+         "pm25": 61.0, "band": "Moderate", "interval": [40.0, 95.0]},
+        {"date": "2026-10-21", "horizon": 2, "issued": "2026-10-19",
+         "pm25": 12.0, "band": "Good"}]}
+    shadow = {"forecasts": [{"date": "2026-10-21", "issued": "2026-10-20",
+                             "age": 2, "models": {"ridge": 30.0},
+                             "actual": None}]}
+    data = pages.dashboard_data(predictions, samples, rows, None, None,
+                                today=today, board=lab_board(),
+                                shadow=shadow)
+    json.dumps(data, allow_nan=False)
+    assert [r["date"] for r in data["outlook"]] == ["2026-10-22"], \
+        "only outlook issued today"
+    ridge = next(m for m in data["lab"]["models"] if m["key"] == "ridge")
+    assert ridge["tomorrow"] == 30.0 and ridge["live_n"] == 3
+    assert len(data["analogs"]) == pages.ANALOG_DAYS
+    assert all(a["date"] < "2026-10-21" for a in data["analogs"])
+
+
+def test_live_range_counts_only_resized_ranges():
+    records = [
+        {"date": "2026-11-01", "actual": 50.0, "interval": [40.0, 60.0],
+         "range_method": "calibrated"},
+        {"date": "2026-11-02", "actual": 90.0, "interval": [40.0, 60.0],
+         "range_method": "calibrated"},
+        {"date": "2026-10-01", "actual": 50.0, "interval": [40.0, 60.0]},
+    ]
+    got = pages.range_summary(None, records)
+    assert got["live"] == {"held": 1, "days": 2}

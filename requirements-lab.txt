@@ -1,0 +1,13 @@
+# The model lab's benchmarks: random forest, gradient boosting and a
+# small neural network (code/candidates.py). Pinned to the versions
+# the leaderboard was built with.
+#
+# Not needed for the forecast. The daily job installs these for the
+# lab step alone, which runs after the forecast is out and is not
+# allowed to stop the morning's data being committed. Without them
+# the lab still runs every standard-library model and says what it
+# skipped.
+
+scikit-learn==1.8.0
+numpy==2.4.4
+scipy==1.17.1

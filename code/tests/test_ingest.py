@@ -218,3 +218,49 @@ def test_fire_map_left_alone_when_nothing_came_back(tmp_path):
     path.write_text("old")
     assert not run_daily.save_fires(date(2026, 10, 23), [], {}, path)
     assert path.read_text() == "old"
+
+
+def hourly(days, value):
+    times = [f"{d.isoformat()}T{h:02d}:00" for d in days for h in range(24)]
+    return times, [value(d, h) for d in days for h in range(24)]
+
+
+def test_daily_inputs_reads_each_day_on_its_own():
+    """Tomorrow and the outlook days come out of one payload, and
+    each day's mean must use that day's hours only."""
+    start = date(2026, 11, 3)
+    days = [start + timedelta(days=k) for k in range(4)]
+    times, pm = hourly(days, lambda d, h: 10.0 * (d - start).days)
+    _, temp = hourly(days, lambda d, h: 20.0)
+    aq = {"hourly": {"time": times, "pm2_5": pm}}
+    wx = {"hourly": {"time": times, "temperature_2m": temp,
+                     "relative_humidity_2m": temp,
+                     "wind_speed_10m": temp,
+                     "wind_direction_10m": [315.0] * len(times)}}
+    got = run_daily.daily_inputs(aq, wx, days[1:])
+    assert [got[d]["cams_pm25"] for d in days[1:]] == [10.0, 20.0, 30.0]
+    assert abs(got[days[1]]["wind_dir_mean"] - 315.0) < 1e-6
+
+
+def test_the_outlook_file_skips_days_without_cams(tmp_path):
+    import json
+
+    today = date(2026, 11, 3)
+    good = {"cams_pm25": 91.234, "temp_mean": 22.0, "rh_mean": 60.0,
+            "wind_speed_mean": 7.0, "wind_dir_mean": 310.0}
+    path = tmp_path / "outlook.json"
+    assert run_daily.save_outlook(
+        today, {date(2026, 11, 5): good,
+                date(2026, 11, 6): dict(good, cams_pm25=None)}, path)
+    blob = json.loads(path.read_text())
+    assert blob["issued"] == "2026-11-03"
+    assert list(blob["days"]) == ["2026-11-05"]
+    assert blob["days"]["2026-11-05"]["cams_pm25"] == 91.23
+    assert run_daily.outlook_issued(path) == "2026-11-03"
+
+
+def test_nothing_to_save_writes_nothing(tmp_path):
+    path = tmp_path / "outlook.json"
+    assert not run_daily.save_outlook(date(2026, 11, 3), {}, path)
+    assert not path.exists()
+    assert run_daily.outlook_issued(path) is None

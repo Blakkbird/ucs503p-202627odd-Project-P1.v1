@@ -116,7 +116,24 @@ METRICS_JSON = DATA / "metrics.json"
 MODEL_JSON = DATA / "model.json"
 BACKTEST_JSON = DATA / "backtest.json"  # one walk-forward forecast per day
 FIRES_JSON = DATA / "fires.json"  # where the most recent fires were
+OUTLOOK_JSON = DATA / "outlook.json"  # CAMS and weather for days 2 and 3
+LEADERBOARD_JSON = DATA / "leaderboard.json"  # the model lab's table
+SHADOW_JSON = DATA / "shadow.json"  # every candidate's daily forecast
 DASHBOARD_JSON = ROOT / "docs" / "dashboard" / "data.json"
+
+# --- model
+
+# Interaction terms the shipped model is fitted with, on top of the
+# plain inputs. Empty: the plain ridge ships. Changing this is how a
+# challenger is promoted, and only after it passes the rule in
+# code/lab.py. The smoke terms ("burn_fire", "burn_wind_u") are the
+# obvious next candidate, and the lab says why they are not here.
+SHIPPED_EXTRA = ()
+
+# The outlook: forecasts two and three days ahead, made from the
+# same reading as tomorrow's. Read further from the reading, so
+# less sure, and scored separately.
+OUTLOOK_HORIZONS = (2, 3)
 
 # --- credentials 
 

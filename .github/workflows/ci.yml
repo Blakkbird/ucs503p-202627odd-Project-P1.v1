@@ -16,7 +16,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install
-        run: pip install -r requirements.txt
+        # The lab's requirements too, so its scikit-learn tests run
+        # here; the daily forecast never imports them.
+        run: pip install -r requirements.txt -r requirements-lab.txt
 
       - name: Lint
         run: ruff check code/ scripts/

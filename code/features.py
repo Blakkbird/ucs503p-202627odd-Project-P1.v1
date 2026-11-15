@@ -229,7 +229,7 @@ def freshest_age(rows, target, horizon=1):
     return None
 
 
-def build(rows=None, use_weather=True, extra=(), age=None, horizon=1):
+def build(rows=None, use_weather=True, extra=None, age=None, horizon=1):
     """Build one Sample per target day, oldest first.
 
     `age` fixes how old the station reading in every row is,
@@ -253,9 +253,11 @@ def build(rows=None, use_weather=True, extra=(), age=None, horizon=1):
 
     `extra` names INTERACTIONS to append. Each is the product of
     two columns already in the row, so it adds nothing the row did
-    not already know at issue time.
+    not already know at issue time. Left as None it is the set the
+    shipped model uses, config.SHIPPED_EXTRA; pass () for none.
     """
     rows = load() if rows is None else rows
+    extra = config.SHIPPED_EXTRA if extra is None else extra
     age = default_age(horizon) if age is None else age
     if age < horizon + 1:
         raise ValueError(f"a reading {age} days old is not published "
