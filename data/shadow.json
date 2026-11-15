@@ -1,3 +1,23 @@
 {
- "forecasts": []
+ "forecasts": [
+  {
+   "date": "2026-11-16",
+   "issued": "2026-11-15",
+   "age": 2,
+   "models": {
+    "persistence": 68.8,
+    "climatology": 35.52,
+    "raw_cams": 65.2,
+    "cams_rescale": 27.63,
+    "ridge": 52.53,
+    "ridge_smoke": 56.0,
+    "analogs": 54.28,
+    "random_forest": 63.42,
+    "gradient_boosting": 64.92,
+    "neural_net": 50.84,
+    "ensemble": 56.91
+   },
+   "actual": null
+  }
+ ]
 }

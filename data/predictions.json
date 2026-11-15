@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-15T15:16:43+05:30",
+  "generated_at": "2026-11-15T19:44:40+05:30",
   "model": {
     "alpha": 10.0,
     "features": [
@@ -1139,13 +1139,82 @@
         "persistence_operational": 73.9,
         "forecast_provenance_live": true
       }
+    },
+    {
+      "date": "2026-11-16",
+      "issued": "2026-11-15",
+      "issued_at": "2026-11-15T19:44+05:30",
+      "pm25": 52.53,
+      "band": "Satisfactory",
+      "actual": null,
+      "error": null,
+      "interval": [
+        34.06,
+        91.24
+      ],
+      "range_method": "calibrated",
+      "inputs": {
+        "cams_log": 4.1927,
+        "cams_pm25": 65.2,
+        "obs_age_days": 2.0,
+        "obs_day": "2026-11-14",
+        "persistence_operational": 68.8,
+        "forecast_provenance_live": true
+      }
     }
   ],
-  "outlook": [],
+  "outlook": [
+    {
+      "date": "2026-11-17",
+      "issued": "2026-11-15",
+      "issued_at": "2026-11-15T19:44+05:30",
+      "pm25": 48.82,
+      "band": "Satisfactory",
+      "actual": null,
+      "error": null,
+      "interval": [
+        31.01,
+        87.14
+      ],
+      "range_method": "calibrated",
+      "inputs": {
+        "cams_log": 3.9314,
+        "cams_pm25": 49.98,
+        "obs_age_days": 3.0,
+        "obs_day": "2026-11-14",
+        "persistence_operational": 68.8,
+        "forecast_provenance_live": true
+      },
+      "horizon": 2
+    },
+    {
+      "date": "2026-11-18",
+      "issued": "2026-11-15",
+      "issued_at": "2026-11-15T19:44+05:30",
+      "pm25": 53.45,
+      "band": "Satisfactory",
+      "actual": null,
+      "error": null,
+      "interval": [
+        35.7,
+        92.54
+      ],
+      "range_method": "calibrated",
+      "inputs": {
+        "cams_log": 4.096,
+        "cams_pm25": 59.1,
+        "obs_age_days": 4.0,
+        "obs_day": "2026-11-14",
+        "persistence_operational": 68.8,
+        "forecast_provenance_live": true
+      },
+      "horizon": 3
+    }
+  ],
   "status": {
     "target": "2026-11-16",
-    "issued": false,
-    "reason": "the inputs for that day were not fetched",
+    "issued": true,
+    "reason": null,
     "obs_age": 2
   }
 }

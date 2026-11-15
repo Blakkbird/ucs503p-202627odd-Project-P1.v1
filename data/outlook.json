@@ -1,0 +1,20 @@
+{
+ "issued": "2026-11-15",
+ "generated_at": "2026-11-15T19:44:06+05:30",
+ "days": {
+  "2026-11-17": {
+   "cams_pm25": 49.98,
+   "temp_mean": 18.76,
+   "rh_mean": 57.83,
+   "wind_speed_mean": 9.37,
+   "wind_dir_mean": 310.45
+  },
+  "2026-11-18": {
+   "cams_pm25": 59.1,
+   "temp_mean": 18.26,
+   "rh_mean": 61.54,
+   "wind_speed_mean": 7.28,
+   "wind_dir_mean": 323.8
+  }
+ }
+}
