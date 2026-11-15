@@ -449,15 +449,42 @@ def ship(rows, use_weather=True, target=None):
     if len(ready) <= MIN_TRAIN:
         return None
     final = fit(ready)
-    save_model(final, age, config.MODEL_JSON)
+    save_model(final, age, config.MODEL_JSON, samples=ready)
     return final, age, len(ready)
 
 
-def save_model(model, age, path, horizon=1):
-    """model.json: the fitted weights, plus the age they were fitted at."""
+# The plain readings a model is fitted on, by the name they have in
+# a sample's raw readings. Wind direction is left out: it is a circle,
+# and every bearing turns up in a year.
+RANGE_INPUTS = ("cams", "obs_recent", "temp", "rh", "wind_speed", "fires")
+
+
+def fitted_ranges(samples):
+    """{reading: [lowest, highest]} over the rows a model was fitted on.
+
+    Kept with the model so that anything asking it about other inputs
+    (the API's what-if) can tell when it is being asked to extrapolate.
+    A spread-based test is not enough: fires enter the model on a log
+    scale, and six times the largest count ever seen is still well
+    inside four standard deviations there.
+    """
+    out = {}
+    for name in RANGE_INPUTS:
+        values = [s.raw.get(name) for s in samples
+                  if s.raw.get(name) is not None]
+        if values:
+            out[name] = [round(min(values), 2), round(max(values), 2)]
+    return out
+
+
+def save_model(model, age, path, horizon=1, samples=None):
+    """model.json: the fitted weights, the reading age they were fitted
+    at, and the range of every reading in the rows behind them."""
     blob = model.to_dict()
     blob["obs_age"] = age
     blob["horizon"] = horizon
+    if samples:
+        blob["ranges"] = fitted_ranges(samples)
     with open(path, "w") as f:
         json.dump(blob, f, indent=2)
 
