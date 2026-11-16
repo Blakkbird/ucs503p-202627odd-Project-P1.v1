@@ -1,7 +1,7 @@
 # Results
 
-Walk-forward backtest over 2025-04-03 to 2026-11-14,
-481 days. The model is refitted from scratch
+Walk-forward backtest over 2025-04-03 to 2026-11-15,
+482 days. The model is refitted from scratch
 before each day and only ever sees days strictly before the one
 it is predicting. Every row uses the station reading from 2 days before the day being forecast, which is the freshest the feed now publishes in time. There is no shuffled train/test split
 anywhere in this project; the rows are a time series and shuffling
@@ -9,11 +9,11 @@ them would let the model read its own future.
 
 | Method | n | MAE | RMSE | Bias | Band correct |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| **Pawan** | 481 | **9.16** | 14.42 | -0.27 | 74% |
-| Persistence (textbook) | 456 | 8.15 | 12.42 | -0.25 | 78% |
-| Persistence (operational) | 481 | 10.50 | 16.21 | -0.31 | 71% |
-| Climatology | 481 | 18.24 | 23.05 | +3.33 | 33% |
-| Raw CAMS | 481 | 41.69 | 49.74 | +38.92 | 14% |
+| **Pawan** | 482 | **9.22** | 14.50 | -0.35 | 74% |
+| Persistence (textbook) | 457 | 8.17 | 12.43 | -0.28 | 78% |
+| Persistence (operational) | 482 | 10.53 | 16.22 | -0.35 | 71% |
+| Climatology | 482 | 18.30 | 23.12 | +3.22 | 33% |
+| Raw CAMS | 482 | 41.66 | 49.70 | +38.78 | 14% |
 
 ## By season
 
@@ -24,14 +24,14 @@ beat; burning season is when a forecast is worth having.
 | Season | Days | Pawan MAE | Operational persistence MAE | Skill | Target |
 | --- | ---: | ---: | ---: | ---: | :--- |
 | Calm (Dec to Sep) | 394 | 7.98 | 9.19 | +13.2% | 10%, met |
-| Burning (Oct, Nov) | 87 | 14.52 | 16.42 | +11.6% | 20%, not met |
+| Burning (Oct, Nov) | 88 | 14.78 | 16.49 | +10.4% | 20%, not met |
 
-On the **71** days whose CAMS forecast was recorded live rather than read back from an archive, Pawan's MAE is **10.22** against 10.79 for operational persistence, **+5.3%**. No archive has flattered those days, so if this figure and the totals drift apart, this is the one to believe.
+On the **72** days whose CAMS forecast was recorded live rather than read back from an archive, Pawan's MAE is **10.60** against 10.96 for operational persistence, **+3.3%**. No archive has flattered those days, so if this figure and the totals drift apart, this is the one to believe.
 
 ## Skill
 
-- Against operational persistence: **12.8% better** on MAE.
-- Against textbook persistence: **12.3% worse** on MAE.
+- Against operational persistence: **12.4% better** on MAE.
+- Against textbook persistence: **12.9% worse** on MAE.
 
 The two baselines are both persistence, and the difference
 between them is the whole argument.
@@ -58,15 +58,15 @@ compared with each other but not read as physics.
 
 | Feature | Weight |
 | --- | ---: |
-| `obs_recent_log` | +0.193 |
-| `rh` | -0.192 |
-| `cams_log` | +0.169 |
-| `temp` | -0.126 |
+| `obs_recent_log` | +0.195 |
+| `rh` | -0.191 |
+| `cams_log` | +0.167 |
+| `temp` | -0.125 |
 | `wind_speed` | -0.107 |
 | `fire_log` | +0.106 |
 | `wind_u` | +0.040 |
-| `burning` | +0.035 |
-| `wind_v` | +0.005 |
+| `burning` | +0.037 |
+| `wind_v` | +0.003 |
 
 
 ## How old the reading is
@@ -130,19 +130,19 @@ model fitted at that age.
 
 | Days ahead | Reading age | Days | Pawan MAE | Persistence MAE | Skill | Range held |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 2 days | 481 | 9.16 | 10.50 | +12.8% | 363 of 451 |
-| 2 | 3 days | 471 | 9.62 | 11.55 | +16.7% | 354 of 441 |
-| 3 | 4 days | 469 | 10.01 | 12.64 | +20.8% | 359 of 439 |
+| 1 | 2 days | 482 | 9.22 | 10.53 | +12.4% | 363 of 452 |
+| 2 | 3 days | 472 | 9.67 | 11.57 | +16.5% | 355 of 442 |
+| 3 | 4 days | 470 | 10.07 | 12.63 | +20.3% | 359 of 440 |
 
 ## Likely range
 
-The likely range is the middle 80% of the backtest's own errors, taken out of sample and per season, so four days in five should land inside it. Sized only from the days before it, the range held the measured value on **363 of 451** backtest days (80%), and on 62 of 87 in burning season (71%), where the first days of a season have the fewest errors to size from.
+The likely range is the middle 80% of the backtest's own errors, taken out of sample and per season, so four days in five should land inside it. Sized only from the days before it, the range held the measured value on **363 of 452** backtest days (80%), and on 62 of 88 in burning season (70%), where the first days of a season have the fewest errors to size from.
 
 ## Limitations
 
 What the figures above do not show.
 
-- **Burning season is a small sample.** 87 burning-season days are scored: 55 read back from archives and 32 recorded live. That is one or two seasons at most, and a dry year, a wet one or a shift in when the stubble is burnt would each move these numbers.
+- **Burning season is a small sample.** 88 burning-season days are scored: 55 read back from archives and 33 recorded live. That is one or two seasons at most, and a dry year, a wet one or a shift in when the stubble is burnt would each move these numbers.
 - **Band accuracy only means much in burning season.** On calm days almost everything falls in Good, and a method that guessed Good every time would score nearly as well.
 - **Archive rows are mildly optimistic.** Rows read back from archives take CAMS and weather from series stitched out of the opening hours of successive model runs, which sit a little closer to what happened than a forecast issued a day ahead. The live-only figure, where there is one, is the check on how much that flatters the totals.
 - **The feature set was chosen on calm-season data.** Every change was made for a stated reason and not only because it scored better, but the reasons and the scores were looked at together. This year's burning season, scored live as it happens, is the test nothing here was tuned against.

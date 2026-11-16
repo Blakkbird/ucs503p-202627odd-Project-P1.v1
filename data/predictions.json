@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-15T19:44:40+05:30",
+  "generated_at": "2026-11-16T15:35:54+05:30",
   "model": {
     "alpha": 10.0,
     "features": [
@@ -13,7 +13,7 @@
       "wind_v",
       "fire_log"
     ],
-    "fitted_rows": 522,
+    "fitted_rows": 523,
     "obs_age": 2
   },
   "predictions": [
@@ -1126,8 +1126,8 @@
       "issued": "2026-11-14",
       "pm25": 43.49,
       "band": "Satisfactory",
-      "actual": null,
-      "error": null,
+      "actual": 82.9,
+      "error": -39.41,
       "interval": [
         28.2,
         66.79
@@ -1138,7 +1138,8 @@
         "obs_age_days": 4.0,
         "persistence_operational": 73.9,
         "forecast_provenance_live": true
-      }
+      },
+      "band_hit": false
     },
     {
       "date": "2026-11-16",
@@ -1212,9 +1213,9 @@
     }
   ],
   "status": {
-    "target": "2026-11-16",
-    "issued": true,
-    "reason": null,
+    "target": "2026-11-17",
+    "issued": false,
+    "reason": "the inputs for that day were not fetched",
     "obs_age": 2
   }
 }
