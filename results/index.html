@@ -1293,8 +1293,8 @@
 
 
 <h1 id="results">Results<a class="headerlink" href="#results" title="Permanent link">&para;</a></h1>
-<p>Walk-forward backtest over 2025-04-03 to 2026-11-15,
-482 days. The model is refitted from scratch
+<p>Walk-forward backtest over 2025-04-03 to 2026-11-16,
+483 days. The model is refitted from scratch
 before each day and only ever sees days strictly before the one
 it is predicting. Every row uses the station reading from 2 days before the day being forecast, which is the freshest the feed now publishes in time. There is no shuffled train/test split
 anywhere in this project; the rows are a time series and shuffling
@@ -1313,42 +1313,42 @@ them would let the model read its own future.</p>
 <tbody>
 <tr>
 <td><strong>Pawan</strong></td>
-<td style="text-align: right;">482</td>
-<td style="text-align: right;"><strong>9.22</strong></td>
-<td style="text-align: right;">14.50</td>
-<td style="text-align: right;">-0.35</td>
+<td style="text-align: right;">483</td>
+<td style="text-align: right;"><strong>9.21</strong></td>
+<td style="text-align: right;">14.49</td>
+<td style="text-align: right;">-0.34</td>
 <td style="text-align: right;">74%</td>
 </tr>
 <tr>
 <td>Persistence (textbook)</td>
-<td style="text-align: right;">457</td>
-<td style="text-align: right;">8.17</td>
-<td style="text-align: right;">12.43</td>
-<td style="text-align: right;">-0.28</td>
+<td style="text-align: right;">458</td>
+<td style="text-align: right;">8.22</td>
+<td style="text-align: right;">12.51</td>
+<td style="text-align: right;">-0.21</td>
 <td style="text-align: right;">78%</td>
 </tr>
 <tr>
 <td>Persistence (operational)</td>
-<td style="text-align: right;">482</td>
-<td style="text-align: right;">10.53</td>
-<td style="text-align: right;">16.22</td>
-<td style="text-align: right;">-0.35</td>
+<td style="text-align: right;">483</td>
+<td style="text-align: right;">10.54</td>
+<td style="text-align: right;">16.23</td>
+<td style="text-align: right;">-0.31</td>
 <td style="text-align: right;">71%</td>
 </tr>
 <tr>
 <td>Climatology</td>
-<td style="text-align: right;">482</td>
-<td style="text-align: right;">18.30</td>
-<td style="text-align: right;">23.12</td>
-<td style="text-align: right;">+3.22</td>
+<td style="text-align: right;">483</td>
+<td style="text-align: right;">18.29</td>
+<td style="text-align: right;">23.11</td>
+<td style="text-align: right;">+3.19</td>
 <td style="text-align: right;">33%</td>
 </tr>
 <tr>
 <td>Raw CAMS</td>
-<td style="text-align: right;">482</td>
-<td style="text-align: right;">41.66</td>
-<td style="text-align: right;">49.70</td>
-<td style="text-align: right;">+38.78</td>
+<td style="text-align: right;">483</td>
+<td style="text-align: right;">41.61</td>
+<td style="text-align: right;">49.66</td>
+<td style="text-align: right;">+38.73</td>
 <td style="text-align: right;">14%</td>
 </tr>
 </tbody>
@@ -1379,19 +1379,19 @@ beat; burning season is when a forecast is worth having.</p>
 </tr>
 <tr>
 <td>Burning (Oct, Nov)</td>
-<td style="text-align: right;">88</td>
-<td style="text-align: right;">14.78</td>
-<td style="text-align: right;">16.49</td>
-<td style="text-align: right;">+10.4%</td>
+<td style="text-align: right;">89</td>
+<td style="text-align: right;">14.65</td>
+<td style="text-align: right;">16.53</td>
+<td style="text-align: right;">+11.3%</td>
 <td style="text-align: left;">20%, not met</td>
 </tr>
 </tbody>
 </table>
-<p>On the <strong>72</strong> days whose CAMS forecast was recorded live rather than read back from an archive, Pawan's MAE is <strong>10.60</strong> against 10.96 for operational persistence, <strong>+3.3%</strong>. No archive has flattered those days, so if this figure and the totals drift apart, this is the one to believe.</p>
+<p>On the <strong>73</strong> days whose CAMS forecast was recorded live rather than read back from an archive, Pawan's MAE is <strong>10.51</strong> against 11.08 for operational persistence, <strong>+5.2%</strong>. No archive has flattered those days, so if this figure and the totals drift apart, this is the one to believe.</p>
 <h2 id="skill">Skill<a class="headerlink" href="#skill" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Against operational persistence: <strong>12.4% better</strong> on MAE.</li>
-<li>Against textbook persistence: <strong>12.9% worse</strong> on MAE.</li>
+<li>Against operational persistence: <strong>12.7% better</strong> on MAE.</li>
+<li>Against textbook persistence: <strong>12.0% worse</strong> on MAE.</li>
 </ul>
 <p>The two baselines are both persistence, and the difference
 between them is the whole argument.</p>
@@ -1425,23 +1425,23 @@ compared with each other but not read as physics.</p>
 </tr>
 <tr>
 <td><code>rh</code></td>
-<td style="text-align: right;">-0.191</td>
+<td style="text-align: right;">-0.174</td>
 </tr>
 <tr>
 <td><code>cams_log</code></td>
-<td style="text-align: right;">+0.167</td>
+<td style="text-align: right;">+0.163</td>
 </tr>
 <tr>
 <td><code>temp</code></td>
-<td style="text-align: right;">-0.125</td>
-</tr>
-<tr>
-<td><code>wind_speed</code></td>
-<td style="text-align: right;">-0.107</td>
+<td style="text-align: right;">-0.114</td>
 </tr>
 <tr>
 <td><code>fire_log</code></td>
-<td style="text-align: right;">+0.106</td>
+<td style="text-align: right;">+0.109</td>
+</tr>
+<tr>
+<td><code>wind_speed</code></td>
+<td style="text-align: right;">-0.099</td>
 </tr>
 <tr>
 <td><code>wind_u</code></td>
@@ -1453,7 +1453,7 @@ compared with each other but not read as physics.</p>
 </tr>
 <tr>
 <td><code>wind_v</code></td>
-<td style="text-align: right;">+0.003</td>
+<td style="text-align: right;">-0.006</td>
 </tr>
 </tbody>
 </table>
@@ -1569,7 +1569,7 @@ scored days in brackets.</p>
 <td style="text-align: right;">+14.7%</td>
 <td style="text-align: right;">+13.4%</td>
 <td style="text-align: right;">+17.9%</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">6.90 (1)</td>
 <td>Breaks down with 4-day-old readings</td>
 </tr>
 <tr>
@@ -1579,7 +1579,7 @@ scored days in brackets.</p>
 <td style="text-align: right;">+12.8%</td>
 <td style="text-align: right;">+13.2%</td>
 <td style="text-align: right;">+11.6%</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">3.43 (1)</td>
 <td>Shipped</td>
 </tr>
 <tr>
@@ -1589,7 +1589,7 @@ scored days in brackets.</p>
 <td style="text-align: right;">+12.2%</td>
 <td style="text-align: right;">+13.1%</td>
 <td style="text-align: right;">+9.8%</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">7.81 (1)</td>
 <td>Benchmark: needs scikit-learn</td>
 </tr>
 <tr>
@@ -1599,7 +1599,7 @@ scored days in brackets.</p>
 <td style="text-align: right;">+8.2%</td>
 <td style="text-align: right;">+11.3%</td>
 <td style="text-align: right;">+0.5%</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">14.32 (1)</td>
 <td>Benchmark: needs scikit-learn</td>
 </tr>
 <tr>
@@ -1609,7 +1609,7 @@ scored days in brackets.</p>
 <td style="text-align: right;">+4.9%</td>
 <td style="text-align: right;">+8.2%</td>
 <td style="text-align: right;">-3.5%</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">5.18 (1)</td>
 <td>Not clearly better in burning season</td>
 </tr>
 <tr>
@@ -1619,7 +1619,7 @@ scored days in brackets.</p>
 <td style="text-align: right;">+1.4%</td>
 <td style="text-align: right;">+3.1%</td>
 <td style="text-align: right;">-2.8%</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">15.82 (1)</td>
 <td>Benchmark: needs scikit-learn</td>
 </tr>
 <tr>
@@ -1629,7 +1629,7 @@ scored days in brackets.</p>
 <td style="text-align: right;">+1.1%</td>
 <td style="text-align: right;">-0.2%</td>
 <td style="text-align: right;">+4.3%</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">1.74 (1)</td>
 <td>Benchmark: needs scikit-learn</td>
 </tr>
 <tr>
@@ -1639,7 +1639,7 @@ scored days in brackets.</p>
 <td style="text-align: right;">+0.0%</td>
 <td style="text-align: right;">+0.0%</td>
 <td style="text-align: right;">+0.0%</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">19.70 (1)</td>
 <td>Baseline</td>
 </tr>
 <tr>
@@ -1649,7 +1649,7 @@ scored days in brackets.</p>
 <td style="text-align: right;">-30.2%</td>
 <td style="text-align: right;">-24.2%</td>
 <td style="text-align: right;">-45.3%</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">21.47 (1)</td>
 <td>Not clearly better in burning season</td>
 </tr>
 <tr>
@@ -1659,7 +1659,7 @@ scored days in brackets.</p>
 <td style="text-align: right;">-75.7%</td>
 <td style="text-align: right;">-78.8%</td>
 <td style="text-align: right;">-67.9%</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">13.58 (1)</td>
 <td>Baseline</td>
 </tr>
 <tr>
@@ -1669,7 +1669,7 @@ scored days in brackets.</p>
 <td style="text-align: right;">-297.0%</td>
 <td style="text-align: right;">-378.8%</td>
 <td style="text-align: right;">-89.6%</td>
-<td style="text-align: right;">-</td>
+<td style="text-align: right;">16.10 (1)</td>
 <td>Baseline</td>
 </tr>
 </tbody>
@@ -1704,38 +1704,38 @@ model fitted at that age.</p>
 <tr>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">2 days</td>
-<td style="text-align: right;">482</td>
-<td style="text-align: right;">9.22</td>
-<td style="text-align: right;">10.53</td>
-<td style="text-align: right;">+12.4%</td>
-<td style="text-align: right;">363 of 452</td>
+<td style="text-align: right;">483</td>
+<td style="text-align: right;">9.21</td>
+<td style="text-align: right;">10.54</td>
+<td style="text-align: right;">+12.7%</td>
+<td style="text-align: right;">364 of 453</td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">3 days</td>
-<td style="text-align: right;">472</td>
-<td style="text-align: right;">9.67</td>
+<td style="text-align: right;">473</td>
+<td style="text-align: right;">9.65</td>
 <td style="text-align: right;">11.57</td>
-<td style="text-align: right;">+16.5%</td>
-<td style="text-align: right;">355 of 442</td>
+<td style="text-align: right;">+16.6%</td>
+<td style="text-align: right;">356 of 443</td>
 </tr>
 <tr>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">4 days</td>
-<td style="text-align: right;">470</td>
-<td style="text-align: right;">10.07</td>
-<td style="text-align: right;">12.63</td>
-<td style="text-align: right;">+20.3%</td>
-<td style="text-align: right;">359 of 440</td>
+<td style="text-align: right;">471</td>
+<td style="text-align: right;">10.06</td>
+<td style="text-align: right;">12.72</td>
+<td style="text-align: right;">+20.9%</td>
+<td style="text-align: right;">360 of 441</td>
 </tr>
 </tbody>
 </table>
 <h2 id="likely-range">Likely range<a class="headerlink" href="#likely-range" title="Permanent link">&para;</a></h2>
-<p>The likely range is the middle 80% of the backtest's own errors, taken out of sample and per season, so four days in five should land inside it. Sized only from the days before it, the range held the measured value on <strong>363 of 452</strong> backtest days (80%), and on 62 of 88 in burning season (70%), where the first days of a season have the fewest errors to size from.</p>
+<p>The likely range is the middle 80% of the backtest's own errors, taken out of sample and per season, so four days in five should land inside it. Sized only from the days before it, the range held the measured value on <strong>364 of 453</strong> backtest days (80%), and on 63 of 89 in burning season (71%), where the first days of a season have the fewest errors to size from.</p>
 <h2 id="limitations">Limitations<a class="headerlink" href="#limitations" title="Permanent link">&para;</a></h2>
 <p>What the figures above do not show.</p>
 <ul>
-<li><strong>Burning season is a small sample.</strong> 88 burning-season days are scored: 55 read back from archives and 33 recorded live. That is one or two seasons at most, and a dry year, a wet one or a shift in when the stubble is burnt would each move these numbers.</li>
+<li><strong>Burning season is a small sample.</strong> 89 burning-season days are scored: 55 read back from archives and 34 recorded live. That is one or two seasons at most, and a dry year, a wet one or a shift in when the stubble is burnt would each move these numbers.</li>
 <li><strong>Band accuracy only means much in burning season.</strong> On calm days almost everything falls in Good, and a method that guessed Good every time would score nearly as well.</li>
 <li><strong>Archive rows are mildly optimistic.</strong> Rows read back from archives take CAMS and weather from series stitched out of the opening hours of successive model runs, which sit a little closer to what happened than a forecast issued a day ahead. The live-only figure, where there is one, is the check on how much that flatters the totals.</li>
 <li><strong>The feature set was chosen on calm-season data.</strong> Every change was made for a stated reason and not only because it scored better, but the reasons and the scores were looked at together. This year's burning season, scored live as it happens, is the test nothing here was tuned against.</li>
@@ -1763,7 +1763,7 @@ model fitted at that age.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 16, 2026 10:06:14 UTC">November 16, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 17, 2026 11:02:41 UTC">November 17, 2026</span>
   </span>
 
     
