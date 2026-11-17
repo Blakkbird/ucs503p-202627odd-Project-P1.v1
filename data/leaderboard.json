@@ -513,6 +513,62 @@
    "obs_weight": 0.0612
   }
  ],
- "live": {},
- "updated_at": "2026-11-16T15:36:07+05:30"
+ "live": {
+  "analogs": {
+   "n": 1,
+   "mae": 5.18,
+   "shipped_mae": 3.43
+  },
+  "cams_rescale": {
+   "n": 1,
+   "mae": 21.47,
+   "shipped_mae": 3.43
+  },
+  "climatology": {
+   "n": 1,
+   "mae": 13.58,
+   "shipped_mae": 3.43
+  },
+  "ensemble": {
+   "n": 1,
+   "mae": 7.81,
+   "shipped_mae": 3.43
+  },
+  "gradient_boosting": {
+   "n": 1,
+   "mae": 15.82,
+   "shipped_mae": 3.43
+  },
+  "neural_net": {
+   "n": 1,
+   "mae": 1.74,
+   "shipped_mae": 3.43
+  },
+  "persistence": {
+   "n": 1,
+   "mae": 19.7,
+   "shipped_mae": 3.43
+  },
+  "random_forest": {
+   "n": 1,
+   "mae": 14.32,
+   "shipped_mae": 3.43
+  },
+  "raw_cams": {
+   "n": 1,
+   "mae": 16.1,
+   "shipped_mae": 3.43
+  },
+  "ridge": {
+   "n": 1,
+   "mae": 3.43,
+   "shipped_mae": 3.43
+  },
+  "ridge_smoke": {
+   "n": 1,
+   "mae": 6.9,
+   "shipped_mae": 3.43
+  }
+ },
+ "updated_at": "2026-11-17T16:32:34+05:30"
 }
