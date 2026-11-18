@@ -18,6 +18,25 @@
     "ensemble": 56.91
    },
    "actual": 49.1
+  },
+  {
+   "date": "2026-11-19",
+   "issued": "2026-11-18",
+   "age": 2,
+   "models": {
+    "persistence": 63.7,
+    "climatology": 35.63,
+    "raw_cams": 67.47,
+    "cams_rescale": 41.31,
+    "ridge": 59.77,
+    "ridge_smoke": 66.39,
+    "analogs": 74.35,
+    "random_forest": 70.08,
+    "gradient_boosting": 70.79,
+    "neural_net": 62.18,
+    "ensemble": 67.21
+   },
+   "actual": null
   }
  ]
 }
