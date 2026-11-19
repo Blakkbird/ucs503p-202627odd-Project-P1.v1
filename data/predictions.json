@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-18T16:02:21+05:30",
+  "generated_at": "2026-11-19T16:11:49+05:30",
   "model": {
     "alpha": 30.0,
     "features": [
@@ -1282,9 +1282,9 @@
     }
   ],
   "status": {
-    "target": "2026-11-19",
-    "issued": true,
-    "reason": null,
+    "target": "2026-11-20",
+    "issued": false,
+    "reason": "the inputs for that day were not fetched",
     "obs_age": 2
   }
 }
