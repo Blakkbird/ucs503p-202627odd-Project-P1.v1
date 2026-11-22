@@ -1,12 +1,12 @@
 {
- "generated_at": "2026-11-15T15:18:42+05:30",
- "backtest_on": "2026-11-15",
+ "generated_at": "2026-11-22T15:41:26+05:30",
+ "backtest_on": "2026-11-22",
  "reference_age": 2,
  "window": {
   "first": "2025-04-03",
-  "last": "2026-11-14"
+  "last": "2026-11-21"
  },
- "days": 481,
+ "days": 485,
  "sklearn": true,
  "rule": {
   "burning_gain": 0.03,
@@ -23,12 +23,12 @@
    "sklearn": false,
    "shippable": false,
    "overall": {
-    "n": 481,
-    "mae": 10.501,
-    "rmse": 16.207,
-    "bias": -0.307,
-    "band_hit_rate": 0.711,
-    "r": 0.743
+    "n": 485,
+    "mae": 10.534,
+    "rmse": 16.208,
+    "bias": -0.278,
+    "band_hit_rate": 0.709,
+    "r": 0.744
    },
    "calm": {
     "n": 394,
@@ -39,12 +39,12 @@
     "r": 0.734
    },
    "burning": {
-    "n": 87,
-    "mae": 16.418,
-    "rmse": 25.171,
-    "bias": -2.594,
-    "band_hit_rate": 0.621,
-    "r": 0.617
+    "n": 91,
+    "mae": 16.337,
+    "rmse": 24.849,
+    "bias": -2.341,
+    "band_hit_rate": 0.615,
+    "r": 0.612
    },
    "skill": {
     "overall": 0.0,
@@ -62,12 +62,12 @@
    "sklearn": false,
    "shippable": false,
    "overall": {
-    "n": 481,
-    "mae": 18.451,
-    "rmse": 23.224,
-    "bias": 3.711,
-    "band_hit_rate": 0.331,
-    "r": 0.099
+    "n": 485,
+    "mae": 18.483,
+    "rmse": 23.254,
+    "bias": 3.496,
+    "band_hit_rate": 0.334,
+    "r": 0.092
    },
    "calm": {
     "n": 394,
@@ -78,17 +78,17 @@
     "r": 0.43
    },
    "burning": {
-    "n": 87,
-    "mae": 27.56,
-    "rmse": 35.539,
-    "bias": -20.888,
-    "band_hit_rate": 0.299,
-    "r": 0.262
+    "n": 91,
+    "mae": 27.33,
+    "rmse": 35.195,
+    "bias": -20.952,
+    "band_hit_rate": 0.319,
+    "r": 0.26
    },
    "skill": {
-    "overall": -0.7571,
+    "overall": -0.7546,
     "calm": -0.7881,
-    "burning": -0.6786
+    "burning": -0.6729
    },
    "shipped": false,
    "verdict": "Baseline"
@@ -101,12 +101,12 @@
    "sklearn": false,
    "shippable": false,
    "overall": {
-    "n": 481,
-    "mae": 41.688,
-    "rmse": 49.739,
-    "bias": 38.916,
-    "band_hit_rate": 0.141,
-    "r": 0.421
+    "n": 485,
+    "mae": 41.59,
+    "rmse": 49.634,
+    "bias": 38.725,
+    "band_hit_rate": 0.14,
+    "r": 0.416
    },
    "calm": {
     "n": 394,
@@ -117,17 +117,17 @@
     "r": 0.484
    },
    "burning": {
-    "n": 87,
-    "mae": 31.122,
-    "rmse": 37.164,
-    "bias": 23.053,
-    "band_hit_rate": 0.264,
-    "r": 0.365
+    "n": 91,
+    "mae": 31.067,
+    "rmse": 37.061,
+    "bias": 22.731,
+    "band_hit_rate": 0.253,
+    "r": 0.342
    },
    "skill": {
-    "overall": -2.9699,
+    "overall": -2.9482,
     "calm": -3.788,
-    "burning": -0.8956
+    "burning": -0.9016
    },
    "shipped": false,
    "verdict": "Baseline"
@@ -140,12 +140,12 @@
    "sklearn": false,
    "shippable": true,
    "overall": {
-    "n": 481,
-    "mae": 13.673,
-    "rmse": 21.54,
-    "bias": 0.523,
-    "band_hit_rate": 0.617,
-    "r": 0.575
+    "n": 485,
+    "mae": 13.81,
+    "rmse": 21.691,
+    "bias": 0.391,
+    "band_hit_rate": 0.614,
+    "r": 0.57
    },
    "calm": {
     "n": 394,
@@ -156,17 +156,17 @@
     "r": 0.674
    },
    "burning": {
-    "n": 87,
-    "mae": 23.859,
-    "rmse": 32.718,
-    "bias": -14.815,
-    "band_hit_rate": 0.402,
-    "r": 0.389
+    "n": 91,
+    "mae": 24.144,
+    "rmse": 32.842,
+    "bias": -14.844,
+    "band_hit_rate": 0.396,
+    "r": 0.368
    },
    "skill": {
-    "overall": -0.3021,
+    "overall": -0.311,
     "calm": -0.2425,
-    "burning": -0.4532
+    "burning": -0.4779
    },
    "shipped": false,
    "verdict": "Not clearly better in burning season"
@@ -179,12 +179,12 @@
    "sklearn": false,
    "shippable": true,
    "overall": {
-    "n": 481,
-    "mae": 9.16,
-    "rmse": 14.416,
-    "bias": -0.272,
-    "band_hit_rate": 0.742,
-    "r": 0.78
+    "n": 485,
+    "mae": 9.217,
+    "rmse": 14.479,
+    "bias": -0.293,
+    "band_hit_rate": 0.74,
+    "r": 0.779
    },
    "calm": {
     "n": 394,
@@ -195,17 +195,17 @@
     "r": 0.766
    },
    "burning": {
-    "n": 87,
-    "mae": 14.518,
-    "rmse": 22.339,
-    "bias": -7.23,
-    "band_hit_rate": 0.621,
-    "r": 0.694
+    "n": 91,
+    "mae": 14.585,
+    "rmse": 22.272,
+    "bias": -7.036,
+    "band_hit_rate": 0.615,
+    "r": 0.679
    },
    "skill": {
-    "overall": 0.1277,
+    "overall": 0.125,
     "calm": 0.1324,
-    "burning": 0.1157
+    "burning": 0.1072
    },
    "shipped": true,
    "verdict": "Shipped"
@@ -218,12 +218,12 @@
    "sklearn": false,
    "shippable": true,
    "overall": {
-    "n": 481,
-    "mae": 8.962,
-    "rmse": 14.164,
-    "bias": -0.183,
-    "band_hit_rate": 0.748,
-    "r": 0.788
+    "n": 485,
+    "mae": 9.042,
+    "rmse": 14.248,
+    "bias": -0.185,
+    "band_hit_rate": 0.744,
+    "r": 0.786
    },
    "calm": {
     "n": 394,
@@ -234,26 +234,65 @@
     "r": 0.765
    },
    "burning": {
-    "n": 87,
-    "mae": 13.485,
-    "rmse": 21.485,
-    "bias": -5.658,
-    "band_hit_rate": 0.644,
-    "r": 0.704
+    "n": 91,
+    "mae": 13.713,
+    "rmse": 21.513,
+    "bias": -5.431,
+    "band_hit_rate": 0.626,
+    "r": 0.688
    },
    "skill": {
-    "overall": 0.1466,
+    "overall": 0.1416,
     "calm": 0.1339,
-    "burning": 0.1786
+    "burning": 0.1606
    },
    "shipped": false,
    "robust": {
-    "2": 0.9783,
-    "3": 1.1443,
-    "4": 1.5852,
-    "5": 0.9895
+    "2": 0.981,
+    "3": 1.1461,
+    "4": 1.5785,
+    "5": 0.9929
    },
    "verdict": "Breaks down with 4-day-old readings"
+  },
+  {
+   "key": "ridge_recent",
+   "label": "Ridge + recent error",
+   "kind": "linear",
+   "about": "The shipped ridge, moved halfway towards its last week's misses.",
+   "sklearn": false,
+   "shippable": true,
+   "overall": {
+    "n": 485,
+    "mae": 9.033,
+    "rmse": 14.415,
+    "bias": -0.554,
+    "band_hit_rate": 0.757,
+    "r": 0.781
+   },
+   "calm": {
+    "n": 394,
+    "mae": 7.779,
+    "rmse": 12.206,
+    "bias": 0.233,
+    "band_hit_rate": 0.787,
+    "r": 0.759
+   },
+   "burning": {
+    "n": 91,
+    "mae": 14.463,
+    "rmse": 21.504,
+    "bias": -3.96,
+    "band_hit_rate": 0.626,
+    "r": 0.68
+   },
+   "skill": {
+    "overall": 0.1425,
+    "calm": 0.1539,
+    "burning": 0.1147
+   },
+   "shipped": false,
+   "verdict": "Not clearly better in burning season"
   },
   {
    "key": "analogs",
@@ -263,12 +302,12 @@
    "sklearn": false,
    "shippable": true,
    "overall": {
-    "n": 481,
-    "mae": 9.982,
-    "rmse": 15.308,
-    "bias": -0.454,
-    "band_hit_rate": 0.713,
-    "r": 0.746
+    "n": 485,
+    "mae": 10.078,
+    "rmse": 15.399,
+    "bias": -0.412,
+    "band_hit_rate": 0.709,
+    "r": 0.743
    },
    "calm": {
     "n": 394,
@@ -279,17 +318,17 @@
     "r": 0.747
    },
    "burning": {
-    "n": 87,
-    "mae": 16.986,
-    "rmse": 24.641,
-    "bias": -5.838,
-    "band_hit_rate": 0.506,
-    "r": 0.574
+    "n": 91,
+    "mae": 17.188,
+    "rmse": 24.611,
+    "bias": -5.38,
+    "band_hit_rate": 0.495,
+    "r": 0.553
    },
    "skill": {
-    "overall": 0.0494,
+    "overall": 0.0433,
     "calm": 0.0824,
-    "burning": -0.0346
+    "burning": -0.0521
    },
    "shipped": false,
    "verdict": "Not clearly better in burning season"
@@ -302,12 +341,12 @@
    "sklearn": true,
    "shippable": false,
    "overall": {
-    "n": 481,
-    "mae": 9.635,
-    "rmse": 15.269,
-    "bias": -1.672,
-    "band_hit_rate": 0.728,
-    "r": 0.76
+    "n": 485,
+    "mae": 9.694,
+    "rmse": 15.293,
+    "bias": -1.629,
+    "band_hit_rate": 0.724,
+    "r": 0.759
    },
    "calm": {
     "n": 394,
@@ -318,17 +357,17 @@
     "r": 0.75
    },
    "burning": {
-    "n": 87,
-    "mae": 16.336,
-    "rmse": 24.731,
-    "bias": -10.74,
-    "band_hit_rate": 0.552,
-    "r": 0.66
+    "n": 91,
+    "mae": 16.354,
+    "rmse": 24.473,
+    "bias": -10.114,
+    "band_hit_rate": 0.538,
+    "r": 0.638
    },
    "skill": {
-    "overall": 0.0825,
+    "overall": 0.0797,
     "calm": 0.1129,
-    "burning": 0.005
+    "burning": -0.001
    },
    "shipped": false,
    "verdict": "Benchmark: needs scikit-learn"
@@ -341,12 +380,12 @@
    "sklearn": true,
    "shippable": false,
    "overall": {
-    "n": 481,
-    "mae": 10.352,
-    "rmse": 15.553,
-    "bias": -0.421,
-    "band_hit_rate": 0.709,
-    "r": 0.737
+    "n": 485,
+    "mae": 10.413,
+    "rmse": 15.604,
+    "bias": -0.416,
+    "band_hit_rate": 0.707,
+    "r": 0.736
    },
    "calm": {
     "n": 394,
@@ -357,17 +396,17 @@
     "r": 0.727
    },
    "burning": {
-    "n": 87,
-    "mae": 16.88,
-    "rmse": 23.961,
-    "bias": -7.053,
-    "band_hit_rate": 0.563,
-    "r": 0.619
+    "n": 91,
+    "mae": 16.921,
+    "rmse": 23.833,
+    "bias": -6.737,
+    "band_hit_rate": 0.56,
+    "r": 0.604
    },
    "skill": {
-    "overall": 0.0142,
+    "overall": 0.0115,
     "calm": 0.0309,
-    "burning": -0.0281
+    "burning": -0.0357
    },
    "shipped": false,
    "verdict": "Benchmark: needs scikit-learn"
@@ -380,12 +419,12 @@
    "sklearn": true,
    "shippable": false,
    "overall": {
-    "n": 481,
-    "mae": 10.389,
-    "rmse": 16.297,
-    "bias": 0.221,
-    "band_hit_rate": 0.726,
-    "r": 0.714
+    "n": 485,
+    "mae": 10.462,
+    "rmse": 16.393,
+    "bias": 0.194,
+    "band_hit_rate": 0.724,
+    "r": 0.711
    },
    "calm": {
     "n": 394,
@@ -396,17 +435,17 @@
     "r": 0.689
    },
    "burning": {
-    "n": 87,
-    "mae": 15.707,
-    "rmse": 23.838,
-    "bias": -5.742,
-    "band_hit_rate": 0.632,
-    "r": 0.617
+    "n": 91,
+    "mae": 15.859,
+    "rmse": 23.909,
+    "bias": -5.623,
+    "band_hit_rate": 0.626,
+    "r": 0.598
    },
    "skill": {
-    "overall": 0.0107,
+    "overall": 0.0068,
     "calm": -0.0023,
-    "burning": 0.0433
+    "burning": 0.0293
    },
    "shipped": false,
    "verdict": "Benchmark: needs scikit-learn"
@@ -419,12 +458,12 @@
    "sklearn": true,
    "shippable": false,
    "overall": {
-    "n": 481,
-    "mae": 9.223,
-    "rmse": 14.594,
-    "bias": -0.792,
-    "band_hit_rate": 0.73,
-    "r": 0.776
+    "n": 485,
+    "mae": 9.296,
+    "rmse": 14.66,
+    "bias": -0.784,
+    "band_hit_rate": 0.726,
+    "r": 0.774
    },
    "calm": {
     "n": 394,
@@ -435,17 +474,17 @@
     "r": 0.765
    },
    "burning": {
-    "n": 87,
-    "mae": 14.812,
-    "rmse": 23.101,
-    "bias": -7.734,
-    "band_hit_rate": 0.598,
-    "r": 0.671
+    "n": 91,
+    "mae": 14.959,
+    "rmse": 23.019,
+    "bias": -7.386,
+    "band_hit_rate": 0.582,
+    "r": 0.653
    },
    "skill": {
-    "overall": 0.1217,
+    "overall": 0.1175,
     "calm": 0.1311,
-    "burning": 0.0978
+    "burning": 0.0843
    },
    "shipped": false,
    "verdict": "Benchmark: needs scikit-learn"
@@ -454,121 +493,121 @@
  "by_age": [
   {
    "age": 2,
-   "days": 481,
-   "mae": 9.16,
-   "persistence_mae": 10.501,
-   "skill": 0.1277,
+   "days": 485,
+   "mae": 9.217,
+   "persistence_mae": 10.534,
+   "skill": 0.125,
    "calm_skill": 0.1324,
-   "burning_skill": 0.1157,
-   "obs_weight": 0.1933
+   "burning_skill": 0.1072,
+   "obs_weight": 0.1952
   },
   {
    "age": 3,
-   "days": 471,
-   "mae": 9.584,
-   "persistence_mae": 11.546,
-   "skill": 0.1699,
+   "days": 475,
+   "mae": 9.609,
+   "persistence_mae": 11.532,
+   "skill": 0.1668,
    "calm_skill": 0.1588,
-   "burning_skill": 0.1962,
-   "obs_weight": 0.1646
+   "burning_skill": 0.1853,
+   "obs_weight": 0.1678
   },
   {
    "age": 4,
-   "days": 469,
-   "mae": 9.915,
-   "persistence_mae": 12.637,
-   "skill": 0.2154,
+   "days": 473,
+   "mae": 9.994,
+   "persistence_mae": 12.769,
+   "skill": 0.2173,
    "calm_skill": 0.2156,
-   "burning_skill": 0.2148,
-   "obs_weight": 0.1403
+   "burning_skill": 0.2216,
+   "obs_weight": 0.1457
   },
   {
    "age": 5,
-   "days": 466,
-   "mae": 10.001,
-   "persistence_mae": 13.101,
-   "skill": 0.2366,
+   "days": 470,
+   "mae": 10.042,
+   "persistence_mae": 13.106,
+   "skill": 0.2338,
    "calm_skill": 0.2328,
-   "burning_skill": 0.2473,
-   "obs_weight": 0.1085
+   "burning_skill": 0.2364,
+   "obs_weight": 0.1117
   },
   {
    "age": 6,
-   "days": 463,
-   "mae": 10.132,
-   "persistence_mae": 13.4,
-   "skill": 0.2439,
+   "days": 467,
+   "mae": 10.178,
+   "persistence_mae": 13.524,
+   "skill": 0.2474,
    "calm_skill": 0.2457,
-   "burning_skill": 0.2387,
-   "obs_weight": 0.0888
+   "burning_skill": 0.2521,
+   "obs_weight": 0.1051
   },
   {
    "age": 7,
-   "days": 461,
-   "mae": 10.498,
-   "persistence_mae": 13.987,
-   "skill": 0.2494,
+   "days": 465,
+   "mae": 10.55,
+   "persistence_mae": 14.217,
+   "skill": 0.2579,
    "calm_skill": 0.2708,
-   "burning_skill": 0.1864,
-   "obs_weight": 0.0612
+   "burning_skill": 0.2234,
+   "obs_weight": 0.065
   }
  ],
  "live": {
   "analogs": {
-   "n": 2,
-   "mae": 13.91,
-   "shipped_mae": 5.75
+   "n": 3,
+   "mae": 17.44,
+   "shipped_mae": 8.8
   },
   "cams_rescale": {
-   "n": 2,
-   "mae": 15.93,
-   "shipped_mae": 5.75
+   "n": 3,
+   "mae": 20.52,
+   "shipped_mae": 8.8
   },
   "climatology": {
-   "n": 2,
-   "mae": 14.82,
-   "shipped_mae": 5.75
+   "n": 3,
+   "mae": 13.96,
+   "shipped_mae": 8.8
   },
   "ensemble": {
-   "n": 2,
-   "mae": 11.66,
-   "shipped_mae": 5.75
+   "n": 3,
+   "mae": 12.97,
+   "shipped_mae": 8.8
   },
   "gradient_boosting": {
-   "n": 2,
-   "mae": 17.46,
-   "shipped_mae": 5.75
+   "n": 3,
+   "mae": 14.55,
+   "shipped_mae": 8.8
   },
   "neural_net": {
-   "n": 2,
-   "mae": 6.11,
-   "shipped_mae": 5.75
+   "n": 3,
+   "mae": 11.86,
+   "shipped_mae": 8.8
   },
   "persistence": {
-   "n": 2,
-   "mae": 15.85,
-   "shipped_mae": 5.75
+   "n": 3,
+   "mae": 11.83,
+   "shipped_mae": 8.8
   },
   "random_forest": {
-   "n": 2,
-   "mae": 16.35,
-   "shipped_mae": 5.75
+   "n": 3,
+   "mae": 13.67,
+   "shipped_mae": 8.8
   },
   "raw_cams": {
-   "n": 2,
-   "mae": 15.93,
-   "shipped_mae": 5.75
+   "n": 3,
+   "mae": 30.41,
+   "shipped_mae": 8.8
   },
   "ridge": {
-   "n": 2,
-   "mae": 5.75,
-   "shipped_mae": 5.75
+   "n": 3,
+   "mae": 8.8,
+   "shipped_mae": 8.8
   },
   "ridge_smoke": {
-   "n": 2,
-   "mae": 10.79,
-   "shipped_mae": 5.75
+   "n": 3,
+   "mae": 12.13,
+   "shipped_mae": 8.8
   }
  },
- "updated_at": "2026-11-21T15:37:25+05:30"
+ "updated_at": "2026-11-22T15:41:26+05:30"
 }

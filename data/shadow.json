@@ -55,6 +55,26 @@
     "neural_net": 71.26,
     "ensemble": 63.49
    },
+   "actual": 47.9
+  },
+  {
+   "date": "2026-11-23",
+   "issued": "2026-11-22",
+   "age": 2,
+   "models": {
+    "persistence": 47.9,
+    "climatology": 35.69,
+    "raw_cams": 72.68,
+    "cams_rescale": 52.59,
+    "ridge": 45.71,
+    "ridge_smoke": 50.09,
+    "ridge_recent": 48.2,
+    "analogs": 44.27,
+    "random_forest": 44.56,
+    "gradient_boosting": 35.01,
+    "neural_net": 47.38,
+    "ensemble": 43.15
+   },
    "actual": null
   }
  ]
