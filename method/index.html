@@ -998,6 +998,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../journals/1024170378-gurkirpa/w12-ticket-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Week 12: Two ways to miss a forecast
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1334,11 +1362,14 @@ model is allowed to know, and that turns out to be less than the
 proposal assumed.</p>
 <h2 id="what-is-actually-available-at-issue-time">What is actually available at issue time<a class="headerlink" href="#what-is-actually-available-at-issue-time" title="Permanent link">&para;</a></h2>
 <p>The daily job is scheduled for 08:00 IST. GitHub starts scheduled
-jobs late when it is busy, and in practice the run lands between
-late morning and mid-afternoon, so each forecast now records the
-time it was actually issued. The CAMS forecast and the weather
-forecast for tomorrow are available then. The station's own
-readings are a different matter.</p>
+jobs late when it is busy, and in practice the run lands in the
+afternoon, so each forecast records the time it was actually
+issued. Four backup runs through the day (<code>code/due.py</code>) do the
+work again only if that run went out without a forecast, or if by
+evening it has not run at all. They never run ahead of it, so a
+backup that fires on time cannot forecast from a staler reading.
+Whenever the job runs, the CAMS and weather forecasts for tomorrow
+are already out. The station's own readings are a different matter.</p>
 <p>The CPCB feed runs behind, and by how much has changed over the
 semester. On 17 August the newest published day was 14 August,
 three days behind. In early October readings arrived in batches
@@ -1494,10 +1525,11 @@ worth trying, on the same days and with the same information.</p>
 <ul>
 <li><strong>Candidates.</strong> Three baselines (persistence, climatology, raw
   CAMS), then CAMS rescaled by its recent ratio to the station, the
-  shipped ridge, ridge with the smoke terms from week 7, analog days
-  (the average of the most similar past days), a random forest,
-  gradient boosting, a small neural network, and an ensemble of the
-  last five. The first seven need nothing outside the standard
+  shipped ridge, ridge with the smoke terms from week 7, ridge
+  corrected by half its mean error over the last seven published
+  days, analog days (the average of the most similar past days), a
+  random forest, gradient boosting, a small neural network, and an
+  ensemble. The first eight need nothing outside the standard
   library and could ship. The scikit-learn models are benchmarks,
   installed for the lab alone (<code>requirements-lab.txt</code>).</li>
 <li><strong>Same rules for all.</strong> Every candidate is walked forward over the
@@ -1585,7 +1617,7 @@ lower forecast deserves a second look.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 3, 2026 08:23:51 UTC">November 3, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 15, 2026 14:47:12 UTC">November 15, 2026</span>
   </span>
 
     
