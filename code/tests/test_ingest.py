@@ -288,3 +288,100 @@ def test_a_refused_request_never_prints_the_firms_key(monkeypatch):
         message = str(e)
     assert "***" in message
     assert not any(key[i:i + 6] in message for i in range(len(key) - 5))
+
+
+class Busy:
+    """urlopen that refuses with 429 a set number of times."""
+
+    def __init__(self, refusals, retry_after=None, body=b"ok"):
+        self.left = refusals
+        self.retry_after = retry_after
+        self.body = body
+        self.calls = 0
+
+    def __call__(self, req, timeout=None):
+        import io
+        import urllib.error
+
+        self.calls += 1
+        if self.left > 0:
+            self.left -= 1
+            headers = {}
+            if self.retry_after is not None:
+                headers["Retry-After"] = self.retry_after
+            raise urllib.error.HTTPError(req.full_url, 429,
+                                         "Too Many Requests", headers,
+                                         io.BytesIO(b""))
+        return io.BytesIO(self.body)
+
+
+def test_a_busy_source_is_tried_again(monkeypatch):
+    """15 November: Open-Meteo answered 429 and the job gave up at
+    once, so no forecast went out. A 429 now waits and retries."""
+    waits = []
+    busy = Busy(refusals=2)
+    monkeypatch.setattr(run_daily.urllib.request, "urlopen", busy)
+    monkeypatch.setattr(run_daily.time, "sleep", waits.append)
+    assert run_daily.fetch("https://api.open-meteo.com/v1/forecast") == "ok"
+    assert busy.calls == 3
+    assert waits == [15, 30]
+
+
+def test_retry_after_is_obeyed_up_to_the_cap(monkeypatch):
+    waits = []
+    monkeypatch.setattr(run_daily.time, "sleep", waits.append)
+    monkeypatch.setattr(run_daily.urllib.request, "urlopen",
+                        Busy(refusals=1, retry_after="7"))
+    run_daily.fetch("https://api.open-meteo.com/v1/forecast")
+    monkeypatch.setattr(run_daily.urllib.request, "urlopen",
+                        Busy(refusals=1, retry_after="3600"))
+    run_daily.fetch("https://api.open-meteo.com/v1/forecast")
+    assert waits == [7, run_daily.BUSY_WAIT_CAP]
+
+
+def test_a_source_that_stays_busy_is_reported(monkeypatch):
+    monkeypatch.setattr(run_daily.time, "sleep", lambda s: None)
+    monkeypatch.setattr(run_daily.urllib.request, "urlopen",
+                        Busy(refusals=99))
+    try:
+        run_daily.fetch("https://api.open-meteo.com/v1/forecast")
+    except run_daily.SourceError as e:
+        assert "429" in str(e)
+    else:
+        raise AssertionError("a source that never answers should raise")
+
+
+def test_a_stalled_connection_gets_time_to_clear(monkeypatch):
+    """16 to 21 November: four runs lost their forecast to TLS
+    handshakes timing out, after waits of 2 and 4 seconds."""
+    import io
+
+    waits, calls = [], []
+
+    def stalls(req, timeout=None):
+        calls.append(1)
+        if len(calls) < 3:
+            raise TimeoutError("The handshake operation timed out")
+        return io.BytesIO(b"ok")
+    monkeypatch.setattr(run_daily.urllib.request, "urlopen", stalls)
+    monkeypatch.setattr(run_daily.time, "sleep", waits.append)
+    assert run_daily.fetch("https://api.open-meteo.com/v1/forecast") == "ok"
+    assert waits == [15, 30]
+
+
+def test_other_client_errors_are_still_not_retried(monkeypatch):
+    import io
+    import urllib.error
+
+    calls = []
+
+    def forbidden(req, timeout=None):
+        calls.append(1)
+        raise urllib.error.HTTPError(req.full_url, 403, "Forbidden", {},
+                                     io.BytesIO(b""))
+    monkeypatch.setattr(run_daily.urllib.request, "urlopen", forbidden)
+    try:
+        run_daily.fetch("https://example.org/x")
+    except run_daily.SourceError:
+        pass
+    assert len(calls) == 1

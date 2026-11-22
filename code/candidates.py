@@ -139,6 +139,57 @@ class RidgeModel(Candidate):
         return Fitted(lambda s: model.predict_one(s.x))
 
 
+class RecentError(Candidate):
+    """Ridge, nudged by how far off it has been this past week.
+
+    Smoke comes in spells. In the first half of November 2026 the
+    station read 75 to 115 most days while the shipped model kept
+    saying 55 to 75: wrong in the same direction, day after day.
+    CAMS, which usually overshoots this station several-fold and so
+    gets pulled down hard, was roughly right that week, and the
+    model could not tell. Its own recent errors are the cheapest
+    signal that a spell like that is on.
+
+    The correction is WEIGHT times the mean log error over the last
+    WINDOW published days. Those errors are measured out of sample:
+    a ridge fitted without the window is asked about it. Half rather
+    than all of it, because spells end, and a full correction keeps
+    pushing for days after they do.
+
+    WINDOW and WEIGHT were picked from five variants on the same
+    backtest the leaderboard uses, which flatters them. The live
+    record is the test that was not looked at first.
+    """
+
+    key, label, kind = "ridge_recent", "Ridge + recent error", "linear"
+    about = "The shipped ridge, moved halfway towards its last week's misses."
+    shippable = True
+    WINDOW = 7
+    WEIGHT = 0.5
+
+    def __init__(self, extra=()):
+        self.extra = tuple(extra)
+
+    def fit(self, train):
+        model = evaluate.fit(train)
+        shift = 0.0
+        if len(train) - self.WINDOW > evaluate.MIN_TRAIN:
+            head, tail = train[:-self.WINDOW], train[-self.WINDOW:]
+            past = evaluate.fit(head)
+            errors = [math.log1p(s.y)
+                      - math.log1p(max(past.predict_one(s.x), 0.0))
+                      for s in tail]
+            shift = self.WEIGHT * sum(errors) / len(errors)
+
+        def one(sample):
+            base = max(model.predict_one(sample.x), 0.0)
+            return math.expm1(math.log1p(base) + shift)
+
+        fitted = Fitted(one)
+        fitted.shift = shift
+        return fitted
+
+
 def nearest(train, target, k):
     """The k training rows closest to `target`, closest first.
 
@@ -343,8 +394,8 @@ def lineup(shipped_extra=()):
             key="ridge_smoke", label="Ridge + smoke terms", extra=SMOKE,
             about="Ridge, letting fires and the westerly count for more "
                   "in burning season."))
-    out += [Analogs(), RandomForest(), GradientBoosting(), NeuralNet(),
-            Ensemble()]
+    out += [RecentError(shipped_extra), Analogs(), RandomForest(),
+            GradientBoosting(), NeuralNet(), Ensemble()]
     return out
 
 

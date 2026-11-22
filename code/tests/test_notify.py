@@ -10,7 +10,7 @@ import io
 import json
 import sys
 import urllib.error
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -38,7 +38,7 @@ def predictions(today, pm25=66.0, band="Moderate", outlook=True):
 
 
 def test_the_post_says_what_the_dashboard_says():
-    today = datetime(2026, 11, 3).date()
+    today = date(2026, 11, 3)
     key, text = notify.compose(predictions(today), today)
     assert key == "2026-11-04|forecast"
     assert "Wednesday 4 November" in text
@@ -51,13 +51,13 @@ def test_the_post_says_what_the_dashboard_says():
 
 
 def test_a_poor_day_leads_with_a_warning():
-    today = datetime(2026, 11, 3).date()
+    today = date(2026, 11, 3)
     _, text = notify.compose(predictions(today, 104.0, "Poor"), today)
     assert text.startswith("Air quality warning for Patiala: Poor")
 
 
 def test_no_forecast_is_posted_as_no_forecast():
-    today = datetime(2026, 11, 3).date()
+    today = date(2026, 11, 3)
     blob = {"predictions": [], "status": {
         "target": "2026-11-04", "issued": False,
         "reason": "the inputs for that day were not fetched"}}
@@ -68,7 +68,7 @@ def test_no_forecast_is_posted_as_no_forecast():
 
 
 def test_nothing_is_posted_when_the_forecast_step_never_ran():
-    today = datetime(2026, 11, 3).date()
+    today = date(2026, 11, 3)
     blob = {"predictions": [], "status": {"target": "2026-11-01"}}
     assert notify.compose(blob, today) is None
 

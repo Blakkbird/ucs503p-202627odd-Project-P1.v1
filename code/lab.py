@@ -412,10 +412,23 @@ def refresh_verdicts(board, book):
     return board
 
 
-def stale(board, today):
+def stale(board, today, lineup=None):
+    """Whether the leaderboard's backtest needs running again.
+
+    Once a week, and also as soon as a candidate joins the line-up,
+    so a new challenger is on the board the next morning rather than
+    up to a week later. A scikit-learn model only counts when
+    scikit-learn is installed to run it.
+    """
     on = (board or {}).get("backtest_on")
     if not on:
         return True
+    if lineup is not None:
+        have = {m["key"] for m in board.get("models", [])}
+        runnable = candidates.sklearn_available()
+        want = {c.key for c in lineup if runnable or not c.sklearn}
+        if want - have:
+            return True
     return (today - date.fromisoformat(on)).days >= REFRESH_DAYS
 
 
@@ -447,7 +460,7 @@ def main():
                   indent=1)
 
     board = load_json(config.LEADERBOARD_JSON, None)
-    if "--backtest" in sys.argv or stale(board, today):
+    if "--backtest" in sys.argv or stale(board, today, lineup):
         board = backtest(rows, lineup)
     if not board:
         return 1
