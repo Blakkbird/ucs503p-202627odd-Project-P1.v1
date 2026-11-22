@@ -95,6 +95,11 @@ markdown_extensions:
         - name: math
           class: arithmatex
           arithmatex: !!python/object/apply:pymdownx.arithmatex.arithmatex_fenced_format {which: generic}
+        # Diagrams on the Design page. Material draws them in the
+        # browser, in the site's own colours.
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.emoji:

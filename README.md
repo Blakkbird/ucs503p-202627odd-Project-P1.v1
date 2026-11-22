@@ -99,7 +99,8 @@ its history is the commit log, and every number on the site is
 generated from it. The forecast that ships is a ridge regression in
 log space, written out by hand and standard library only. Why it is
 built this way is in [Method](docs/method.md); what is in the table
-and where it comes from is in [Data](docs/data.md).
+and where it comes from is in [Data](docs/data.md). The requirements,
+UML diagrams and design decisions are in [Design](docs/design.md).
 
 ## The model lab
 
