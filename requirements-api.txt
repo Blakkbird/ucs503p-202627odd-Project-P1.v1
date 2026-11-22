@@ -1,0 +1,10 @@
+# The HTTP API (code/api.py): FastAPI to serve it, uvicorn to run it,
+# httpx for its tests. Pinned to the versions it was built and tested
+# with.
+#
+# Not needed for the forecast or the website. The daily job never
+# installs these, and the API's tests skip themselves without them.
+
+fastapi==0.163.1
+uvicorn==0.54.0
+httpx==0.28.1

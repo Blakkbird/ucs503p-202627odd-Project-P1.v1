@@ -11,6 +11,7 @@ one line here as well as in its own folder's index. -->
 * [Results](results.md)
 * [Method](method.md)
 * [Data](data.md)
+* [API](api.md)
 * [Choosing the project](criteria-for-project-selection.md)
 * Journals
     * [Gurkirpa Singh](journals/1024170378-gurkirpa/index.md)
@@ -26,6 +27,7 @@ one line here as well as in its own folder's index. -->
         * [Week 10: Eleven models, one exam](journals/1024170378-gurkirpa/w10-ticket-resolution.md)
         * [Week 11: Nobody has to go looking](journals/1024170378-gurkirpa/w11-ticket-resolution.md)
         * [Week 12: Two ways to miss a forecast](journals/1024170378-gurkirpa/w12-ticket-resolution.md)
+        * [Week 13: An endpoint that would answer anything](journals/1024170378-gurkirpa/w13-ticket-resolution.md)
     * [Aayush Kandhol](journals/1024170379-aayush/index.md)
         * [Week 1: Problem analysis](journals/1024170379-aayush/w1-problem-analysis.md)
         * [Week 2: Architecture and validation](journals/1024170379-aayush/w2-architecture-and-validation.md)

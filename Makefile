@@ -63,7 +63,7 @@ $(ICONS_FOLDER)/simple $(ICONS_FOLDER) :
 ### The daily job runs these in the same order. Handy for
 ### reproducing a day's output locally when something looks off.
 
-.PHONY: ingest eval forecast lab lab-full notify site daily check history compare report
+.PHONY: ingest eval forecast lab lab-full notify site daily check history compare report api
 
 ingest:
 	python code/ingest/run_daily.py
@@ -89,6 +89,11 @@ notify:
 
 site:
 	python code/pages.py
+
+# The HTTP API on http://127.0.0.1:8000, docs at /docs. Needs
+# `pip install -r requirements-api.txt` first.
+api:
+	python code/api.py
 
 # Everything, in the order the workflow does it.
 daily: ingest eval forecast lab notify site

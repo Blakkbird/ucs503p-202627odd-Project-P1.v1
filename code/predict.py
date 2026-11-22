@@ -149,7 +149,8 @@ def ensure_model(blob, age, samples, path=None):
     if len(ready) <= evaluate.MIN_TRAIN:
         return None, False
     model = evaluate.fit(ready)
-    evaluate.save_model(model, age, path or config.MODEL_JSON)
+    evaluate.save_model(model, age, path or config.MODEL_JSON,
+                        samples=ready)
     return model, True
 
 
