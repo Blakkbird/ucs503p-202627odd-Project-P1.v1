@@ -53,8 +53,9 @@ out.
 See [Tomorrow's forecast](forecast.md) for the live service,
 [Results](results.md) for the full evaluation, [Method](method.md)
 for how it is measured and [Data](data.md) for what is in the
-table. The [prototype report](https://github.com/Blakkbird/ucs503p-202627odd-Project-P1.v1/blob/master/project-report-prototype-stage/main.pdf)
-covers all of it in one place.
+table. The [final report](https://github.com/Blakkbird/ucs503p-202627odd-Project-P1.v1/blob/master/project-report-final/main.pdf)
+covers all of it in one place, and [Design](design.md) has the
+requirements and diagrams.
 
 ## Layout
 

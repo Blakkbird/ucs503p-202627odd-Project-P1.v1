@@ -16,7 +16,8 @@ satellite fire detections upwind.
 **[Results](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/results/)** ·
 **[Project page](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/)** ·
 [Proposal](project-proposal/main.pdf) ·
-[Prototype report](project-report-prototype-stage/main.pdf)
+[Prototype report](project-report-prototype-stage/main.pdf) ·
+[Final report](project-report-final/main.pdf)
 
 UCS503P Software Engineering, TIET Patiala, 2026-27 odd semester.
 Instructor: Dr. Paramveer Kaur.
@@ -173,6 +174,7 @@ scripts/
   backfill_history.py  weather and fire counts for archive rows
   compare_models.py  the week 7 comparison, kept as it was run
   report_figures.py  every number in the prototype report
+  final_report_figures.py  every number and chart in the final report
 data/                daily.csv and the files derived from it
 docs/                the project page (MkDocs)
 docs/dashboard/      the live dashboard: hand-written page, generated data.json
@@ -208,13 +210,17 @@ depends on, the less can change underneath it.
 - `requirements-docs.txt`: the site's toolchain, pinned below
   MkDocs 2.0.
 
-To rebuild the prototype report:
+To rebuild the final report (needs matplotlib, and biber for the
+bibliography):
 
 ```shell
-python scripts/report_figures.py
-cd project-report-prototype-stage
+python scripts/final_report_figures.py
+cd project-report-final
 latexmk -pdf main.tex
 ```
+
+The prototype report rebuilds the same way, with
+`scripts/report_figures.py` and `project-report-prototype-stage`.
 
 ## Workflows
 
