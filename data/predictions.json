@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-22T15:38:32+05:30",
+  "generated_at": "2026-11-23T16:34:51+05:30",
   "model": {
     "alpha": 30.0,
     "features": [
@@ -1231,6 +1231,28 @@
         "persistence_operational": 47.9,
         "forecast_provenance_live": true
       }
+    },
+    {
+      "date": "2026-11-24",
+      "issued": "2026-11-23",
+      "issued_at": "2026-11-23T16:34+05:30",
+      "pm25": 46.89,
+      "band": "Satisfactory",
+      "actual": null,
+      "error": null,
+      "interval": [
+        30.49,
+        82.64
+      ],
+      "range_method": "calibrated",
+      "inputs": {
+        "cams_log": 4.1138,
+        "cams_pm25": 60.18,
+        "obs_age_days": 2.0,
+        "obs_day": "2026-11-22",
+        "persistence_operational": 55.9,
+        "forecast_provenance_live": true
+      }
     }
   ],
   "outlook": [
@@ -1398,6 +1420,29 @@
     },
     {
       "date": "2026-11-25",
+      "issued": "2026-11-23",
+      "issued_at": "2026-11-23T16:34+05:30",
+      "pm25": 60.49,
+      "band": "Moderate",
+      "actual": null,
+      "error": null,
+      "interval": [
+        38.99,
+        107.59
+      ],
+      "range_method": "calibrated",
+      "inputs": {
+        "cams_log": 4.5216,
+        "cams_pm25": 90.98,
+        "obs_age_days": 3.0,
+        "obs_day": "2026-11-22",
+        "persistence_operational": 55.9,
+        "forecast_provenance_live": true
+      },
+      "horizon": 2
+    },
+    {
+      "date": "2026-11-25",
       "issued": "2026-11-22",
       "issued_at": "2026-11-22T15:38+05:30",
       "pm25": 54.98,
@@ -1418,10 +1463,33 @@
         "forecast_provenance_live": true
       },
       "horizon": 3
+    },
+    {
+      "date": "2026-11-26",
+      "issued": "2026-11-23",
+      "issued_at": "2026-11-23T16:34+05:30",
+      "pm25": 63.15,
+      "band": "Moderate",
+      "actual": null,
+      "error": null,
+      "interval": [
+        42.47,
+        110.71
+      ],
+      "range_method": "calibrated",
+      "inputs": {
+        "cams_log": 4.7249,
+        "cams_pm25": 111.72,
+        "obs_age_days": 4.0,
+        "obs_day": "2026-11-22",
+        "persistence_operational": 55.9,
+        "forecast_provenance_live": true
+      },
+      "horizon": 3
     }
   ],
   "status": {
-    "target": "2026-11-23",
+    "target": "2026-11-24",
     "issued": true,
     "reason": null,
     "obs_age": 2
