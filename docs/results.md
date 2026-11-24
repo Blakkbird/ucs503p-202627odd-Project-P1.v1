@@ -1,7 +1,7 @@
 # Results
 
-Walk-forward backtest over 2025-04-03 to 2026-11-21,
-485 days. The model is refitted from scratch
+Walk-forward backtest over 2025-04-03 to 2026-11-23,
+486 days. The model is refitted from scratch
 before each day and only ever sees days strictly before the one
 it is predicting. Every row uses the station reading from 2 days before the day being forecast, which is the freshest the feed now publishes in time. There is no shuffled train/test split
 anywhere in this project; the rows are a time series and shuffling
@@ -9,11 +9,11 @@ them would let the model read its own future.
 
 | Method | n | MAE | RMSE | Bias | Band correct |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| **Pawan** | 485 | **9.22** | 14.48 | -0.29 | 74% |
-| Persistence (textbook) | 460 | 8.21 | 12.49 | -0.19 | 78% |
-| Persistence (operational) | 485 | 10.53 | 16.21 | -0.28 | 71% |
-| Climatology | 485 | 18.27 | 23.08 | +3.12 | 33% |
-| Raw CAMS | 485 | 41.59 | 49.63 | +38.73 | 14% |
+| **Pawan** | 486 | **9.22** | 14.47 | -0.32 | 74% |
+| Persistence (textbook) | 461 | 8.20 | 12.48 | -0.19 | 78% |
+| Persistence (operational) | 486 | 10.53 | 16.20 | -0.30 | 71% |
+| Climatology | 486 | 18.28 | 23.08 | +3.06 | 34% |
+| Raw CAMS | 486 | 41.54 | 49.59 | +38.68 | 14% |
 
 ## By season
 
@@ -24,14 +24,14 @@ beat; burning season is when a forecast is worth having.
 | Season | Days | Pawan MAE | Operational persistence MAE | Skill | Target |
 | --- | ---: | ---: | ---: | ---: | :--- |
 | Calm (Dec to Sep) | 394 | 7.98 | 9.19 | +13.2% | 10%, met |
-| Burning (Oct, Nov) | 91 | 14.59 | 16.34 | +10.7% | 20%, not met |
+| Burning (Oct, Nov) | 92 | 14.55 | 16.27 | +10.5% | 20%, not met |
 
-On the **75** days whose CAMS forecast was recorded live rather than read back from an archive, Pawan's MAE is **10.53** against 11.00 for operational persistence, **+4.2%**. No archive has flattered those days, so if this figure and the totals drift apart, this is the one to believe.
+On the **76** days whose CAMS forecast was recorded live rather than read back from an archive, Pawan's MAE is **10.55** against 10.98 for operational persistence, **+3.9%**. No archive has flattered those days, so if this figure and the totals drift apart, this is the one to believe.
 
 ## Skill
 
-- Against operational persistence: **12.5% better** on MAE.
-- Against textbook persistence: **12.2% worse** on MAE.
+- Against operational persistence: **12.4% better** on MAE.
+- Against textbook persistence: **12.5% worse** on MAE.
 
 The two baselines are both persistence, and the difference
 between them is the whole argument.
@@ -59,14 +59,14 @@ compared with each other but not read as physics.
 | Feature | Weight |
 | --- | ---: |
 | `obs_recent_log` | +0.195 |
-| `rh` | -0.173 |
-| `cams_log` | +0.163 |
+| `rh` | -0.172 |
+| `cams_log` | +0.162 |
 | `temp` | -0.113 |
 | `fire_log` | +0.109 |
 | `wind_speed` | -0.098 |
-| `wind_u` | +0.041 |
-| `burning` | +0.036 |
-| `wind_v` | -0.007 |
+| `wind_u` | +0.042 |
+| `burning` | +0.037 |
+| `wind_v` | -0.006 |
 
 
 ## How old the reading is
@@ -99,18 +99,18 @@ scored days in brackets.
 
 | Model | Kind | MAE | Skill | Calm | Burning | Live MAE | Verdict |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| Ridge + recent error | linear | 9.03 | +14.2% | +15.4% | +11.5% | - | Not clearly better in burning season |
-| Ridge + smoke terms | linear | 9.04 | +14.2% | +13.4% | +16.1% | 12.13 (3) | Breaks down with 4-day-old readings |
-| **Ridge regression (shipped)** | linear | **9.22** | +12.5% | +13.2% | +10.7% | 8.80 (3) | Shipped |
-| Ensemble | ensemble | 9.30 | +11.8% | +13.1% | +8.4% | 12.97 (3) | Benchmark: needs scikit-learn |
-| Random forest | tree | 9.69 | +8.0% | +11.3% | -0.1% | 13.67 (3) | Benchmark: needs scikit-learn |
-| Analog days | analog | 10.08 | +4.3% | +8.2% | -5.2% | 17.44 (3) | Not clearly better in burning season |
-| Gradient boosting | tree | 10.41 | +1.1% | +3.1% | -3.6% | 14.55 (3) | Benchmark: needs scikit-learn |
-| Neural network | neural | 10.46 | +0.7% | -0.2% | +2.9% | 11.86 (3) | Benchmark: needs scikit-learn |
-| Persistence | baseline | 10.53 | +0.0% | +0.0% | +0.0% | 11.83 (3) | Baseline |
-| CAMS rescaled | linear | 13.81 | -31.1% | -24.2% | -47.8% | 20.52 (3) | Not clearly better in burning season |
-| Climatology | baseline | 18.48 | -75.5% | -78.8% | -67.3% | 13.96 (3) | Baseline |
-| Raw CAMS | baseline | 41.59 | -294.8% | -378.8% | -90.2% | 30.41 (3) | Baseline |
+| Ridge + recent error | linear | 9.03 | +14.2% | +15.4% | +11.5% | 9.40 (1) | Not clearly better in burning season |
+| Ridge + smoke terms | linear | 9.04 | +14.2% | +13.4% | +16.1% | 10.98 (4) | Breaks down with 4-day-old readings |
+| **Ridge regression (shipped)** | linear | **9.22** | +12.5% | +13.2% | +10.7% | 9.57 (4) | Shipped |
+| Ensemble | ensemble | 9.30 | +11.8% | +13.1% | +8.4% | 13.34 (4) | Benchmark: needs scikit-learn |
+| Random forest | tree | 9.69 | +8.0% | +11.3% | -0.1% | 13.51 (4) | Benchmark: needs scikit-learn |
+| Analog days | analog | 10.08 | +4.3% | +8.2% | -5.2% | 16.41 (4) | Not clearly better in burning season |
+| Gradient boosting | tree | 10.41 | +1.1% | +3.1% | -3.6% | 16.56 (4) | Benchmark: needs scikit-learn |
+| Neural network | neural | 10.46 | +0.7% | -0.2% | +2.9% | 11.45 (4) | Benchmark: needs scikit-learn |
+| Persistence | baseline | 10.53 | +0.0% | +0.0% | +0.0% | 11.30 (4) | Baseline |
+| CAMS rescaled | linear | 13.81 | -31.1% | -24.2% | -47.8% | 16.64 (4) | Not clearly better in burning season |
+| Climatology | baseline | 18.48 | -75.5% | -78.8% | -67.3% | 15.95 (4) | Baseline |
+| Raw CAMS | baseline | 41.59 | -294.8% | -378.8% | -90.2% | 26.58 (4) | Baseline |
 
 A challenger replaces the shipped model only when it is at least
 3 points of skill better in
@@ -131,19 +131,19 @@ model fitted at that age.
 
 | Days ahead | Reading age | Days | Pawan MAE | Persistence MAE | Skill | Range held |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 2 days | 485 | 9.22 | 10.53 | +12.5% | 366 of 455 |
-| 2 | 3 days | 475 | 9.64 | 11.53 | +16.4% | 358 of 445 |
-| 3 | 4 days | 473 | 10.08 | 12.77 | +21.1% | 362 of 443 |
+| 1 | 2 days | 486 | 9.22 | 10.53 | +12.4% | 367 of 456 |
+| 2 | 3 days | 476 | 9.64 | 11.51 | +16.2% | 359 of 446 |
+| 3 | 4 days | 474 | 10.08 | 12.75 | +21.0% | 363 of 444 |
 
 ## Likely range
 
-The likely range is the middle 80% of the backtest's own errors, taken out of sample and per season, so four days in five should land inside it. Sized only from the days before it, the range held the measured value on **366 of 455** backtest days (80%), and on 65 of 91 in burning season (71%), where the first days of a season have the fewest errors to size from.
+The likely range is the middle 80% of the backtest's own errors, taken out of sample and per season, so four days in five should land inside it. Sized only from the days before it, the range held the measured value on **367 of 456** backtest days (80%), and on 66 of 92 in burning season (72%), where the first days of a season have the fewest errors to size from.
 
 ## Limitations
 
 What the figures above do not show.
 
-- **Burning season is a small sample.** 91 burning-season days are scored: 55 read back from archives and 36 recorded live. That is one or two seasons at most, and a dry year, a wet one or a shift in when the stubble is burnt would each move these numbers.
+- **Burning season is a small sample.** 92 burning-season days are scored: 55 read back from archives and 37 recorded live. That is one or two seasons at most, and a dry year, a wet one or a shift in when the stubble is burnt would each move these numbers.
 - **Band accuracy only means much in burning season.** On calm days almost everything falls in Good, and a method that guessed Good every time would score nearly as well.
 - **Archive rows are mildly optimistic.** Rows read back from archives take CAMS and weather from series stitched out of the opening hours of successive model runs, which sit a little closer to what happened than a forecast issued a day ahead. The live-only figure, where there is one, is the check on how much that flatters the totals.
 - **The feature set was chosen on calm-season data.** Every change was made for a stated reason and not only because it scored better, but the reasons and the scores were looked at together. This year's burning season, scored live as it happens, is the test nothing here was tuned against.

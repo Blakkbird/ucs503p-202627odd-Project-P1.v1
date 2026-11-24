@@ -554,60 +554,65 @@
  ],
  "live": {
   "analogs": {
-   "n": 3,
-   "mae": 17.44,
-   "shipped_mae": 8.8
+   "n": 4,
+   "mae": 16.41,
+   "shipped_mae": 9.57
   },
   "cams_rescale": {
-   "n": 3,
-   "mae": 20.52,
-   "shipped_mae": 8.8
+   "n": 4,
+   "mae": 16.64,
+   "shipped_mae": 9.57
   },
   "climatology": {
-   "n": 3,
-   "mae": 13.96,
-   "shipped_mae": 8.8
+   "n": 4,
+   "mae": 15.95,
+   "shipped_mae": 9.57
   },
   "ensemble": {
-   "n": 3,
-   "mae": 12.97,
-   "shipped_mae": 8.8
+   "n": 4,
+   "mae": 13.34,
+   "shipped_mae": 9.57
   },
   "gradient_boosting": {
-   "n": 3,
-   "mae": 14.55,
-   "shipped_mae": 8.8
+   "n": 4,
+   "mae": 16.56,
+   "shipped_mae": 9.57
   },
   "neural_net": {
-   "n": 3,
-   "mae": 11.86,
-   "shipped_mae": 8.8
+   "n": 4,
+   "mae": 11.45,
+   "shipped_mae": 9.57
   },
   "persistence": {
-   "n": 3,
-   "mae": 11.83,
-   "shipped_mae": 8.8
+   "n": 4,
+   "mae": 11.3,
+   "shipped_mae": 9.57
   },
   "random_forest": {
-   "n": 3,
-   "mae": 13.67,
-   "shipped_mae": 8.8
+   "n": 4,
+   "mae": 13.51,
+   "shipped_mae": 9.57
   },
   "raw_cams": {
-   "n": 3,
-   "mae": 30.41,
-   "shipped_mae": 8.8
+   "n": 4,
+   "mae": 26.58,
+   "shipped_mae": 9.57
   },
   "ridge": {
-   "n": 3,
-   "mae": 8.8,
-   "shipped_mae": 8.8
+   "n": 4,
+   "mae": 9.57,
+   "shipped_mae": 9.57
+  },
+  "ridge_recent": {
+   "n": 1,
+   "mae": 9.4,
+   "shipped_mae": 11.89
   },
   "ridge_smoke": {
-   "n": 3,
-   "mae": 12.13,
-   "shipped_mae": 8.8
+   "n": 4,
+   "mae": 10.98,
+   "shipped_mae": 9.57
   }
  },
- "updated_at": "2026-11-23T16:35:04+05:30"
+ "updated_at": "2026-11-24T18:20:16+05:30"
 }

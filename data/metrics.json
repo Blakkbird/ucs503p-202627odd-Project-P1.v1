@@ -1,8 +1,8 @@
 {
-  "generated_for": "2026-11-21",
+  "generated_for": "2026-11-23",
   "window": {
     "first": "2025-04-03",
-    "last": "2026-11-21"
+    "last": "2026-11-23"
   },
   "features": [
     "cams_log",
@@ -21,42 +21,42 @@
   "min_obs_hours": 16,
   "overall": {
     "model": {
-      "n": 485,
-      "mae": 9.217,
-      "rmse": 14.479,
-      "bias": -0.293,
-      "band_hit_rate": 0.74,
+      "n": 486,
+      "mae": 9.222,
+      "rmse": 14.474,
+      "bias": -0.317,
+      "band_hit_rate": 0.741,
       "r": 0.779
     },
     "persistence": {
-      "n": 460,
-      "mae": 8.211,
-      "rmse": 12.495,
-      "bias": -0.186,
-      "band_hit_rate": 0.776,
+      "n": 461,
+      "mae": 8.197,
+      "rmse": 12.481,
+      "bias": -0.189,
+      "band_hit_rate": 0.777,
       "r": 0.854
     },
     "persistence_operational": {
-      "n": 485,
-      "mae": 10.534,
-      "rmse": 16.208,
-      "bias": -0.278,
-      "band_hit_rate": 0.709,
+      "n": 486,
+      "mae": 10.532,
+      "rmse": 16.197,
+      "bias": -0.298,
+      "band_hit_rate": 0.71,
       "r": 0.744
     },
     "climatology": {
-      "n": 485,
-      "mae": 18.272,
-      "rmse": 23.081,
-      "bias": 3.116,
-      "band_hit_rate": 0.334,
-      "r": 0.123
+      "n": 486,
+      "mae": 18.28,
+      "rmse": 23.079,
+      "bias": 3.064,
+      "band_hit_rate": 0.335,
+      "r": 0.121
     },
     "raw_cams": {
-      "n": 485,
-      "mae": 41.59,
-      "rmse": 49.634,
-      "bias": 38.725,
+      "n": 486,
+      "mae": 41.536,
+      "rmse": 49.588,
+      "bias": 38.676,
       "band_hit_rate": 0.138,
       "r": 0.416
     }
@@ -106,43 +106,43 @@
     },
     "burning": {
       "model": {
-        "n": 91,
-        "mae": 14.585,
-        "rmse": 22.272,
-        "bias": -7.036,
-        "band_hit_rate": 0.615,
+        "n": 92,
+        "mae": 14.555,
+        "rmse": 22.185,
+        "bias": -7.089,
+        "band_hit_rate": 0.62,
         "r": 0.679
       },
       "persistence": {
-        "n": 84,
-        "mae": 12.412,
-        "rmse": 18.185,
-        "bias": -1.433,
-        "band_hit_rate": 0.702,
+        "n": 85,
+        "mae": 12.286,
+        "rmse": 18.079,
+        "bias": -1.436,
+        "band_hit_rate": 0.706,
         "r": 0.809
       },
       "persistence_operational": {
-        "n": 91,
-        "mae": 16.337,
-        "rmse": 24.849,
-        "bias": -2.341,
-        "band_hit_rate": 0.615,
+        "n": 92,
+        "mae": 16.265,
+        "rmse": 24.734,
+        "bias": -2.421,
+        "band_hit_rate": 0.62,
         "r": 0.612
       },
       "climatology": {
-        "n": 91,
-        "mae": 27.435,
-        "rmse": 35.314,
-        "bias": -21.235,
-        "band_hit_rate": 0.319,
+        "n": 92,
+        "mae": 27.378,
+        "rmse": 35.197,
+        "bias": -21.245,
+        "band_hit_rate": 0.326,
         "r": 0.304
       },
       "raw_cams": {
-        "n": 91,
-        "mae": 31.067,
-        "rmse": 37.061,
-        "bias": 22.731,
-        "band_hit_rate": 0.253,
+        "n": 92,
+        "mae": 30.893,
+        "rmse": 36.893,
+        "bias": 22.648,
+        "band_hit_rate": 0.25,
         "r": 0.342
       }
     }
@@ -150,44 +150,44 @@
   "by_provenance": {
     "live": {
       "model": {
-        "n": 75,
-        "mae": 10.532,
-        "rmse": 17.303,
-        "bias": -2.864,
-        "band_hit_rate": 0.72,
-        "r": 0.841
+        "n": 76,
+        "mae": 10.55,
+        "rmse": 17.243,
+        "bias": -2.983,
+        "band_hit_rate": 0.724,
+        "r": 0.843
       },
       "persistence": {
-        "n": 70,
-        "mae": 8.415,
-        "rmse": 14.099,
-        "bias": -0.847,
-        "band_hit_rate": 0.8,
-        "r": 0.88
+        "n": 71,
+        "mae": 8.321,
+        "rmse": 14.0,
+        "bias": -0.859,
+        "band_hit_rate": 0.803,
+        "r": 0.881
       },
       "persistence_operational": {
-        "n": 75,
-        "mae": 10.996,
-        "rmse": 17.625,
-        "bias": -1.659,
-        "band_hit_rate": 0.707,
-        "r": 0.802
+        "n": 76,
+        "mae": 10.979,
+        "rmse": 17.544,
+        "bias": -1.764,
+        "band_hit_rate": 0.711,
+        "r": 0.803
       },
       "climatology": {
-        "n": 75,
-        "mae": 21.979,
-        "rmse": 28.305,
-        "bias": -0.382,
-        "band_hit_rate": 0.187,
-        "r": -0.016
+        "n": 76,
+        "mae": 21.98,
+        "rmse": 28.232,
+        "bias": -0.667,
+        "band_hit_rate": 0.197,
+        "r": 0.001
       },
       "raw_cams": {
-        "n": 75,
-        "mae": 38.313,
-        "rmse": 42.766,
-        "bias": 33.398,
-        "band_hit_rate": 0.107,
-        "r": 0.451
+        "n": 76,
+        "mae": 38.007,
+        "rmse": 42.519,
+        "bias": 33.157,
+        "band_hit_rate": 0.105,
+        "r": 0.452
       }
     },
     "backfilled": {
@@ -234,36 +234,36 @@
     }
   },
   "skill": {
-    "operational": 0.125,
-    "textbook": -0.1225
+    "operational": 0.1244,
+    "textbook": -0.125
   },
-  "skill_vs_persistence": -0.1225,
+  "skill_vs_persistence": -0.125,
   "counts": {
-    "burning_live": 36,
+    "burning_live": 37,
     "burning_backfilled": 55
   },
   "horizons": {
     "1": {
       "horizon": 1,
       "age": 2,
-      "days": 485,
+      "days": 486,
       "model": {
-        "n": 485,
-        "mae": 9.217,
-        "rmse": 14.479,
-        "bias": -0.293,
-        "band_hit_rate": 0.74,
+        "n": 486,
+        "mae": 9.222,
+        "rmse": 14.474,
+        "bias": -0.317,
+        "band_hit_rate": 0.741,
         "r": 0.779
       },
       "persistence": {
-        "n": 485,
-        "mae": 10.534,
-        "rmse": 16.208,
-        "bias": -0.278,
-        "band_hit_rate": 0.709,
+        "n": 486,
+        "mae": 10.532,
+        "rmse": 16.197,
+        "bias": -0.298,
+        "band_hit_rate": 0.71,
         "r": 0.744
       },
-      "skill": 0.125,
+      "skill": 0.1244,
       "calibration": {
         "calm": {
           "low": -0.4433,
@@ -271,9 +271,9 @@
           "errors": 394
         },
         "burning": {
-          "low": -0.4191,
-          "high": 0.5577,
-          "errors": 91
+          "low": -0.4141,
+          "high": 0.5555,
+          "errors": 92
         }
       },
       "coverage": {
@@ -283,38 +283,38 @@
           "rate": 0.827
         },
         "burning": {
-          "held": 65,
-          "days": 91,
-          "rate": 0.714
+          "held": 66,
+          "days": 92,
+          "rate": 0.717
         },
         "overall": {
-          "held": 366,
-          "days": 455,
-          "rate": 0.804
+          "held": 367,
+          "days": 456,
+          "rate": 0.805
         }
       }
     },
     "2": {
       "horizon": 2,
       "age": 3,
-      "days": 475,
+      "days": 476,
       "model": {
-        "n": 475,
-        "mae": 9.645,
-        "rmse": 15.194,
-        "bias": -0.252,
+        "n": 476,
+        "mae": 9.638,
+        "rmse": 15.181,
+        "bias": -0.265,
         "band_hit_rate": 0.714,
         "r": 0.748
       },
       "persistence": {
-        "n": 475,
-        "mae": 11.532,
-        "rmse": 17.952,
+        "n": 476,
+        "mae": 11.508,
+        "rmse": 17.933,
         "bias": -0.06,
-        "band_hit_rate": 0.699,
+        "band_hit_rate": 0.7,
         "r": 0.69
       },
-      "skill": 0.1636,
+      "skill": 0.1625,
       "calibration": {
         "calm": {
           "low": -0.5078,
@@ -322,9 +322,9 @@
           "errors": 387
         },
         "burning": {
-          "low": -0.4302,
-          "high": 0.5688,
-          "errors": 88
+          "low": -0.4272,
+          "high": 0.5684,
+          "errors": 89
         }
       },
       "coverage": {
@@ -334,38 +334,38 @@
           "rate": 0.832
         },
         "burning": {
-          "held": 61,
-          "days": 88,
-          "rate": 0.693
+          "held": 62,
+          "days": 89,
+          "rate": 0.697
         },
         "overall": {
-          "held": 358,
-          "days": 445,
-          "rate": 0.804
+          "held": 359,
+          "days": 446,
+          "rate": 0.805
         }
       }
     },
     "3": {
       "horizon": 3,
       "age": 4,
-      "days": 473,
+      "days": 474,
       "model": {
-        "n": 473,
-        "mae": 10.08,
-        "rmse": 15.498,
-        "bias": -0.183,
+        "n": 474,
+        "mae": 10.078,
+        "rmse": 15.487,
+        "bias": -0.202,
         "band_hit_rate": 0.717,
-        "r": 0.737
+        "r": 0.738
       },
       "persistence": {
-        "n": 473,
-        "mae": 12.769,
-        "rmse": 18.979,
-        "bias": 0.139,
-        "band_hit_rate": 0.668,
+        "n": 474,
+        "mae": 12.754,
+        "rmse": 18.961,
+        "bias": 0.126,
+        "band_hit_rate": 0.669,
         "r": 0.658
       },
-      "skill": 0.2106,
+      "skill": 0.2098,
       "calibration": {
         "calm": {
           "low": -0.5598,
@@ -373,9 +373,9 @@
           "errors": 387
         },
         "burning": {
-          "low": -0.3892,
-          "high": 0.5547,
-          "errors": 86
+          "low": -0.3879,
+          "high": 0.5523,
+          "errors": 87
         }
       },
       "coverage": {
@@ -385,14 +385,14 @@
           "rate": 0.843
         },
         "burning": {
-          "held": 61,
-          "days": 86,
-          "rate": 0.709
+          "held": 62,
+          "days": 87,
+          "rate": 0.713
         },
         "overall": {
-          "held": 362,
-          "days": 443,
-          "rate": 0.817
+          "held": 363,
+          "days": 444,
+          "rate": 0.818
         }
       }
     }
