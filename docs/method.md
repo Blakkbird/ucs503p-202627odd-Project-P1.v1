@@ -275,11 +275,12 @@ two and three a little; their live records are the check.
 current evaluation, split by season, by reading age and by model,
 with a live-only line.
 
-As of early November 2026, against persistence given the same
-two-day-old reading, the calm-season target is met and burning
-season is about a point short of its 20%. With readings four days
-old, the situation the proposal was written for, both are met
-comfortably. The shipped ridge and its smoke-term variant have the
+As of late November 2026, against persistence given the same
+two-day-old reading, the calm-season target is met (+13%) and
+burning season is short of its 20% (about +9%): the smoky first
+half of November, which the model under-forecast day after day,
+pulled it down. With readings four days old, the situation the
+proposal was written for, both are met (+22% in each season). The shipped ridge and its smoke-term variant have the
 lowest errors of any single models on the leaderboard, ahead of
 the forest, boosting and the network. The model still does not see
 spikes coming. The analog list on the dashboard helps there: when

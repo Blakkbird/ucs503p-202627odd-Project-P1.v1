@@ -42,8 +42,10 @@ out, and Pawan is always measured against persistence given the
 same reading it had. The proposal set a 10% reduction in error
 against it outside the burning season and 20% during it.
 
-Both are met, the second across the 2025 and 2026 burning seasons,
-and [Results](results.md) has the current figures, regenerated
+The calm-season target is met. The burning-season target is met
+with the four-day-old readings the proposal was written for, and
+not with the two-day-old readings the feed has delivered since late
+October. [Results](results.md) has the current figures, regenerated
 every morning. The textbook version of persistence, which uses
 yesterday's reading, still beats Pawan. Nobody has yesterday's
 reading at forecast time, so it marks the cost of the publication

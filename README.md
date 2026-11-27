@@ -15,6 +15,7 @@ satellite fire detections upwind.
 **[Tomorrow's forecast](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/forecast/)** ·
 **[Results](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/results/)** ·
 **[Project page](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/)** ·
+**[Telegram channel](https://t.me/pawan_patiala)** ·
 [Proposal](project-proposal/main.pdf) ·
 [Prototype report](project-report-prototype-stage/main.pdf) ·
 [Final report](project-report-final/main.pdf)
@@ -52,19 +53,21 @@ reduction in error against it.
 | | Days | Pawan | Persistence | Raw CAMS | Skill | Target |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Calm season | 394 | 7.98 | 9.19 | 44.02 | +13.2% | 10% |
-| Burning season (Oct, Nov) | 76 | 12.85 | 15.84 | 32.85 | +18.9% | 20% |
-| Live forecasts only | 60 | 7.32 | 9.03 | 42.39 | +18.9% | |
+| Burning season (Oct, Nov) | 95 | 14.60 | 16.09 | 30.83 | +9.3% | 20% |
+| Days with live CAMS inputs | 79 | 10.76 | 10.98 | 37.66 | +2.0% | |
 
-Snapshot from 3 November 2026. The [results page](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/results/)
+Snapshot from 27 November 2026. The [results page](https://blakkbird.github.io/ucs503p-202627odd-Project-P1.v1/results/)
 is regenerated every day and is the current one.
 
 With readings four days old, the situation the proposal was
-written for, the same backtest gives +21.6% in calm season and
-+31.8% in burning season. Since late October the feed has been
-fast enough to give two-day-old readings. Against persistence
-given the same reading, the calm target is met and the burning
-target is a point short: the faster feed made the baseline better
-by more than it made the model better.
+written for, the model lab gives +21.6% in calm season and +22.2%
+in burning season. Since late October the feed has been fast
+enough to give two-day-old readings. Against persistence given the
+same reading, the calm target is met and the burning target is
+not: the faster feed made the baseline better by more than it made
+the model better, and the smoky first half of November 2026, which
+the model under-forecast day after day, pulled the burning figure
+down further.
 
 What it does not do yet is see pollution spikes coming. On those
 days the dashboard's list of the most similar past days is the
@@ -144,7 +147,8 @@ website does not depend on it. Details in [API](docs/api.md).
 
 ## Daily alerts
 
-The daily job posts the forecast to a Telegram channel, with a
+The daily job posts the forecast to a Telegram channel,
+[@pawan_patiala](https://t.me/pawan_patiala), with a
 warning line when the band is Poor or worse and a plain note when no
 forecast could be issued. It needs two repository secrets,
 `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` (the channel's
