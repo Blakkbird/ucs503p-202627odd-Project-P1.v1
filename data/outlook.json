@@ -1,20 +1,20 @@
 {
- "issued": "2026-11-27",
- "generated_at": "2026-11-27T16:44:45+05:30",
+ "issued": "2026-11-28",
+ "generated_at": "2026-11-28T16:15:14+05:30",
  "days": {
-  "2026-11-29": {
-   "cams_pm25": 153.45,
-   "temp_mean": 17.11,
-   "rh_mean": 77.46,
-   "wind_speed_mean": 3.77,
-   "wind_dir_mean": 322.24
-  },
   "2026-11-30": {
-   "cams_pm25": 149.62,
+   "cams_pm25": 134.85,
    "temp_mean": 16.73,
-   "rh_mean": 81.71,
-   "wind_speed_mean": 3.83,
-   "wind_dir_mean": 311.24
+   "rh_mean": 80.42,
+   "wind_speed_mean": 5.29,
+   "wind_dir_mean": 304.21
+  },
+  "2026-12-01": {
+   "cams_pm25": 118.75,
+   "temp_mean": 16.57,
+   "rh_mean": 78.75,
+   "wind_speed_mean": 6.36,
+   "wind_dir_mean": 311.04
   }
  }
 }

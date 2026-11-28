@@ -155,7 +155,7 @@
     "neural_net": 82.7,
     "ensemble": 76.82
    },
-   "actual": null
+   "actual": 72.8
   },
   {
    "date": "2026-11-28",
@@ -174,6 +174,26 @@
     "gradient_boosting": 70.83,
     "neural_net": 68.49,
     "ensemble": 68.7
+   },
+   "actual": null
+  },
+  {
+   "date": "2026-11-29",
+   "issued": "2026-11-28",
+   "age": 2,
+   "models": {
+    "persistence": 72.8,
+    "climatology": 35.97,
+    "raw_cams": 148.27,
+    "cams_rescale": 116.05,
+    "ridge": 74.63,
+    "ridge_smoke": 74.35,
+    "ridge_recent": 73.99,
+    "analogs": 67.34,
+    "random_forest": 60.28,
+    "gradient_boosting": 69.02,
+    "neural_net": 69.43,
+    "ensemble": 67.98
    },
    "actual": null
   }
